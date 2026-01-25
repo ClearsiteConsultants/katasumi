@@ -130,6 +130,293 @@ Features:
 - **Web Premium**: PostgreSQL + Redis
 - **Sync**: TUI can export to web (upload cache.db shortcuts)
 
+---
+
+#### 1.1.1 Multi-Tier Architecture & User Account Strategy
+
+**Problem Statement**: Premium users need their custom shortcuts, collections, and preferences available across both TUI and Web interfaces. However, TUI uses SQLite (offline-first) and Web uses PostgreSQL (cloud-hosted). How do we sync data between these two systems while maintaining the TUI's offline capabilities?
+
+**Proposed Solution: Hybrid Sync Architecture**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Cloud (PostgreSQL)                      │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  Premium User Account Database                       │  │
+│  │  - User auth & profile                               │  │
+│  │  - Custom shortcuts (user-added)                     │  │
+│  │  - Collections & favorites                           │  │
+│  │  - Sync metadata (last_sync, conflict_resolution)    │  │
+│  │  - API usage tracking                                │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ↕                                  │
+│                    REST API / GraphQL                        │
+│                  (Authentication via JWT)                    │
+└─────────────────────────────────────────────────────────────┘
+                            ↕
+┌─────────────────────────────────────────────────────────────┐
+│                   Local TUI (SQLite)                        │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  shortcuts.db (bundled, read-only)                   │  │
+│  │  - Core shortcuts for popular apps                   │  │
+│  │  - Updated via GitHub releases                       │  │
+│  └──────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  user-data.db (local, read-write)                    │  │
+│  │  - User-scraped shortcuts                            │  │
+│  │  - Custom shortcuts                                  │  │
+│  │  - Collections                                       │  │
+│  │  - Sync metadata (conflicts, pending changes)       │  │
+│  └──────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  config.json                                         │  │
+│  │  - API token (for premium users)                    │  │
+│  │  - Sync preferences                                  │  │
+│  │  - Last sync timestamp                               │  │
+│  └──────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Tier Breakdown**:
+
+**Free Tier (Web & TUI)**:
+- **Web**: Read-only access to core shortcuts via PostgreSQL
+- **TUI**: Full offline access to bundled shortcuts.db + local cache
+- **No Account Required**: Anonymous usage
+- **Rate Limits**: 5 AI searches per day (IP-based)
+- **No Sync**: TUI and Web are independent
+
+**Premium Tier ($5-10/month)**:
+- **Account Required**: Email/OAuth login
+- **Cloud Storage**: PostgreSQL stores user's custom shortcuts & collections
+- **Unlimited AI**: No rate limits on AI scraping
+- **Cross-Platform Sync**: TUI ↔ Web bidirectional sync
+- **Features**:
+  - Save custom shortcuts
+  - Create collections/folders
+  - Tag and organize shortcuts
+  - Export/import (CSV, JSON)
+  - Priority support
+
+**Team Tier ($20-50/month)** (Future):
+- All Premium features
+- Shared team collections
+- Role-based access control
+- Admin dashboard
+- Usage analytics
+
+**Sync Strategy Details**:
+
+**How TUI Authenticates**:
+```bash
+# One-time setup
+$ shortcut-finder login
+? Enter your email: user@example.com
+? Enter your password: ••••••••
+✓ Logged in successfully
+✓ API token saved to ~/.shortcut-finder/config.json
+
+# Or via web OAuth flow
+$ shortcut-finder login --web
+→ Opens browser to auth page
+✓ Token received and saved
+```
+
+**Sync Process (TUI → Cloud)**:
+1. User adds/modifies shortcuts in TUI (stored in user-data.db)
+2. On next sync (manual or automatic):
+   - TUI compares local user-data.db with last sync timestamp
+   - Sends changed records to API: `POST /api/sync/push`
+   - API validates user token and writes to PostgreSQL
+   - Returns latest cloud timestamp
+
+**Sync Process (Cloud → TUI)**:
+1. User modifies shortcuts on Web (written to PostgreSQL)
+2. TUI initiates sync: `GET /api/sync/pull?since=<timestamp>`
+3. API returns shortcuts modified since last sync
+4. TUI merges changes into user-data.db
+
+**Conflict Resolution**:
+```typescript
+// When same shortcut modified in both places
+enum ConflictStrategy {
+  LOCAL_WINS = 'local',      // Keep TUI version
+  REMOTE_WINS = 'remote',    // Keep Cloud version
+  NEWEST_WINS = 'newest',    // Keep most recently modified (default)
+  MERGE = 'merge',           // Attempt intelligent merge
+  MANUAL = 'manual'          // Prompt user
+}
+
+// User configures preference
+// ~/.shortcut-finder/config.json
+{
+  "sync": {
+    "enabled": true,
+    "auto": true,              // Auto-sync on startup
+    "interval": "hourly",       // or "manual"
+    "conflictStrategy": "newest"
+  }
+}
+```
+
+**Data Partitioning**:
+- **Core Shortcuts**: Read-only, same for all users (shortcuts.db)
+- **User Shortcuts**: User-owned, synced via API (user-data.db ↔ PostgreSQL)
+- **Cached Scraped Shortcuts**: Stored locally only (optional cloud upload)
+
+**API Endpoints**:
+```typescript
+// Sync endpoints
+POST /api/sync/push           // Upload local changes
+GET  /api/sync/pull           // Download remote changes
+GET  /api/sync/status         // Check sync state
+
+// User data endpoints
+GET    /api/shortcuts         // List user's shortcuts
+POST   /api/shortcuts         // Create shortcut
+PUT    /api/shortcuts/:id     // Update shortcut
+DELETE /api/shortcuts/:id     // Delete shortcut
+
+// Collections
+GET    /api/collections
+POST   /api/collections
+PUT    /api/collections/:id
+DELETE /api/collections/:id
+
+// Authentication
+POST /api/auth/login          // Email/password
+POST /api/auth/oauth          // OAuth (Google, GitHub)
+POST /api/auth/refresh        // Refresh JWT token
+POST /api/auth/logout         // Invalidate token
+```
+
+**Database Schema (PostgreSQL)**:
+
+```sql
+-- Users table
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255),
+  tier VARCHAR(50) DEFAULT 'free', -- 'free', 'premium', 'team'
+  api_token_hash VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- User shortcuts (custom)
+CREATE TABLE user_shortcuts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  app VARCHAR(100) NOT NULL,
+  action VARCHAR(500) NOT NULL,
+  description TEXT,
+  keys_mac VARCHAR(100),
+  keys_windows VARCHAR(100),
+  keys_linux VARCHAR(100),
+  context VARCHAR(100),
+  category VARCHAR(100),
+  tags TEXT[], -- PostgreSQL array
+  source_type VARCHAR(50) DEFAULT 'user-added',
+  source_url TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  
+  -- Sync metadata
+  synced_at TIMESTAMP,
+  conflict_version INTEGER DEFAULT 1
+);
+
+CREATE INDEX idx_user_shortcuts_user ON user_shortcuts(user_id);
+CREATE INDEX idx_user_shortcuts_app ON user_shortcuts(app);
+CREATE INDEX idx_user_shortcuts_updated ON user_shortcuts(updated_at);
+
+-- Collections
+CREATE TABLE collections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  is_public BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Collection shortcuts (junction table)
+CREATE TABLE collection_shortcuts (
+  collection_id UUID REFERENCES collections(id) ON DELETE CASCADE,
+  shortcut_id UUID REFERENCES user_shortcuts(id) ON DELETE CASCADE,
+  added_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (collection_id, shortcut_id)
+);
+
+-- Sync log (for debugging)
+CREATE TABLE sync_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  action VARCHAR(50), -- 'push', 'pull'
+  records_affected INTEGER,
+  conflicts_resolved INTEGER,
+  status VARCHAR(50), -- 'success', 'partial', 'error'
+  error_message TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**Advantages of This Approach**:
+
+✅ **Offline-First TUI**: Works 100% offline with bundled + local DB
+✅ **Premium Value**: Cloud sync is a clear premium feature
+✅ **Performance**: Local SQLite queries remain fast (<10ms)
+✅ **Scalability**: PostgreSQL handles concurrent web users
+✅ **Flexibility**: Users can choose TUI-only, Web-only, or both
+✅ **Data Ownership**: Users can export their data anytime
+✅ **Cost-Effective**: Free tier has no DB writes (saves hosting costs)
+
+**Challenges & Solutions**:
+
+❗ **Challenge**: Keeping SQLite schema in sync with PostgreSQL
+✅ **Solution**: Shared TypeScript types + migration scripts for both
+
+❗ **Challenge**: Large sync payload for users with many shortcuts
+✅ **Solution**: Incremental sync (only changes since last sync) + pagination
+
+❗ **Challenge**: Offline edits in TUI while user also edits on Web
+✅ **Solution**: Conflict detection + user-configurable resolution strategy
+
+❗ **Challenge**: TUI needs to securely store API token
+✅ **Solution**: Store in ~/.shortcut-finder/config.json with 600 permissions
+
+**Monetization Considerations**:
+
+1. **Free Tier is Generous**: Encourages adoption
+2. **Premium is Value-Add**: Sync + unlimited AI is worth $5-10/mo
+3. **Team Tier**: Larger customers willing to pay more
+4. **Avoid Freemium Trap**: Don't make free tier too good
+5. **Usage-Based Alternative**: Consider per-query pricing for AI features
+
+**Implementation Priority**:
+
+Phase 1 (MVP):
+- [ ] Core SQLite DB (TUI)
+- [ ] PostgreSQL schema (Web)
+- [ ] Basic user auth
+- [ ] Free tier (no sync)
+
+Phase 2 (Premium):
+- [ ] User shortcuts table
+- [ ] Sync API endpoints
+- [ ] TUI login command
+- [ ] Bidirectional sync
+
+Phase 3 (Polish):
+- [ ] Conflict resolution
+- [ ] Collections feature
+- [ ] Team tier
+- [ ] Export/import
+
+---
+
 **Implementation Plan**:
 ```typescript
 // core/src/db/index.ts
@@ -569,58 +856,746 @@ const rules: ValidationRule[] = [
 - UI update rate: 60fps (Ink's default)
 - Memory footprint: <50MB
 
-#### 2.2 TUI Features (MVP) - TO BE DISCUSSED LATER ⏸️
+#### 2.2 TUI Features & Design (MVP)
 
-**Note**: Coming back to this after database and scraping implementation.
+**Design Philosophy**: 
+- Keyboard-first navigation (zero mouse dependency)
+- Muscle memory: Same keybindings work in TUI and Web
+- Fast workflow for learning shortcuts for one app at a time
+- Support OS/desktop navigation shortcuts alongside app shortcuts
+- Minimal cognitive load: Clear visual hierarchy, obvious controls
 
-**Initial Mockup**:
+---
+
+**2.2.1 Search Mode Toggle: App-First vs. Full-Phrase**
+
+The TUI supports **two distinct search modes** to accommodate different user intents:
+
+**Mode 1: App-First Search** (Default)
+- User wants to explore shortcuts for a specific app
+- Workflow: Select app → Filter by context/category/tags → Browse results
+- Best for: "I'm using Vim today and want to learn navigation shortcuts"
+
+**Mode 2: Full-Phrase Search** (AI-Enhanced)
+- User has a specific task in mind but may not know which app or shortcut
+- Workflow: Type natural language query → Get shortcuts across all apps
+- Best for: "How do I split my screen" or "markdown bold text"
+
+**Toggle between modes**: Press `Tab` (or `Ctrl+Tab` if Tab is used for autocomplete)
+
+---
+
+**2.2.2 Mode 1: App-First Search (Detailed Mockup)**
+
+This is the default mode, optimized for focused learning of one app at a time.
+
 ```
-┌─ Shortcut Finder ────────────────────────────┐
-│ Search: vim motion commands_█                │
-│                                              │
-│ Results (12):                                │
-│ ▸ h/j/k/l    - Move left/down/up/right     │
-│   w/b        - Jump word forward/backward   │
-│   gg/G       - Jump to top/bottom           │
-│   0/$        - Jump to line start/end       │
-│                                              │
-│ [Tab] Toggle AI  [Ctrl+C] Exit             │
-└──────────────────────────────────────────────┘
+┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+│                                                                   │
+│ Mode: [App-First] | Platform: macOS | AI: OFF                   │
+│                                                                   │
+│ ┌─ Select App ─────────────────────────────────────────────────┐ │
+│ │ > vim_                                                        │ │
+│ │   ↓ Vim - Vi IMproved (Editor) ................... 342 keys  │ │
+│ │     VSCode - Visual Studio Code (Editor) ......... 618 keys  │ │
+│ │     vimium - Vim for Browser (Browser) ............ 87 keys  │ │
+│ │     macOS - System Shortcuts (OS) ................ 156 keys  │ │
+│ │     GNOME - Desktop Environment (OS) .............. 89 keys  │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ Navigation: ↑↓ Select | Enter Confirm | Esc Clear | Tab Search   │
+└───────────────────────────────────────────────────────────────────┘
+
+                            ↓ User presses Enter ↓
+
+┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+│                                                                   │
+│ Mode: [App-First] | Platform: macOS | AI: OFF                   │
+│ App: Vim (342 shortcuts) | [F2] Change App                       │
+│                                                                   │
+│ ┌─ Filters ─────────────────────────────────────────────────────┐ │
+│ │ Context: [All] ▾   Category: [All] ▾   Tags: [none] ▾       │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ┌─ Quick Search ────────────────────────────────────────────────┐ │
+│ │ _                                                             │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ┌─ Results (342) ───────────────────────────────────────────────┐ │
+│ │ ▸ h/j/k/l        Move left/down/up/right             [Normal] │ │
+│ │   w              Move forward to start of word        [Normal] │ │
+│ │   b              Move backward to start of word       [Normal] │ │
+│ │   e              Move forward to end of word          [Normal] │ │
+│ │   gg             Jump to first line                   [Normal] │ │
+│ │   G              Jump to last line                    [Normal] │ │
+│ │   0              Jump to start of line                [Normal] │ │
+│ │   $              Jump to end of line                  [Normal] │ │
+│ │   %              Jump to matching bracket             [Normal] │ │
+│ │   Ctrl+f         Page down                            [Normal] │ │
+│ │   Ctrl+b         Page up                              [Normal] │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ Navigation: ↑↓ Select | Enter Details | / Search | F3 Filters   │
+│ Actions: [Ctrl+C] Quit | [F2] Change App | [F4] Toggle AI       │
+└───────────────────────────────────────────────────────────────────┘
+
+                   ↓ User types "nav" in Quick Search ↓
+
+┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+│                                                                   │
+│ Mode: [App-First] | Platform: macOS | AI: OFF                   │
+│ App: Vim (342 shortcuts) | [F2] Change App                       │
+│                                                                   │
+│ ┌─ Filters ─────────────────────────────────────────────────────┐ │
+│ │ Context: [All] ▾   Category: [Navigation] ▾   Tags: [none] ▾ │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ┌─ Quick Search ────────────────────────────────────────────────┐ │
+│ │ nav_                                                          │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ┌─ Results (28) ────────────────────────────────────────────────┐ │
+│ │ ▸ h/j/k/l        Move left/down/up/right             [Normal] │ │
+│ │   w              Move forward to start of word        [Normal] │ │
+│ │   b              Move backward to start of word       [Normal] │ │
+│ │   gg             Jump to first line                   [Normal] │ │
+│ │   G              Jump to last line                    [Normal] │ │
+│ │   Ctrl+f         Page down                            [Normal] │ │
+│ │   Ctrl+b         Page up                              [Normal] │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ Navigation: ↑↓ Select | Enter Details | Esc Clear | F3 Filters  │
+│ Actions: [Ctrl+C] Quit | [F2] Change App | [F4] Toggle AI       │
+└───────────────────────────────────────────────────────────────────┘
+
+             ↓ User presses F3 to focus Filters, then Enter on Context ↓
+
+┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+│                                                                   │
+│ Mode: [App-First] | Platform: macOS | AI: OFF                   │
+│ App: Vim (342 shortcuts) | [F2] Change App                       │
+│                                                                   │
+│ ┌─ Filters ─────────────────────────────────────────────────────┐ │
+│ │ Context: [Normal Mode] ▾   Category: [All] ▾   Tags: [none] ▾│ │
+│ │   ┌─ Context ──────────────────┐                              │ │
+│ │   │ ▸ All                      │                              │ │
+│ │   │   Normal Mode (284)        │                              │ │
+│ │   │   Insert Mode (42)         │                              │ │
+│ │   │   Visual Mode (31)         │                              │ │
+│ │   │   Command Mode (18)        │                              │ │
+│ │   └────────────────────────────┘                              │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ┌─ Quick Search ────────────────────────────────────────────────┐ │
+│ │ nav_                                                          │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ┌─ Results (21) ────────────────────────────────────────────────┐ │
+│ │ ▸ h/j/k/l        Move left/down/up/right             [Normal] │ │
+│ │   w              Move forward to start of word        [Normal] │ │
+│ │   b              Move backward to start of word       [Normal] │ │
+│ │   gg             Jump to first line                   [Normal] │ │
+│ │   G              Jump to last line                    [Normal] │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ Navigation: ↑↓ Select | Enter Confirm | Esc Close Dropdown      │
+│ Actions: [Ctrl+C] Quit | [F2] Change App | [F4] Toggle AI       │
+└───────────────────────────────────────────────────────────────────┘
+
+                   ↓ User presses Enter on a shortcut ↓
+
+┌─ Shortcut Details ────────────────────────────────────────────────┐
+│                                                                   │
+│ App: Vim | Context: Normal Mode | Category: Navigation           │
+│                                                                   │
+│ ╔═══════════════════════════════════════════════════════════════╗ │
+│ ║ Action: Move cursor forward to start of word                 ║ │
+│ ║                                                               ║ │
+│ ║ Keys:                                                         ║ │
+│ ║   macOS:    w                                                ║ │
+│ ║   Windows:  w                                                ║ │
+│ ║   Linux:    w                                                ║ │
+│ ║                                                               ║ │
+│ ║ Description:                                                  ║ │
+│ ║   Moves the cursor to the beginning of the next word. A      ║ │
+│ ║   word consists of letters, digits, and underscores, or a    ║ │
+│ ║   sequence of other non-blank characters separated by        ║ │
+│ ║   whitespace. Use 'W' for WORD (space-separated).            ║ │
+│ ║                                                               ║ │
+│ ║ Related Shortcuts:                                            ║ │
+│ ║   • b - Move backward to start of word                        ║ │
+│ ║   • e - Move forward to end of word                           ║ │
+│ ║   • W - Move forward to start of WORD                         ║ │
+│ ║                                                               ║ │
+│ ║ Tags: cursor, movement, navigation, word                      ║ │
+│ ║ Source: vim.org/docs (Official)                               ║ │
+│ ╚═══════════════════════════════════════════════════════════════╝ │
+│                                                                   │
+│ [Esc] Back to Results | [c] Copy Keys | [o] Open Docs           │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
-**Core Interactions** (tentative):
-- Always-active search input (type to filter)
-- Arrow keys: navigate results
-- Enter: show detailed view (context, examples, source link)
-- Tab: toggle between keyword/AI search (if API key configured)
-- ?: show help overlay
-- q/Esc: quit
+**Key Features in App-First Mode**:
 
-**Performance Target**: <100ms from keystroke to updated results
+1. **Two-Stage Selection**:
+   - Stage 1: Select app (autocomplete with fuzzy search)
+   - Stage 2: Browse/filter shortcuts for that app
 
-**TODO**: Design detailed component structure, state management, and user flows
+2. **Progressive Filtering**:
+   - Quick Search: Fuzzy search within current app's shortcuts
+   - Context Filter: Filter by mode/context (e.g., "Normal Mode" for Vim)
+   - Category Filter: Filter by action type (Navigation, Editing, etc.)
+   - Tags Filter: Multi-select tags (cursor, split, window, etc.)
+
+3. **Keyboard Navigation Flow**:
+   - `/` or start typing → Focus Quick Search
+   - `F3` → Focus Filters (Tab through Context/Category/Tags)
+   - `↑↓` → Navigate results
+   - `Enter` → Show details or confirm selection
+   - `Esc` → Go back one level (Clear search → Close filter → Exit app → Quit)
+   - `F2` → Change app (back to app selector)
+
+4. **OS/Desktop Shortcuts**:
+   - Treat OS shortcuts as special "apps" (macOS, Windows, GNOME, KDE, etc.)
+   - Allows searching for system shortcuts alongside app shortcuts
+
+---
+
+**2.2.3 Mode 2: Full-Phrase Search (Detailed Mockup)**
+
+This mode uses natural language queries and can leverage AI for better results.
+
+```
+┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+│                                                                   │
+│ Mode: [Full-Phrase] | Platform: macOS | AI: ON                  │
+│                                                                   │
+│ ┌─ Natural Language Search ─────────────────────────────────────┐ │
+│ │ How do I split my screen vertically?_                        │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ┌─ Results (8 shortcuts across 4 apps) ────────────────────────┐ │
+│ │ ▸ tmux              Ctrl+b %                        [Pane]   │ │
+│ │     Split pane vertically (left/right)                        │ │
+│ │                                                               │ │
+│ │   VSCode            Cmd+\                           [Layout]  │ │
+│ │     Split editor vertically                                   │ │
+│ │                                                               │ │
+│ │   vim               :vsplit or :vs                  [Window]  │ │
+│ │     Split window vertically                                   │ │
+│ │                                                               │ │
+│ │   macOS             Cmd+Ctrl+F                      [System]  │ │
+│ │     Enter full screen / split view                            │ │
+│ │                                                               │ │
+│ │   Obsidian          Cmd+\                           [Layout]  │ │
+│ │     Split pane                                                │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ 💡 AI Insight: Found shortcuts for splitting in 4 apps          │
+│                                                                   │
+│ Navigation: ↑↓ Select | Enter Details | / New Search            │
+│ Actions: [Ctrl+C] Quit | [Tab] Switch to App-First              │
+└───────────────────────────────────────────────────────────────────┘
+
+              ↓ User types a more specific query ↓
+
+┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+│                                                                   │
+│ Mode: [Full-Phrase] | Platform: macOS | AI: ON                  │
+│                                                                   │
+│ ┌─ Natural Language Search ─────────────────────────────────────┐ │
+│ │ markdown make text bold_                                      │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ┌─ Results (6 shortcuts across 3 apps) ────────────────────────┐ │
+│ │ ▸ Obsidian          Cmd+B                           [Edit]   │ │
+│ │     Toggle bold for selection                                 │ │
+│ │                                                               │ │
+│ │   VSCode            Cmd+B                           [Edit]    │ │
+│ │     Toggle bold (Markdown files)                              │ │
+│ │                                                               │ │
+│ │   Notion            Cmd+B                           [Edit]    │ │
+│ │     Bold text                                                 │ │
+│ │                                                               │ │
+│ │   Typora            Cmd+B                           [Format]  │ │
+│ │     Bold                                                      │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ 💡 AI Insight: Cmd+B is the standard for bold in most MD editors│
+│                                                                   │
+│ Navigation: ↑↓ Select | Enter Details | / New Search            │
+│ Actions: [Ctrl+C] Quit | [Tab] Switch to App-First | [F4] AI OFF│
+└───────────────────────────────────────────────────────────────────┘
+
+                 ↓ User turns AI off (F4) ↓
+
+┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+│                                                                   │
+│ Mode: [Full-Phrase] | Platform: macOS | AI: OFF                 │
+│                                                                   │
+│ ┌─ Natural Language Search ─────────────────────────────────────┐ │
+│ │ markdown make text bold_                                      │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ┌─ Results (4 shortcuts) ───────────────────────────────────────┐ │
+│ │ ▸ Obsidian          Cmd+B                           [Edit]   │ │
+│ │     Bold                                                      │ │
+│ │                                                               │ │
+│ │   Notion            Cmd+B                           [Edit]    │ │
+│ │     Bold text                                                 │ │
+│ │                                                               │ │
+│ │   Typora            Cmd+B                           [Format]  │ │
+│ │     Bold                                                      │ │
+│ └───────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│ ⚡ Keyword search only (no AI). Press F4 to enable AI search.   │
+│                                                                   │
+│ Navigation: ↑↓ Select | Enter Details | / New Search            │
+│ Actions: [Ctrl+C] Quit | [Tab] Switch to App-First | [F4] AI ON │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+**Key Features in Full-Phrase Mode**:
+
+1. **Natural Language Input**:
+   - Type full questions or phrases
+   - AI extracts intent and searches across all apps
+   - Falls back to keyword search if AI is disabled
+
+2. **Cross-App Results**:
+   - Results grouped by app
+   - Shows how different apps handle the same task
+   - Useful for discovering alternatives
+
+3. **AI Toggle (F4)**:
+   - ON: Uses AI to understand query and rank results
+   - OFF: Falls back to fuzzy keyword search
+   - Premium users: unlimited AI queries
+   - Free users: limited AI queries, shows remaining count
+
+4. **Simplified Navigation**:
+   - No filters needed (AI handles relevance)
+   - Focus on query refinement
+   - Quick iteration on search terms
+
+---
+
+**2.2.4 Global Features (Both Modes)**
+
+**Platform Selector** (Cmd+P or F5):
+```
+┌─ Platform Selection ─────────────────┐
+│ ▸ macOS (current)                   │
+│   Windows                            │
+│   Linux                              │
+│   All Platforms (show all variants) │
+└──────────────────────────────────────┘
+```
+
+**Settings** (Cmd+, or F6):
+```
+┌─ Settings ────────────────────────────────────────────┐
+│                                                       │
+│ General:                                              │
+│   Default Mode: [App-First] ▾                        │
+│   Default Platform: [macOS] ▾                        │
+│   Auto-detect Platform: [ON]                         │
+│                                                       │
+│ AI Search:                                            │
+│   Provider: [OpenAI] ▾                               │
+│   API Key: ••••••••••••••••••••••1234                │
+│   Model: [gpt-4-turbo] ▾                             │
+│                                                       │
+│ Sync (Premium):                                       │
+│   Auto-sync: [ON]                                    │
+│   Sync Interval: [Hourly] ▾                          │
+│   Last Sync: 2 hours ago                             │
+│   [↻ Sync Now]                                       │
+│                                                       │
+│ Display:                                              │
+│   Result Limit: [50] ▾                               │
+│   Show Descriptions: [ON]                            │
+│   Compact Mode: [OFF]                                │
+│                                                       │
+│ [Save] [Cancel]                                      │
+└───────────────────────────────────────────────────────┘
+```
+
+**Help Overlay** (? key):
+```
+┌─ Keyboard Shortcuts ──────────────────────────────────┐
+│                                                       │
+│ Global:                                               │
+│   Ctrl+C / q       Quit                              │
+│   ?                Show this help                    │
+│   Cmd+, / F6       Settings                          │
+│   Cmd+P / F5       Platform selector                 │
+│                                                       │
+│ Navigation:                                           │
+│   ↑↓               Navigate results                  │
+│   Enter            Select / Show details             │
+│   Esc              Back / Close                      │
+│   / or type        Focus search                      │
+│                                                       │
+│ Search Modes:                                         │
+│   Tab              Toggle App-First ↔ Full-Phrase    │
+│   F2               Change app (App-First mode)       │
+│   F3               Focus filters (App-First mode)    │
+│   F4               Toggle AI on/off                  │
+│                                                       │
+│ Detail View:                                          │
+│   c                Copy keys to clipboard            │
+│   o                Open documentation URL            │
+│                                                       │
+│ [Esc] Close Help                                     │
+└───────────────────────────────────────────────────────┘
+```
+
+---
+
+**2.2.5 Keyboard Navigation Flow Chart**
+
+```
+App Launch
+    ↓
+[Choose Mode: App-First (default) or Full-Phrase (Tab)]
+    ↓
+┌─────────────────────┴─────────────────────┐
+│                                           │
+App-First Mode                    Full-Phrase Mode
+│                                           │
+├─ Select App (autocomplete)      ├─ Type query
+│  ↓                               │  ↓
+├─ Quick Search (/):               ├─ AI search (F4 toggle)
+│  • Fuzzy filter results          │  ↓
+│  • Realtime filtering            ├─ Browse cross-app results
+│  ↓                               │  • Grouped by app
+├─ Filters (F3):                   │  • AI-ranked relevance
+│  • Context dropdown              │  ↓
+│  • Category dropdown             └─ Select shortcut
+│  • Tags multi-select                 ↓
+│  ↓                                   Enter for details
+├─ Browse Results (↑↓)                 │
+│  ↓                                   │
+└─ Select shortcut                     │
+    ↓                                  │
+    Enter for details ─────────────────┘
+    │
+    ↓
+Detail View
+    ├─ Read description
+    ├─ Copy keys (c)
+    ├─ Open docs (o)
+    └─ Esc back to results
+        │
+        └─ Continue browsing or new search
+```
+
+---
+
+**2.2.6 Component Architecture (Ink/React)**
+
+```typescript
+// tui/src/App.tsx
+export default function App() {
+  const [mode, setMode] = useState<'app-first' | 'full-phrase'>('app-first');
+  const [platform, setPlatform] = useState<Platform>('mac');
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [selectedApp, setSelectedApp] = useState<AppInfo | null>(null);
+  const [view, setView] = useState<'search' | 'results' | 'detail'>('search');
+  
+  return (
+    <Box flexDirection="column">
+      <Header 
+        mode={mode} 
+        platform={platform} 
+        aiEnabled={aiEnabled} 
+      />
+      
+      {mode === 'app-first' ? (
+        <AppFirstMode
+          platform={platform}
+          selectedApp={selectedApp}
+          onSelectApp={setSelectedApp}
+          view={view}
+          onViewChange={setView}
+        />
+      ) : (
+        <FullPhraseMode
+          platform={platform}
+          aiEnabled={aiEnabled}
+          view={view}
+          onViewChange={setView}
+        />
+      )}
+      
+      <Footer mode={mode} />
+      
+      <GlobalKeybindings
+        onToggleMode={() => setMode(m => m === 'app-first' ? 'full-phrase' : 'app-first')}
+        onToggleAI={() => setAiEnabled(a => !a)}
+        onOpenSettings={() => {/* ... */}}
+        onQuit={() => process.exit(0)}
+      />
+    </Box>
+  );
+}
+
+// tui/src/components/AppFirstMode.tsx
+export function AppFirstMode({ selectedApp, view, ... }) {
+  if (!selectedApp) {
+    return <AppSelector onSelect={onSelectApp} />;
+  }
+  
+  if (view === 'search' || view === 'results') {
+    return (
+      <>
+        <Filters app={selectedApp} />
+        <QuickSearch />
+        <ResultsList app={selectedApp} />
+      </>
+    );
+  }
+  
+  if (view === 'detail') {
+    return <ShortcutDetail />;
+  }
+}
+
+// tui/src/components/FullPhraseMode.tsx
+export function FullPhraseMode({ aiEnabled, view, ... }) {
+  if (view === 'search' || view === 'results') {
+    return (
+      <>
+        <NaturalLanguageSearch aiEnabled={aiEnabled} />
+        <CrossAppResults />
+      </>
+    );
+  }
+  
+  if (view === 'detail') {
+    return <ShortcutDetail />;
+  }
+}
+```
+
+---
+
+**2.2.7 State Management**
+
+Use **Zustand** (lightweight, works with Ink):
+
+```typescript
+// tui/src/store.ts
+import create from 'zustand';
+
+interface AppState {
+  // UI State
+  mode: 'app-first' | 'full-phrase';
+  view: 'search' | 'results' | 'detail';
+  platform: Platform;
+  aiEnabled: boolean;
+  
+  // Search State
+  selectedApp: AppInfo | null;
+  query: string;
+  filters: {
+    context: string | null;
+    category: string | null;
+    tags: string[];
+  };
+  results: Shortcut[];
+  selectedShortcut: Shortcut | null;
+  
+  // Actions
+  setMode: (mode: 'app-first' | 'full-phrase') => void;
+  setView: (view: 'search' | 'results' | 'detail') => void;
+  setPlatform: (platform: Platform) => void;
+  toggleAI: () => void;
+  selectApp: (app: AppInfo | null) => void;
+  setQuery: (query: string) => void;
+  setFilters: (filters: Partial<AppState['filters']>) => void;
+  search: () => Promise<void>;
+  selectShortcut: (shortcut: Shortcut) => void;
+}
+
+export const useAppStore = create<AppState>((set, get) => ({
+  mode: 'app-first',
+  view: 'search',
+  platform: detectPlatform(),
+  aiEnabled: false,
+  selectedApp: null,
+  query: '',
+  filters: { context: null, category: null, tags: [] },
+  results: [],
+  selectedShortcut: null,
+  
+  setMode: (mode) => set({ mode }),
+  setView: (view) => set({ view }),
+  setPlatform: (platform) => set({ platform }),
+  toggleAI: () => set((state) => ({ aiEnabled: !state.aiEnabled })),
+  selectApp: (app) => set({ selectedApp: app }),
+  setQuery: (query) => set({ query }),
+  setFilters: (filters) => set((state) => ({ 
+    filters: { ...state.filters, ...filters } 
+  })),
+  
+  search: async () => {
+    const { mode, query, selectedApp, filters, platform, aiEnabled } = get();
+    
+    if (mode === 'app-first') {
+      const results = await searchEngine.keywordSearch(query, {
+        app: selectedApp?.id,
+        platform,
+        context: filters.context,
+        category: filters.category,
+        tags: filters.tags,
+      });
+      set({ results, view: 'results' });
+    } else {
+      const results = aiEnabled
+        ? await searchEngine.aiSearch(query, { platform })
+        : await searchEngine.keywordSearch(query, { platform });
+      set({ results, view: 'results' });
+    }
+  },
+  
+  selectShortcut: (shortcut) => set({ 
+    selectedShortcut: shortcut, 
+    view: 'detail' 
+  }),
+}));
+```
+
+---
+
+**2.2.8 Performance Targets**
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Cold start | < 200ms | Time to first render |
+| App search | < 50ms | Keystroke to filtered list |
+| Keyword search | < 100ms | Query to results displayed |
+| AI search | < 2s | Query to results (network dependent) |
+| Filter toggle | < 50ms | Click to updated results |
+| Memory usage | < 100MB | Steady state |
+| DB query | < 10ms | SQLite SELECT |
+
+---
+
+**2.2.9 Accessibility & UX Polish**
+
+- **Clear Focus Indicators**: Highlighted borders, color changes
+- **Status Messages**: "Searching...", "No results", "AI limit reached"
+- **Error Handling**: Graceful fallbacks, helpful error messages
+- **Loading States**: Spinners for async operations
+- **Empty States**: Helpful prompts when no app selected or no results
+- **Keyboard Hints**: Always visible at bottom (context-aware)
+- **Color Scheme**: Support light/dark mode (detect terminal theme)
+- **Text Overflow**: Truncate long text with ellipsis, show full in detail view
+
+---
+
+**2.2.10 Cross-Platform Keyboard Mapping**
+
+Since the same shortcuts should work in Web UI, document the canonical mapping:
+
+| Action | TUI | Web | Description |
+|--------|-----|-----|-------------|
+| Toggle Mode | Tab | Tab | Switch App-First ↔ Full-Phrase |
+| Focus Search | `/` or type | `/` or click | Start typing to search |
+| Navigate Results | ↑↓ | ↑↓ or click | Move selection |
+| Select/Confirm | Enter | Enter or click | Confirm or view details |
+| Go Back | Esc | Esc | Back one level |
+| Change App | F2 | Cmd/Ctrl+K | Open app selector |
+| Focus Filters | F3 | Cmd/Ctrl+F | Jump to filters |
+| Toggle AI | F4 | Cmd/Ctrl+A | Turn AI on/off |
+| Platform | F5 or Cmd+P | Cmd/Ctrl+P | Select platform |
+| Settings | F6 or Cmd+, | Cmd/Ctrl+, | Open settings |
+| Help | ? | ? | Show keyboard shortcuts |
+| Copy Keys | c (detail view) | Cmd/Ctrl+C | Copy to clipboard |
+| Open Docs | o (detail view) | Cmd/Ctrl+O | Open in browser |
+| Quit | Ctrl+C or q | Cmd/Ctrl+W | Close/exit |
+
+**Note**: F-keys are TUI-specific. Web uses Cmd/Ctrl modifiers to avoid conflicts.
+
+---
+
+**Summary of TUI Design**:
+
+✅ **Two search modes** with clear toggle (Tab)
+✅ **App-first mode** optimized for focused learning
+✅ **Full-phrase mode** for natural language queries
+✅ **Comprehensive filtering** (context, category, tags)
+✅ **OS shortcuts** included as special apps
+✅ **Consistent keyboard navigation** across modes
+✅ **AI toggle** with clear on/off state
+✅ **Platform selector** as global preference
+✅ **Detail view** with copy/open actions
+✅ **Performance-focused** with fast feedback
+✅ **Designed for muscle memory** (same keys in TUI and Web)
 
 ### Phase 3: Web Interface (Week 3-4)
+
+**Design Philosophy**: Mirror TUI functionality with web-native enhancements
 
 #### 3.1 Web App Structure
 
 ```
 web/
 ├── app/
-│   ├── page.tsx              # Main search interface
+│   ├── page.tsx              # Main search interface (matches TUI)
+│   ├── login/
+│   │   └── page.tsx          # Login/Sign up page
+│   ├── dashboard/
+│   │   └── page.tsx          # User dashboard (Premium)
 │   ├── api/
+│   │   ├── auth/
+│   │   │   ├── login/route.ts
+│   │   │   ├── signup/route.ts
+│   │   │   └── logout/route.ts
 │   │   ├── search/route.ts   # Keyword search endpoint
-│   │   └── ai/route.ts       # AI search (BYOK or managed)
+│   │   ├── ai/route.ts       # AI search (managed)
+│   │   └── sync/route.ts     # Sync endpoint (Premium)
 │   └── layout.tsx
 ├── components/
 │   ├── SearchBar.tsx
 │   ├── ResultsList.tsx
-│   └── ShortcutDetail.tsx
+│   ├── ShortcutDetail.tsx
+│   ├── AppSelector.tsx
+│   ├── Filters.tsx
+│   └── LoginForm.tsx
 └── lib/
-    └── api-client.ts
+    ├── api-client.ts
+    └── auth.ts
 ```
 
-#### 3.2 Monetization Model
+#### 3.2 Key Differences from TUI
+
+**Additional Features**:
+- Login/Sign up page for Premium users
+- User dashboard (view usage, manage API keys, sync status)
+- Click-based navigation in addition to keyboard
+- Responsive design (mobile-friendly)
+- Share shortcuts via URL
+- Export shortcuts (CSV, JSON, PDF)
+
+**Consistent Features** (matches TUI exactly):
+- Two search modes: App-First and Full-Phrase (Tab to toggle)
+- Same keyboard shortcuts (adapted with Cmd/Ctrl modifiers)
+- Same filtering options (Context, Category, Tags)
+- Platform selector (F5 or Cmd+P)
+- AI toggle (F4 or Cmd+A)
+- Help overlay (? key)
+- Settings panel (Cmd+,)
+
+**UI Framework**:
+- Next.js 14+ (App Router)
+- Tailwind CSS for styling
+- Radix UI or shadcn/ui for components (keyboard-accessible)
+- NextAuth.js for authentication
+
+#### 3.3 Monetization Model
 
 **Free Tier (TUI)**:
 - Full keyword search
@@ -632,12 +1607,16 @@ web/
 - Keyword search
 - Limited AI queries (5/day)
 - Community shortcuts only
+- No account required
 
-**Premium Tier (Web) - $5/mo**:
+**Premium Tier (Web + TUI) - $5-10/mo**:
+- Account required (email + password or OAuth)
 - Unlimited AI queries (managed API key)
-- Priority scraping requests
-- Export shortcuts (JSON, PDF)
-- Team sharing features
+- Cloud sync between TUI and Web
+- Custom shortcuts storage
+- Collections/favorites
+- Export shortcuts (JSON, PDF, CSV)
+- Priority support
 
 ### Phase 4: Data Sources & Scraping (Ongoing)
 
