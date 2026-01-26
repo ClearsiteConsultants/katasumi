@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Shortcut table - stores keyboard shortcuts for different applications
+model Shortcut {
+  id        String   @id @default(uuid())
+  app       String   // Application identifier (e.g., "vim", "vscode")
+  action    String   // Action description (e.g., "Copy", "Paste")
+  
+  // Platform-specific keyboard shortcuts (stored as JSON)
+  keysMac     String?  // macOS keyboard shortcut
+  keysWindows String?  // Windows keyboard shortcut
+  keysLinux   String?  // Linux keyboard shortcut
+  
+  context   String?  // Context where shortcut applies (e.g., "Normal Mode", "Insert Mode")
+  category  String?  // Category grouping (e.g., "Editing", "Navigation")
+  tags      String   // Comma-separated tags for searching
+  
+  // Source metadata (stored as JSON)
+  sourceType       String   // 'official' | 'community' | 'ai-scraped' | 'user-added'
+  sourceUrl        String?  // URL where the shortcut was found
+  sourceScrapedAt  DateTime? // When the shortcut was scraped
+  sourceConfidence Float?   // Confidence score (0-1) for AI-scraped shortcuts
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([app])
+  @@index([action])
+  @@index([category])
+  @@map("shortcuts")
+}
+
+// AppInfo table - stores metadata about applications
+model AppInfo {
+  id            String   @id @default(uuid())
+  name          String   @unique // Application name (e.g., "vscode")
+  displayName   String   // Display name (e.g., "Visual Studio Code")
+  category      String   // Application category (e.g., "Code Editor")
+  platforms     String   // Comma-separated platforms: 'mac,windows,linux'
+  shortcutCount Int      @default(0) // Total number of shortcuts
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([name])
+  @@index([category])
+  @@map("app_info")
+}

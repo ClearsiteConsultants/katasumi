@@ -5,13 +5,28 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc --build",
-    "dev": "tsc --build --watch"
+    "build": "prisma generate && tsc --build",
+    "dev": "tsc --build --watch",
+    "prisma:generate": "prisma generate",
+    "migrate": "node dist/migrate.js",
+    "migrate:rollback": "node dist/migrate.js rollback",
+    "migrate:status": "node dist/migrate.js status"
   },
-  "keywords": ["shortcuts", "keyboard", "productivity"],
+  "keywords": [
+    "shortcuts",
+    "keyboard",
+    "productivity"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.0",
+    "@prisma/adapter-libsql": "^7.3.0",
+    "@prisma/client": "^7.3.0",
+    "dotenv": "^17.2.3",
+    "prisma": "^7.3.0"
   }
 }
