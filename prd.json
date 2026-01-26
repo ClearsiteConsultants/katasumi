@@ -1,8 +1,122 @@
 {
-  "project": "Shortcut Finder",
+  "project": "Katasumi",
   "version": "1.0.0",
-  "lastUpdated": "2026-01-25",
+  "lastUpdated": "2026-01-26",
   "requirements": [
+    {
+      "id": "PHASE1-DB-003",
+      "category": "Phase 1: Database - Schema Definition",
+      "description": "Define unified Shortcut and AppInfo TypeScript types that work across both SQLite and PostgreSQL",
+      "acceptanceCriteria": [
+        "Shortcut interface includes all required fields: id, app, action, keys, context, category, tags",
+        "Keys object supports mac, windows, linux variants",
+        "Source object includes type, url, scrapedAt, confidence fields",
+        "AppInfo interface includes id, name, displayName, category, platforms, shortcutCount",
+        "Platform type is union: 'mac' | 'windows' | 'linux'",
+        "SourceType enum includes: 'official', 'community', 'ai-scraped', 'user-added'",
+        "Types are exported from core package for reuse in TUI and Web",
+        "All fields have JSDoc comments explaining their purpose"
+      ],
+      "stepsToVerify": [
+        "Import Shortcut type in both TUI and Web packages",
+        "Create test shortcut object and verify TypeScript validates all required fields",
+        "Attempt to assign invalid Platform value and verify TypeScript error",
+        "Verify keys object accepts optional mac/windows/linux fields",
+        "Verify tags field is typed as string array",
+        "Generate TypeScript documentation and verify JSDoc appears",
+        "Serialize Shortcut to JSON and verify structure matches schema"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Schema types needed by all other DB work"
+    },
+    {
+      "id": "PHASE1-INFRA-001",
+      "category": "Phase 1: Infrastructure - Monorepo Setup",
+      "description": "Set up pnpm workspace monorepo with packages for core, tui, and web",
+      "acceptanceCriteria": [
+        "Root pnpm-workspace.yaml configured with packages/core, packages/tui, packages/web",
+        "Each package has own package.json with name, version, dependencies",
+        "Core package exports shared types and database adapters",
+        "TUI package depends on core package via workspace:*",
+        "Web package depends on core package via workspace:*",
+        "turbo.json configured for build pipeline",
+        "pnpm install works from root and installs all dependencies",
+        "TypeScript configured with composite projects for cross-package types"
+      ],
+      "stepsToVerify": [
+        "Run 'pnpm init' in root and create pnpm-workspace.yaml",
+        "Create packages/core, packages/tui, packages/web directories",
+        "Run 'pnpm install' from root and verify all packages installed",
+        "Import type from core in TUI package and verify TypeScript resolves",
+        "Run 'pnpm run build' from root and verify all packages build",
+        "Verify turbo.json has tasks: build, dev, lint, test",
+        "Change code in core and verify TUI/Web see changes without rebuild",
+        "Check node_modules and verify workspace dependencies linked correctly"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Monorepo must be set up first before any package development"
+    },
+    {
+      "id": "PHASE1-INFRA-002",
+      "category": "Phase 1: Infrastructure - Database Migrations",
+      "description": "Implement database migration system for SQLite and PostgreSQL schema versioning",
+      "acceptanceCriteria": [
+        "Migrations stored in core/migrations/ directory",
+        "Each migration has up and down functions",
+        "Migration naming: YYYYMMDD_HHMMSS_description.ts",
+        "Migrations table tracks applied migrations",
+        "CLI command to run pending migrations: pnpm run migrate",
+        "CLI command to rollback last migration: pnpm run migrate:rollback",
+        "Migrations work for both SQLite and PostgreSQL",
+        "Initial migration creates all tables with proper schema"
+      ],
+      "stepsToVerify": [
+        "Run 'pnpm run migrate' on fresh SQLite database",
+        "Verify all tables created: shortcuts, app_info",
+        "Check migrations table and verify initial migration recorded",
+        "Create new migration file with test table",
+        "Run 'pnpm run migrate' and verify test table created",
+        "Run 'pnpm run migrate:rollback' and verify test table dropped",
+        "Run same migrations on PostgreSQL and verify tables created",
+        "Verify schema matches between SQLite and PostgreSQL"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Migration system (Prisma) needed before creating databases"
+    },
+    {
+      "id": "PHASE1-DATA-001",
+      "category": "Phase 1: Data - Core Shortcuts Database",
+      "description": "Create curated shortcuts database with at least 20 popular apps, each with comprehensive shortcut coverage",
+      "acceptanceCriteria": [
+        "Database includes vim (>100 shortcuts across Normal, Insert, Visual modes)",
+        "Database includes tmux (>50 shortcuts for pane, window, session management)",
+        "Database includes VSCode (>200 shortcuts across editor, debugging, git)",
+        "Database includes git CLI (>40 common commands)",
+        "Database includes bash/zsh (>30 shell shortcuts)",
+        "Database includes macOS system shortcuts (>100)",
+        "Database includes Windows system shortcuts (>100)",
+        "Database includes GNOME desktop shortcuts (>50)",
+        "Each shortcut has proper context, category, and tags",
+        "Each shortcut includes platform-specific key variants where applicable",
+        "All shortcuts link to official documentation source URLs"
+      ],
+      "stepsToVerify": [
+        "Query for vim shortcuts and verify count >= 100",
+        "Verify vim shortcuts have context (Normal Mode, Insert Mode, etc.)",
+        "Query for tmux and verify pane management shortcuts exist",
+        "Query for VSCode and verify count >= 200",
+        "Verify all shortcuts have non-empty source.url field",
+        "Verify macOS shortcuts have mac keys but not windows/linux keys",
+        "Search for 'copy' and verify results from multiple apps",
+        "Verify each app has appropriate category (Editor, Terminal, OS, etc.)"
+      ],
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "Core shortcuts data needed to test search functionality"
+    },
     {
       "id": "PHASE1-DB-001",
       "category": "Phase 1: Database - SQLite (TUI)",
@@ -11,7 +125,7 @@
         "SQLiteAdapter class implements DatabaseAdapter interface",
         "shortcuts.db contains at least 5 popular apps (vim, tmux, vscode, git, bash)",
         "shortcuts.db is read-only and bundled with TUI package",
-        "user-data.db is created in ~/.shortcut-finder/ directory on first run",
+        "user-data.db is created in ~/.katasumi/ directory on first run",
         "user-data.db is read-write for storing user-added shortcuts",
         "Both databases use identical schema (Shortcut table structure)",
         "Queries can search across both databases transparently"
@@ -19,13 +133,15 @@
       "stepsToVerify": [
         "Run TUI application for first time",
         "Verify shortcuts.db exists in package directory",
-        "Verify user-data.db is created at ~/.shortcut-finder/user-data.db",
+        "Verify user-data.db is created at ~/.katasumi/user-data.db",
         "Search for 'vim' shortcuts and verify results appear",
         "Add a custom shortcut and verify it's saved to user-data.db",
         "Restart TUI and verify custom shortcut persists",
         "Attempt to write to shortcuts.db and verify it's read-only"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "TUI database needed for local development and testing"
     },
     {
       "id": "PHASE1-DB-002",
@@ -50,32 +166,9 @@
         "Query user_shortcuts by app and verify index is used (EXPLAIN query)",
         "Verify updated_at index exists on user_shortcuts table"
       ],
-      "passes": false
-    },
-    {
-      "id": "PHASE1-DB-003",
-      "category": "Phase 1: Database - Schema Definition",
-      "description": "Define unified Shortcut and AppInfo TypeScript types that work across both SQLite and PostgreSQL",
-      "acceptanceCriteria": [
-        "Shortcut interface includes all required fields: id, app, action, keys, context, category, tags",
-        "Keys object supports mac, windows, linux variants",
-        "Source object includes type, url, scrapedAt, confidence fields",
-        "AppInfo interface includes id, name, displayName, category, platforms, shortcutCount",
-        "Platform type is union: 'mac' | 'windows' | 'linux'",
-        "SourceType enum includes: 'official', 'community', 'ai-scraped', 'user-added'",
-        "Types are exported from core package for reuse in TUI and Web",
-        "All fields have JSDoc comments explaining their purpose"
-      ],
-      "stepsToVerify": [
-        "Import Shortcut type in both TUI and Web packages",
-        "Create test shortcut object and verify TypeScript validates all required fields",
-        "Attempt to assign invalid Platform value and verify TypeScript error",
-        "Verify keys object accepts optional mac/windows/linux fields",
-        "Verify tags field is typed as string array",
-        "Generate TypeScript documentation and verify JSDoc appears",
-        "Serialize Shortcut to JSON and verify structure matches schema"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "Web database needed for cloud features, can develop in parallel with TUI DB"
     },
     {
       "id": "PHASE1-SEARCH-001",
@@ -102,7 +195,92 @@
         "Measure search time with console.time() and verify <100ms",
         "Search empty string and verify top 50 results by popularity"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "Keyword search is foundation for all search features"
+    },
+    {
+      "id": "PHASE1-TEST-001",
+      "category": "Phase 1: Testing - Unit Tests",
+      "description": "Implement comprehensive unit tests for core search engine and database adapters",
+      "acceptanceCriteria": [
+        "Test coverage >80% for core package",
+        "KeywordSearchEngine tests: fuzzySearch, searchByKeys, filtering",
+        "AISearchEngine tests: mocked AI responses, error handling",
+        "SQLiteAdapter tests: CRUD operations, connection handling",
+        "PostgresAdapter tests: CRUD operations, transactions",
+        "Shortcut schema validation tests",
+        "Tests use Vitest or Jest",
+        "Tests run in CI pipeline"
+      ],
+      "stepsToVerify": [
+        "Run 'pnpm run test' in core package",
+        "Verify all tests pass",
+        "Check coverage report and verify >80% coverage",
+        "Verify fuzzySearch test covers exact match, partial match, no match",
+        "Verify searchByKeys test covers platform filtering",
+        "Verify AI tests mock API calls (no real API requests)",
+        "Verify database tests use in-memory SQLite",
+        "Run tests in CI and verify passing"
+      ],
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "Unit tests should be written alongside core features"
+    },
+    {
+      "id": "PHASE2-TUI-001",
+      "category": "Phase 2: TUI - App Scaffold",
+      "description": "Set up Ink-based TUI application scaffold with main App component and global state management using Zustand",
+      "acceptanceCriteria": [
+        "TUI package uses Ink 4.x and React 18",
+        "Main App.tsx component renders without errors",
+        "Zustand store manages mode, view, platform, selectedApp, query, filters, results state",
+        "Application detects user's platform (mac/windows/linux) on startup",
+        "Global keybindings work: Ctrl+C quits, ? shows help",
+        "Application starts in <200ms on first run",
+        "Memory usage is <100MB after startup"
+      ],
+      "stepsToVerify": [
+        "Run 'npm install' in TUI package and verify no errors",
+        "Run 'npm run dev' and verify TUI renders",
+        "Press Ctrl+C and verify application exits gracefully",
+        "Press ? key and verify help overlay appears",
+        "Measure startup time with Date.now() and verify <200ms",
+        "Check memory usage with process.memoryUsage() and verify <100MB",
+        "Verify Zustand store state persists across component re-renders",
+        "Verify platform auto-detected correctly (check useAppStore platform value)"
+      ],
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "TUI scaffold needed before implementing features"
+    },
+    {
+      "id": "PHASE3-WEB-001",
+      "category": "Phase 3: Web - Next.js App Scaffold",
+      "description": "Set up Next.js 14+ application with App Router, Tailwind CSS, and TypeScript",
+      "acceptanceCriteria": [
+        "Next.js 14+ with App Router structure",
+        "TypeScript configured with strict mode",
+        "Tailwind CSS configured and working",
+        "ESLint and Prettier configured",
+        "app/page.tsx renders main search interface",
+        "app/layout.tsx includes global styles and fonts",
+        "Environment variables configured (.env.local)",
+        "Development server starts without errors"
+      ],
+      "stepsToVerify": [
+        "Run 'npm create next-app@latest' with TypeScript and Tailwind",
+        "Verify app/ directory structure created",
+        "Run 'npm run dev' and verify dev server starts on port 3000",
+        "Open http://localhost:3000 and verify page loads",
+        "Verify Tailwind classes work (add bg-blue-500 to test)",
+        "Verify TypeScript strict mode catches errors",
+        "Check .env.local exists with placeholder variables",
+        "Run 'npm run lint' and verify no errors"
+      ],
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "Web scaffold needed before web features"
     },
     {
       "id": "PHASE1-SEARCH-002",
@@ -133,7 +311,9 @@
         "Search with invalid API key and verify graceful error handling",
         "Measure search time and verify <2 seconds for network-based AI"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "AI search is enhancement of keyword search"
     },
     {
       "id": "PHASE1-SEARCH-003",
@@ -141,7 +321,7 @@
       "description": "Implement reverse lookup: search by key combination to find what action it performs",
       "acceptanceCriteria": [
         "searchByKeys() accepts key string and optional platform",
-        "Normalizes key variants: 'Cmd+K', '⌘K', 'Command+K' all match",
+        "Normalizes key variants: 'Cmd+K', '\u2318K', 'Command+K' all match",
         "Returns shortcuts matching the key combination for specified platform",
         "Supports multi-platform search (returns shortcuts for all platforms)",
         "Case-insensitive matching",
@@ -150,43 +330,16 @@
       ],
       "stepsToVerify": [
         "Search for 'Cmd+K' on macOS platform and verify results",
-        "Search for '⌘K' and verify same results as 'Cmd+K'",
+        "Search for '\u2318K' and verify same results as 'Cmd+K'",
         "Search for 'Ctrl+K' on Windows platform and verify different results",
         "Search for 'j' in vim context and verify 'move down' result",
         "Search for nonexistent key 'Cmd+Shift+F99' and verify empty array",
         "Search for 'cmd+k' (lowercase) and verify matches 'Cmd+K'",
         "Search across all platforms and verify results include mac/windows/linux variants"
       ],
-      "passes": false
-    },
-    {
-      "id": "PHASE1-DATA-001",
-      "category": "Phase 1: Data - Core Shortcuts Database",
-      "description": "Create curated shortcuts database with at least 20 popular apps, each with comprehensive shortcut coverage",
-      "acceptanceCriteria": [
-        "Database includes vim (>100 shortcuts across Normal, Insert, Visual modes)",
-        "Database includes tmux (>50 shortcuts for pane, window, session management)",
-        "Database includes VSCode (>200 shortcuts across editor, debugging, git)",
-        "Database includes git CLI (>40 common commands)",
-        "Database includes bash/zsh (>30 shell shortcuts)",
-        "Database includes macOS system shortcuts (>100)",
-        "Database includes Windows system shortcuts (>100)",
-        "Database includes GNOME desktop shortcuts (>50)",
-        "Each shortcut has proper context, category, and tags",
-        "Each shortcut includes platform-specific key variants where applicable",
-        "All shortcuts link to official documentation source URLs"
-      ],
-      "stepsToVerify": [
-        "Query for vim shortcuts and verify count >= 100",
-        "Verify vim shortcuts have context (Normal Mode, Insert Mode, etc.)",
-        "Query for tmux and verify pane management shortcuts exist",
-        "Query for VSCode and verify count >= 200",
-        "Verify all shortcuts have non-empty source.url field",
-        "Verify macOS shortcuts have mac keys but not windows/linux keys",
-        "Search for 'copy' and verify results from multiple apps",
-        "Verify each app has appropriate category (Editor, Terminal, OS, etc.)"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Reverse lookup depends on basic search working"
     },
     {
       "id": "PHASE1-SYNC-001",
@@ -213,58 +366,9 @@
         "POST to /api/auth/logout and verify token is invalidated",
         "Use invalidated token on sync endpoint and verify 401"
       ],
-      "passes": false
-    },
-    {
-      "id": "PHASE1-SYNC-002",
-      "category": "Phase 1: Sync - Conflict Resolution",
-      "description": "Implement conflict detection and resolution when same shortcut is modified in both TUI and cloud",
-      "acceptanceCriteria": [
-        "Sync engine detects conflicts when updated_at timestamps differ",
-        "Supports ConflictStrategy: local, remote, newest, merge, manual",
-        "Default strategy is 'newest' (most recent updated_at wins)",
-        "User can configure strategy in config.json",
-        "Conflicts are logged to sync_logs table",
-        "Manual strategy prompts user to choose version",
-        "Merge strategy combines tags and preserves both descriptions",
-        "Conflict resolution increments conflict_version field"
-      ],
-      "stepsToVerify": [
-        "Modify shortcut in TUI (set updated_at to now)",
-        "Modify same shortcut in Web (set updated_at to now + 1 second)",
-        "Run sync with strategy='newest' and verify Web version wins",
-        "Run sync with strategy='local' and verify TUI version wins",
-        "Check sync_logs table and verify conflict was logged",
-        "Set strategy='manual' and verify user is prompted",
-        "Verify conflict_version incremented after resolution",
-        "Set strategy='merge' and verify tags from both versions combined"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PHASE2-TUI-001",
-      "category": "Phase 2: TUI - App Scaffold",
-      "description": "Set up Ink-based TUI application scaffold with main App component and global state management using Zustand",
-      "acceptanceCriteria": [
-        "TUI package uses Ink 4.x and React 18",
-        "Main App.tsx component renders without errors",
-        "Zustand store manages mode, view, platform, selectedApp, query, filters, results state",
-        "Application detects user's platform (mac/windows/linux) on startup",
-        "Global keybindings work: Ctrl+C quits, ? shows help",
-        "Application starts in <200ms on first run",
-        "Memory usage is <100MB after startup"
-      ],
-      "stepsToVerify": [
-        "Run 'npm install' in TUI package and verify no errors",
-        "Run 'npm run dev' and verify TUI renders",
-        "Press Ctrl+C and verify application exits gracefully",
-        "Press ? key and verify help overlay appears",
-        "Measure startup time with Date.now() and verify <200ms",
-        "Check memory usage with process.memoryUsage() and verify <100MB",
-        "Verify Zustand store state persists across component re-renders",
-        "Verify platform auto-detected correctly (check useAppStore platform value)"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Sync API needed for premium features, but not for basic TUI/Web"
     },
     {
       "id": "PHASE2-TUI-002",
@@ -292,7 +396,9 @@
         "Press F2 and verify return to app selector",
         "Measure filter response time and verify <100ms"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "App-First mode depends on TUI scaffold and search engine"
     },
     {
       "id": "PHASE2-TUI-003",
@@ -315,12 +421,14 @@
         "Verify mode indicator shows 'Full-Phrase'",
         "Type 'split window' and verify cross-app results",
         "Verify results grouped by app (tmux, vim, VSCode, etc.)",
-        "Press F4 and verify AI toggle (ON → OFF → ON)",
+        "Press F4 and verify AI toggle (ON \u2192 OFF \u2192 ON)",
         "Verify AI indicator updates immediately",
         "With AI ON, search and verify AI insight message appears",
         "With AI OFF, verify 'Keyword search only' message"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Full-Phrase mode depends on App-First mode and AI search"
     },
     {
       "id": "PHASE2-TUI-004",
@@ -350,7 +458,9 @@
         "Press Esc and verify return to results view",
         "Verify related shortcuts section shows relevant alternatives"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Detail view depends on search modes working"
     },
     {
       "id": "PHASE2-TUI-005",
@@ -359,7 +469,7 @@
       "acceptanceCriteria": [
         "F5 or Cmd+P opens platform selector overlay",
         "Shows 4 options: macOS, Windows, Linux, All Platforms",
-        "Current platform marked with indicator (▸ or checkmark)",
+        "Current platform marked with indicator (\u25b8 or checkmark)",
         "Arrow keys navigate options",
         "Enter selects platform and closes overlay",
         "Esc closes overlay without changing platform",
@@ -373,115 +483,12 @@
         "Press Enter on Windows and verify overlay closes",
         "Verify search results now show Windows key variants",
         "Press F5 again and verify Windows is marked as current",
-        "Check ~/.shortcut-finder/config.json and verify platform saved",
+        "Check ~/.katasumi/config.json and verify platform saved",
         "Restart TUI and verify platform preference loaded"
       ],
-      "passes": false
-    },
-    {
-      "id": "PHASE2-TUI-006",
-      "category": "Phase 2: TUI - Settings Panel",
-      "description": "Implement settings panel accessible via F6 or Cmd+, for configuring default mode, platform, AI provider, and sync preferences",
-      "acceptanceCriteria": [
-        "F6 or Cmd+, opens settings panel overlay",
-        "General section: Default Mode, Default Platform, Auto-detect Platform",
-        "AI Search section: Provider, API Key (masked), Model",
-        "Sync section: Auto-sync toggle, Sync Interval, Last Sync time, Sync Now button",
-        "Display section: Result Limit, Show Descriptions, Compact Mode",
-        "Tab navigates between fields",
-        "Enter toggles dropdowns or confirms input",
-        "Save button writes to config.json",
-        "Cancel button discards changes and closes"
-      ],
-      "stepsToVerify": [
-        "Press F6 and verify settings panel appears",
-        "Verify all sections displayed: General, AI Search, Sync, Display",
-        "Tab through fields and verify focus indicator moves",
-        "Change Default Mode to Full-Phrase and click Save",
-        "Verify config.json updated with new default mode",
-        "Reopen settings and verify value persisted",
-        "Enter AI API key and verify it's masked (shows •••••)",
-        "Click Cancel and verify changes discarded",
-        "Click Sync Now and verify sync initiated"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PHASE2-TUI-007",
-      "category": "Phase 2: TUI - Help Overlay",
-      "description": "Implement help overlay accessible via ? key showing all keyboard shortcuts organized by category",
-      "acceptanceCriteria": [
-        "? key opens help overlay",
-        "Help organized into sections: Global, Navigation, Search Modes, Detail View",
-        "All keyboard shortcuts documented with descriptions",
-        "Uses consistent formatting: Key - Description",
-        "Esc closes help overlay",
-        "Help overlay scrollable if content exceeds terminal height",
-        "Help adapts to current mode (shows mode-specific shortcuts)"
-      ],
-      "stepsToVerify": [
-        "Press ? key and verify help overlay appears",
-        "Verify Global section includes Ctrl+C, ?, Cmd+,, Cmd+P",
-        "Verify Navigation section includes ↑↓, Enter, Esc, /",
-        "Verify Search Modes section includes Tab, F2, F3, F4",
-        "Verify Detail View section includes c, o",
-        "Press Esc and verify overlay closes",
-        "Resize terminal to small height and verify help scrollable",
-        "Open help in App-First mode vs Full-Phrase and verify differences"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PHASE2-TUI-008",
-      "category": "Phase 2: TUI - Login Command",
-      "description": "Implement 'shortcut-finder login' CLI command for authenticating premium users and storing API token",
-      "acceptanceCriteria": [
-        "Command prompts for email and password",
-        "Password input is masked",
-        "On success, displays 'Logged in successfully' message",
-        "Stores JWT token in ~/.shortcut-finder/config.json",
-        "Token stored with 600 file permissions (user read/write only)",
-        "Provides --web flag for OAuth browser-based login",
-        "On error, displays helpful error message",
-        "Validates token by making test API call"
-      ],
-      "stepsToVerify": [
-        "Run 'shortcut-finder login' and verify email prompt",
-        "Enter test email and verify password prompt",
-        "Enter password and verify characters masked",
-        "With valid credentials, verify success message",
-        "Check config.json and verify token stored",
-        "Run 'ls -la ~/.shortcut-finder/config.json' and verify 600 permissions",
-        "Run 'shortcut-finder login --web' and verify browser opens",
-        "With invalid credentials, verify error message displayed"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PHASE2-TUI-009",
-      "category": "Phase 2: TUI - Performance Optimization",
-      "description": "Ensure TUI meets all performance targets: <200ms startup, <100ms search, <50ms filter updates",
-      "acceptanceCriteria": [
-        "Cold start (first run) completes in <200ms",
-        "Warm start (subsequent runs) completes in <150ms",
-        "Keyword search returns results in <100ms",
-        "Filter changes update results in <50ms",
-        "App selector filters update in <50ms",
-        "Detail view renders in <50ms",
-        "Memory usage stays below 100MB during normal operation",
-        "SQLite queries execute in <10ms"
-      ],
-      "stepsToVerify": [
-        "Add console.time() around app startup and verify <200ms",
-        "Run app second time and verify <150ms",
-        "Add timing to search function and verify <100ms for keyword search",
-        "Toggle Context filter and measure time to results update (<50ms)",
-        "Type in app selector and measure filter update time (<50ms)",
-        "Navigate to detail view and measure render time (<50ms)",
-        "Monitor memory with process.memoryUsage() and verify <100MB",
-        "Log SQLite query times and verify <10ms"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Platform selector is core feature but not blocking"
     },
     {
       "id": "PHASE2-TUI-010",
@@ -503,37 +510,13 @@
         "Verify Tab moves between search input, filters, results",
         "Verify arrow keys work in all lists and dropdowns",
         "Verify Enter confirms in all contexts (select app, shortcut, dropdown)",
-        "Verify Esc backs out from detail view → results → app selector",
+        "Verify Esc backs out from detail view \u2192 results \u2192 app selector",
         "Verify focus indicator visible on all focused elements",
         "Try to find keyboard traps (should find none)"
       ],
-      "passes": false
-    },
-    {
-      "id": "PHASE3-WEB-001",
-      "category": "Phase 3: Web - Next.js App Scaffold",
-      "description": "Set up Next.js 14+ application with App Router, Tailwind CSS, and TypeScript",
-      "acceptanceCriteria": [
-        "Next.js 14+ with App Router structure",
-        "TypeScript configured with strict mode",
-        "Tailwind CSS configured and working",
-        "ESLint and Prettier configured",
-        "app/page.tsx renders main search interface",
-        "app/layout.tsx includes global styles and fonts",
-        "Environment variables configured (.env.local)",
-        "Development server starts without errors"
-      ],
-      "stepsToVerify": [
-        "Run 'npm create next-app@latest' with TypeScript and Tailwind",
-        "Verify app/ directory structure created",
-        "Run 'npm run dev' and verify dev server starts on port 3000",
-        "Open http://localhost:3000 and verify page loads",
-        "Verify Tailwind classes work (add bg-blue-500 to test)",
-        "Verify TypeScript strict mode catches errors",
-        "Check .env.local exists with placeholder variables",
-        "Run 'npm run lint' and verify no errors"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Keyboard navigation should be built into features as they develop"
     },
     {
       "id": "PHASE3-WEB-002",
@@ -560,7 +543,9 @@
         "Click Google OAuth button and verify OAuth flow initiates",
         "Check database and verify password is hashed (not plaintext)"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Auth needed for premium features but not free tier"
     },
     {
       "id": "PHASE3-WEB-003",
@@ -587,7 +572,9 @@
         "Resize to mobile width and verify filters stack vertically",
         "Initiate search and verify loading spinner appears"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "App-First mode for web parallels TUI development"
     },
     {
       "id": "PHASE3-WEB-004",
@@ -608,12 +595,14 @@
         "Verify large search input appears",
         "Type 'how to split screen' and verify cross-app results",
         "Verify results grouped by app name",
-        "Click AI toggle and verify indicator changes ON → OFF",
+        "Click AI toggle and verify indicator changes ON \u2192 OFF",
         "Verify query count decrements for free users",
         "Login as premium user and verify 'Unlimited' shown",
         "Verify app icons/names displayed correctly"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Full-Phrase mode for web parallels TUI development"
     },
     {
       "id": "PHASE3-WEB-005",
@@ -639,59 +628,9 @@
         "Find shortcut with long description and verify scrolling works",
         "Click related shortcut and verify its modal opens"
       ],
-      "passes": false
-    },
-    {
-      "id": "PHASE3-WEB-006",
-      "category": "Phase 3: Web - User Dashboard (Premium)",
-      "description": "Implement user dashboard showing usage stats, custom shortcuts, collections, and sync status",
-      "acceptanceCriteria": [
-        "Dashboard accessible at /dashboard route",
-        "Requires authentication (redirects to login if not logged in)",
-        "Shows usage stats: AI queries used, total shortcuts, collections count",
-        "Lists user's custom shortcuts with edit/delete actions",
-        "Shows collections with shortcut counts",
-        "Displays last sync time and Sync Now button",
-        "Export button to download shortcuts as JSON/CSV",
-        "Settings link to account settings page"
-      ],
-      "stepsToVerify": [
-        "Navigate to /dashboard while logged out and verify redirect to /login",
-        "Login and navigate to /dashboard",
-        "Verify usage stats displayed (AI queries, shortcuts, collections)",
-        "Add custom shortcut and verify it appears in list",
-        "Edit custom shortcut and verify changes saved",
-        "Delete custom shortcut and verify removed from list",
-        "Click Sync Now and verify last sync time updates",
-        "Click Export and verify JSON file downloads"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PHASE3-WEB-007",
-      "category": "Phase 3: Web - Responsive Design",
-      "description": "Ensure web UI is fully responsive and works on mobile, tablet, and desktop screen sizes",
-      "acceptanceCriteria": [
-        "Mobile (320px-768px): Single column layout, filters collapsed by default",
-        "Tablet (768px-1024px): Two column layout where appropriate",
-        "Desktop (1024px+): Full layout with sidebar filters",
-        "Touch-friendly tap targets (minimum 44x44px)",
-        "Hamburger menu for navigation on mobile",
-        "Search input full-width on mobile",
-        "Results list scrollable on all screen sizes",
-        "Modal/dialog responsive (full screen on mobile)"
-      ],
-      "stepsToVerify": [
-        "Open DevTools and resize to 320px width",
-        "Verify layout switches to single column",
-        "Verify filters collapsed (expandable button shown)",
-        "Tap search input and verify keyboard doesn't obscure results",
-        "Resize to 768px and verify two-column layout",
-        "Resize to 1024px and verify full desktop layout with sidebar",
-        "On mobile, verify hamburger menu works",
-        "Open detail modal on mobile and verify full-screen display"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Detail modal needed for complete search experience"
     },
     {
       "id": "PHASE3-WEB-008",
@@ -717,16 +656,327 @@
         "Verify user's shortcuts returned",
         "Make POST /api/sync/push with new shortcut and verify saved"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "API routes needed for web functionality"
+    },
+    {
+      "id": "PHASE1-DOCS-001",
+      "category": "Phase 1: Documentation - README",
+      "description": "Create comprehensive README.md with project overview, installation, and usage instructions",
+      "acceptanceCriteria": [
+        "README includes project description and key features",
+        "Installation instructions for TUI: npm install -g katasumi",
+        "Usage examples with screenshots/GIFs",
+        "Links to detailed documentation in docs/",
+        "Contributing guide link",
+        "License information (MIT)",
+        "Badges: build status, coverage, version, downloads",
+        "Table of contents for easy navigation"
+      ],
+      "stepsToVerify": [
+        "Open README.md in GitHub and verify formatting",
+        "Follow installation instructions and verify TUI installs",
+        "Try usage examples and verify they work",
+        "Click documentation links and verify pages exist",
+        "Verify badges show correct status (build passing, etc.)",
+        "Check license file matches README (MIT)",
+        "Verify table of contents links work",
+        "Review screenshots/GIFs and verify they're current"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Documentation important but can be written as features complete"
+    },
+    {
+      "id": "PHASE1-INFRA-003",
+      "category": "Phase 1: Infrastructure - CI/CD Pipeline",
+      "description": "Set up GitHub Actions for automated testing, linting, and deployment",
+      "acceptanceCriteria": [
+        "GitHub Actions workflow runs on pull request and push to main",
+        "Workflow installs pnpm and dependencies",
+        "Runs TypeScript compilation check",
+        "Runs ESLint on all packages",
+        "Runs unit tests with coverage reporting",
+        "TUI package publishes to npm on git tag",
+        "Web package deploys to Vercel on push to main",
+        "Workflow fails if any check fails (prevents merge)"
+      ],
+      "stepsToVerify": [
+        "Create .github/workflows/ci.yml file",
+        "Create pull request and verify workflow runs",
+        "Introduce TypeScript error and verify workflow fails",
+        "Fix error and verify workflow passes",
+        "Create git tag v1.0.0 and verify npm publish workflow runs",
+        "Check npm registry and verify TUI package published",
+        "Push to main and verify Vercel deployment workflow runs",
+        "Check Vercel and verify web app deployed"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "CI/CD important but can be set up after initial development"
+    },
+    {
+      "id": "PHASE1-SYNC-002",
+      "category": "Phase 1: Sync - Conflict Resolution",
+      "description": "Implement conflict detection and resolution when same shortcut is modified in both TUI and cloud",
+      "acceptanceCriteria": [
+        "Sync engine detects conflicts when updated_at timestamps differ",
+        "Supports ConflictStrategy: local, remote, newest, merge, manual",
+        "Default strategy is 'newest' (most recent updated_at wins)",
+        "User can configure strategy in config.json",
+        "Conflicts are logged to sync_logs table",
+        "Manual strategy prompts user to choose version",
+        "Merge strategy combines tags and preserves both descriptions",
+        "Conflict resolution increments conflict_version field"
+      ],
+      "stepsToVerify": [
+        "Modify shortcut in TUI (set updated_at to now)",
+        "Modify same shortcut in Web (set updated_at to now + 1 second)",
+        "Run sync with strategy='newest' and verify Web version wins",
+        "Run sync with strategy='local' and verify TUI version wins",
+        "Check sync_logs table and verify conflict was logged",
+        "Set strategy='manual' and verify user is prompted",
+        "Verify conflict_version incremented after resolution",
+        "Set strategy='merge' and verify tags from both versions combined"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Conflict resolution is enhancement of basic sync"
+    },
+    {
+      "id": "PHASE2-TUI-006",
+      "category": "Phase 2: TUI - Settings Panel",
+      "description": "Implement settings panel accessible via F6 or Cmd+, for configuring default mode, platform, AI provider, and sync preferences",
+      "acceptanceCriteria": [
+        "F6 or Cmd+, opens settings panel overlay",
+        "General section: Default Mode, Default Platform, Auto-detect Platform",
+        "AI Search section: Provider, API Key (masked), Model",
+        "Sync section: Auto-sync toggle, Sync Interval, Last Sync time, Sync Now button",
+        "Display section: Result Limit, Show Descriptions, Compact Mode",
+        "Tab navigates between fields",
+        "Enter toggles dropdowns or confirms input",
+        "Save button writes to config.json",
+        "Cancel button discards changes and closes"
+      ],
+      "stepsToVerify": [
+        "Press F6 and verify settings panel appears",
+        "Verify all sections displayed: General, AI Search, Sync, Display",
+        "Tab through fields and verify focus indicator moves",
+        "Change Default Mode to Full-Phrase and click Save",
+        "Verify config.json updated with new default mode",
+        "Reopen settings and verify value persisted",
+        "Enter AI API key and verify it's masked (shows \u2022\u2022\u2022\u2022\u2022)",
+        "Click Cancel and verify changes discarded",
+        "Click Sync Now and verify sync initiated"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Settings panel is polish, not critical for MVP"
+    },
+    {
+      "id": "PHASE2-TUI-007",
+      "category": "Phase 2: TUI - Help Overlay",
+      "description": "Implement help overlay accessible via ? key showing all keyboard shortcuts organized by category",
+      "acceptanceCriteria": [
+        "? key opens help overlay",
+        "Help organized into sections: Global, Navigation, Search Modes, Detail View",
+        "All keyboard shortcuts documented with descriptions",
+        "Uses consistent formatting: Key - Description",
+        "Esc closes help overlay",
+        "Help overlay scrollable if content exceeds terminal height",
+        "Help adapts to current mode (shows mode-specific shortcuts)"
+      ],
+      "stepsToVerify": [
+        "Press ? key and verify help overlay appears",
+        "Verify Global section includes Ctrl+C, ?, Cmd+,, Cmd+P",
+        "Verify Navigation section includes \u2191\u2193, Enter, Esc, /",
+        "Verify Search Modes section includes Tab, F2, F3, F4",
+        "Verify Detail View section includes c, o",
+        "Press Esc and verify overlay closes",
+        "Resize terminal to small height and verify help scrollable",
+        "Open help in App-First mode vs Full-Phrase and verify differences"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Help overlay is important but can come after core features work"
+    },
+    {
+      "id": "PHASE2-TUI-008",
+      "category": "Phase 2: TUI - Login Command",
+      "description": "Implement 'katasumi login' CLI command for authenticating premium users and storing API token",
+      "acceptanceCriteria": [
+        "Command prompts for email and password",
+        "Password input is masked",
+        "On success, displays 'Logged in successfully' message",
+        "Stores JWT token in ~/.katasumi/config.json",
+        "Token stored with 600 file permissions (user read/write only)",
+        "Provides --web flag for OAuth browser-based login",
+        "On error, displays helpful error message",
+        "Validates token by making test API call"
+      ],
+      "stepsToVerify": [
+        "Run 'katasumi login' and verify email prompt",
+        "Enter test email and verify password prompt",
+        "Enter password and verify characters masked",
+        "With valid credentials, verify success message",
+        "Check config.json and verify token stored",
+        "Run 'ls -la ~/.katasumi/config.json' and verify 600 permissions",
+        "Run 'katasumi login --web' and verify browser opens",
+        "With invalid credentials, verify error message displayed"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Login command depends on sync API being ready"
+    },
+    {
+      "id": "PHASE2-TUI-009",
+      "category": "Phase 2: TUI - Performance Optimization",
+      "description": "Ensure TUI meets all performance targets: <200ms startup, <100ms search, <50ms filter updates",
+      "acceptanceCriteria": [
+        "Cold start (first run) completes in <200ms",
+        "Warm start (subsequent runs) completes in <150ms",
+        "Keyword search returns results in <100ms",
+        "Filter changes update results in <50ms",
+        "App selector filters update in <50ms",
+        "Detail view renders in <50ms",
+        "Memory usage stays below 100MB during normal operation",
+        "SQLite queries execute in <10ms"
+      ],
+      "stepsToVerify": [
+        "Add console.time() around app startup and verify <200ms",
+        "Run app second time and verify <150ms",
+        "Add timing to search function and verify <100ms for keyword search",
+        "Toggle Context filter and measure time to results update (<50ms)",
+        "Type in app selector and measure filter update time (<50ms)",
+        "Navigate to detail view and measure render time (<50ms)",
+        "Monitor memory with process.memoryUsage() and verify <100MB",
+        "Log SQLite query times and verify <10ms"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Performance optimization after features are complete"
+    },
+    {
+      "id": "PHASE2-TUI-011",
+      "category": "Phase 2: TUI - Error Handling & Empty States",
+      "description": "Implement comprehensive error handling and helpful empty states throughout TUI",
+      "acceptanceCriteria": [
+        "No apps found: Shows message 'No apps match your search. Try a different query.'",
+        "No shortcuts found: Shows 'No shortcuts found. Try adjusting filters or search query.'",
+        "Database error: Shows 'Database error. Please try again.'",
+        "Network error (sync): Shows 'Network error. Check connection and try again.'",
+        "AI error: Falls back to keyword search with message 'AI unavailable, using keyword search'",
+        "API rate limit: Shows 'Rate limit reached. Upgrade to Premium for unlimited AI searches.'",
+        "All errors logged to ~/.katasumi/error.log",
+        "Error messages user-friendly (no stack traces shown to user)"
+      ],
+      "stepsToVerify": [
+        "Search for nonexistent app 'asdfqwer' and verify empty state message",
+        "Select app and filter to impossible combination, verify no results message",
+        "Corrupt database file and verify graceful error message",
+        "Disconnect network and attempt sync, verify network error message",
+        "Configure invalid AI API key and search, verify fallback to keyword",
+        "As free user, exceed 5 AI queries and verify rate limit message",
+        "Check error.log and verify errors logged with timestamps",
+        "Verify no stack traces shown in UI (only in log file)"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Error handling polish after features work"
+    },
+    {
+      "id": "PHASE2-TUI-012",
+      "category": "Phase 2: TUI - Integration Tests",
+      "description": "Implement integration tests for TUI user flows using Ink's testing utilities",
+      "acceptanceCriteria": [
+        "Test coverage >60% for TUI package",
+        "Tests for App-First mode: select app, filter, view details",
+        "Tests for Full-Phrase mode: search, toggle AI, view results",
+        "Tests for keyboard navigation: Tab, arrow keys, Enter, Esc",
+        "Tests for settings: open, modify, save",
+        "Tests use Ink's render and waitFor utilities",
+        "Tests run headless (no terminal required)",
+        "Snapshot tests for UI layouts"
+      ],
+      "stepsToVerify": [
+        "Run 'pnpm run test' in TUI package",
+        "Verify App-First flow test passes",
+        "Verify Full-Phrase flow test passes",
+        "Verify keyboard navigation test simulates key presses",
+        "Verify settings test opens panel and saves changes",
+        "Check snapshots and verify UI layout captured",
+        "Run tests headless in CI and verify passing",
+        "Check coverage and verify >60%"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Integration tests after TUI features complete"
+    },
+    {
+      "id": "PHASE3-WEB-006",
+      "category": "Phase 3: Web - User Dashboard (Premium)",
+      "description": "Implement user dashboard showing usage stats, custom shortcuts, collections, and sync status",
+      "acceptanceCriteria": [
+        "Dashboard accessible at /dashboard route",
+        "Requires authentication (redirects to login if not logged in)",
+        "Shows usage stats: AI queries used, total shortcuts, collections count",
+        "Lists user's custom shortcuts with edit/delete actions",
+        "Shows collections with shortcut counts",
+        "Displays last sync time and Sync Now button",
+        "Export button to download shortcuts as JSON/CSV",
+        "Settings link to account settings page"
+      ],
+      "stepsToVerify": [
+        "Navigate to /dashboard while logged out and verify redirect to /login",
+        "Login and navigate to /dashboard",
+        "Verify usage stats displayed (AI queries, shortcuts, collections)",
+        "Add custom shortcut and verify it appears in list",
+        "Edit custom shortcut and verify changes saved",
+        "Delete custom shortcut and verify removed from list",
+        "Click Sync Now and verify last sync time updates",
+        "Click Export and verify JSON file downloads"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Dashboard is premium feature, not needed for MVP"
+    },
+    {
+      "id": "PHASE3-WEB-007",
+      "category": "Phase 3: Web - Responsive Design",
+      "description": "Ensure web UI is fully responsive and works on mobile, tablet, and desktop screen sizes",
+      "acceptanceCriteria": [
+        "Mobile (320px-768px): Single column layout, filters collapsed by default",
+        "Tablet (768px-1024px): Two column layout where appropriate",
+        "Desktop (1024px+): Full layout with sidebar filters",
+        "Touch-friendly tap targets (minimum 44x44px)",
+        "Hamburger menu for navigation on mobile",
+        "Search input full-width on mobile",
+        "Results list scrollable on all screen sizes",
+        "Modal/dialog responsive (full screen on mobile)"
+      ],
+      "stepsToVerify": [
+        "Open DevTools and resize to 320px width",
+        "Verify layout switches to single column",
+        "Verify filters collapsed (expandable button shown)",
+        "Tap search input and verify keyboard doesn't obscure results",
+        "Resize to 768px and verify two-column layout",
+        "Resize to 1024px and verify full desktop layout with sidebar",
+        "On mobile, verify hamburger menu works",
+        "Open detail modal on mobile and verify full-screen display"
+      ],
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Responsive design important but can be refined after core features"
     },
     {
       "id": "PHASE3-WEB-009",
       "category": "Phase 3: Web - Keyboard Shortcuts",
       "description": "Implement all keyboard shortcuts matching TUI (with Cmd/Ctrl modifiers) and show shortcuts hint tooltip",
       "acceptanceCriteria": [
-        "Tab toggles search mode (App-First ↔ Full-Phrase)",
+        "Tab toggles search mode (App-First \u2194 Full-Phrase)",
         "/ or clicking search focuses input",
-        "↑↓ navigate results list",
+        "\u2191\u2193 navigate results list",
         "Enter opens detail modal",
         "Esc closes modal/dropdown/overlay",
         "Cmd/Ctrl+K opens app selector",
@@ -740,7 +990,7 @@
       "stepsToVerify": [
         "Press Tab and verify mode toggle",
         "Press / and verify search input focused",
-        "Search for shortcuts, then press ↑↓ and verify navigation",
+        "Search for shortcuts, then press \u2191\u2193 and verify navigation",
         "Press Enter and verify detail modal opens",
         "Press Esc and verify modal closes",
         "Press Cmd+K (Mac) or Ctrl+K (Windows) and verify app selector",
@@ -748,7 +998,9 @@
         "Press ? and verify help overlay with all shortcuts",
         "Verify help overlay lists all keyboard shortcuts with descriptions"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Keyboard shortcuts enhance UX but not critical for launch"
     },
     {
       "id": "PHASE3-WEB-010",
@@ -775,111 +1027,9 @@
         "Check page source and verify Open Graph meta tags present",
         "Navigate through app, then press browser back button and verify works"
       ],
-      "passes": false
-    },
-    {
-      "id": "PHASE1-INFRA-001",
-      "category": "Phase 1: Infrastructure - Monorepo Setup",
-      "description": "Set up pnpm workspace monorepo with packages for core, tui, and web",
-      "acceptanceCriteria": [
-        "Root pnpm-workspace.yaml configured with packages/core, packages/tui, packages/web",
-        "Each package has own package.json with name, version, dependencies",
-        "Core package exports shared types and database adapters",
-        "TUI package depends on core package via workspace:*",
-        "Web package depends on core package via workspace:*",
-        "turbo.json configured for build pipeline",
-        "pnpm install works from root and installs all dependencies",
-        "TypeScript configured with composite projects for cross-package types"
-      ],
-      "stepsToVerify": [
-        "Run 'pnpm init' in root and create pnpm-workspace.yaml",
-        "Create packages/core, packages/tui, packages/web directories",
-        "Run 'pnpm install' from root and verify all packages installed",
-        "Import type from core in TUI package and verify TypeScript resolves",
-        "Run 'pnpm run build' from root and verify all packages build",
-        "Verify turbo.json has tasks: build, dev, lint, test",
-        "Change code in core and verify TUI/Web see changes without rebuild",
-        "Check node_modules and verify workspace dependencies linked correctly"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PHASE1-INFRA-002",
-      "category": "Phase 1: Infrastructure - Database Migrations",
-      "description": "Implement database migration system for SQLite and PostgreSQL schema versioning",
-      "acceptanceCriteria": [
-        "Migrations stored in core/migrations/ directory",
-        "Each migration has up and down functions",
-        "Migration naming: YYYYMMDD_HHMMSS_description.ts",
-        "Migrations table tracks applied migrations",
-        "CLI command to run pending migrations: pnpm run migrate",
-        "CLI command to rollback last migration: pnpm run migrate:rollback",
-        "Migrations work for both SQLite and PostgreSQL",
-        "Initial migration creates all tables with proper schema"
-      ],
-      "stepsToVerify": [
-        "Run 'pnpm run migrate' on fresh SQLite database",
-        "Verify all tables created: shortcuts, app_info",
-        "Check migrations table and verify initial migration recorded",
-        "Create new migration file with test table",
-        "Run 'pnpm run migrate' and verify test table created",
-        "Run 'pnpm run migrate:rollback' and verify test table dropped",
-        "Run same migrations on PostgreSQL and verify tables created",
-        "Verify schema matches between SQLite and PostgreSQL"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PHASE1-INFRA-003",
-      "category": "Phase 1: Infrastructure - CI/CD Pipeline",
-      "description": "Set up GitHub Actions for automated testing, linting, and deployment",
-      "acceptanceCriteria": [
-        "GitHub Actions workflow runs on pull request and push to main",
-        "Workflow installs pnpm and dependencies",
-        "Runs TypeScript compilation check",
-        "Runs ESLint on all packages",
-        "Runs unit tests with coverage reporting",
-        "TUI package publishes to npm on git tag",
-        "Web package deploys to Vercel on push to main",
-        "Workflow fails if any check fails (prevents merge)"
-      ],
-      "stepsToVerify": [
-        "Create .github/workflows/ci.yml file",
-        "Create pull request and verify workflow runs",
-        "Introduce TypeScript error and verify workflow fails",
-        "Fix error and verify workflow passes",
-        "Create git tag v1.0.0 and verify npm publish workflow runs",
-        "Check npm registry and verify TUI package published",
-        "Push to main and verify Vercel deployment workflow runs",
-        "Check Vercel and verify web app deployed"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PHASE2-TUI-011",
-      "category": "Phase 2: TUI - Error Handling & Empty States",
-      "description": "Implement comprehensive error handling and helpful empty states throughout TUI",
-      "acceptanceCriteria": [
-        "No apps found: Shows message 'No apps match your search. Try a different query.'",
-        "No shortcuts found: Shows 'No shortcuts found. Try adjusting filters or search query.'",
-        "Database error: Shows 'Database error. Please try again.'",
-        "Network error (sync): Shows 'Network error. Check connection and try again.'",
-        "AI error: Falls back to keyword search with message 'AI unavailable, using keyword search'",
-        "API rate limit: Shows 'Rate limit reached. Upgrade to Premium for unlimited AI searches.'",
-        "All errors logged to ~/.shortcut-finder/error.log",
-        "Error messages user-friendly (no stack traces shown to user)"
-      ],
-      "stepsToVerify": [
-        "Search for nonexistent app 'asdfqwer' and verify empty state message",
-        "Select app and filter to impossible combination, verify no results message",
-        "Corrupt database file and verify graceful error message",
-        "Disconnect network and attempt sync, verify network error message",
-        "Configure invalid AI API key and search, verify fallback to keyword",
-        "As free user, exceed 5 AI queries and verify rate limit message",
-        "Check error.log and verify errors logged with timestamps",
-        "Verify no stack traces shown in UI (only in log file)"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "URL sharing is nice feature but not critical"
     },
     {
       "id": "PHASE3-WEB-011",
@@ -909,59 +1059,9 @@
         "Verify skip link appears on tab and works",
         "Test with keyboard only (no mouse) and verify full functionality"
       ],
-      "passes": false
-    },
-    {
-      "id": "PHASE1-TEST-001",
-      "category": "Phase 1: Testing - Unit Tests",
-      "description": "Implement comprehensive unit tests for core search engine and database adapters",
-      "acceptanceCriteria": [
-        "Test coverage >80% for core package",
-        "KeywordSearchEngine tests: fuzzySearch, searchByKeys, filtering",
-        "AISearchEngine tests: mocked AI responses, error handling",
-        "SQLiteAdapter tests: CRUD operations, connection handling",
-        "PostgresAdapter tests: CRUD operations, transactions",
-        "Shortcut schema validation tests",
-        "Tests use Vitest or Jest",
-        "Tests run in CI pipeline"
-      ],
-      "stepsToVerify": [
-        "Run 'pnpm run test' in core package",
-        "Verify all tests pass",
-        "Check coverage report and verify >80% coverage",
-        "Verify fuzzySearch test covers exact match, partial match, no match",
-        "Verify searchByKeys test covers platform filtering",
-        "Verify AI tests mock API calls (no real API requests)",
-        "Verify database tests use in-memory SQLite",
-        "Run tests in CI and verify passing"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PHASE2-TUI-012",
-      "category": "Phase 2: TUI - Integration Tests",
-      "description": "Implement integration tests for TUI user flows using Ink's testing utilities",
-      "acceptanceCriteria": [
-        "Test coverage >60% for TUI package",
-        "Tests for App-First mode: select app, filter, view details",
-        "Tests for Full-Phrase mode: search, toggle AI, view results",
-        "Tests for keyboard navigation: Tab, arrow keys, Enter, Esc",
-        "Tests for settings: open, modify, save",
-        "Tests use Ink's render and waitFor utilities",
-        "Tests run headless (no terminal required)",
-        "Snapshot tests for UI layouts"
-      ],
-      "stepsToVerify": [
-        "Run 'pnpm run test' in TUI package",
-        "Verify App-First flow test passes",
-        "Verify Full-Phrase flow test passes",
-        "Verify keyboard navigation test simulates key presses",
-        "Verify settings test opens panel and saves changes",
-        "Check snapshots and verify UI layout captured",
-        "Run tests headless in CI and verify passing",
-        "Check coverage and verify >60%"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "Accessibility important but can be addressed after core features"
     },
     {
       "id": "PHASE3-WEB-012",
@@ -987,33 +1087,9 @@
         "Check visual regression screenshots for diffs",
         "Run in CI and verify passing"
       ],
-      "passes": false
-    },
-    {
-      "id": "PHASE1-DOCS-001",
-      "category": "Phase 1: Documentation - README",
-      "description": "Create comprehensive README.md with project overview, installation, and usage instructions",
-      "acceptanceCriteria": [
-        "README includes project description and key features",
-        "Installation instructions for TUI: npm install -g shortcut-finder",
-        "Usage examples with screenshots/GIFs",
-        "Links to detailed documentation in docs/",
-        "Contributing guide link",
-        "License information (MIT)",
-        "Badges: build status, coverage, version, downloads",
-        "Table of contents for easy navigation"
-      ],
-      "stepsToVerify": [
-        "Open README.md in GitHub and verify formatting",
-        "Follow installation instructions and verify TUI installs",
-        "Try usage examples and verify they work",
-        "Click documentation links and verify pages exist",
-        "Verify badges show correct status (build passing, etc.)",
-        "Check license file matches README (MIT)",
-        "Verify table of contents links work",
-        "Review screenshots/GIFs and verify they're current"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 4,
+      "priorityRationale": "E2E tests after web features complete"
     },
     {
       "id": "PHASE1-DOCS-002",
@@ -1039,7 +1115,9 @@
         "Test search functionality in docs",
         "Verify CI builds and deploys docs on push to main"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 5,
+      "priorityRationale": "API docs nice-to-have, lower priority"
     },
     {
       "id": "PHASE1-DOCS-003",
@@ -1065,7 +1143,9 @@
         "Follow development setup and verify repo runs locally",
         "Verify Code of Conduct link works"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 5,
+      "priorityRationale": "Contributing guide important for open source but not for initial development"
     }
   ]
 }

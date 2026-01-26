@@ -1,11 +1,11 @@
-# Shortcut Finder - Project Plan
+# Katasumi - Project Plan
 
 AI-powered keyboard shortcut discovery tool for terminal and desktop applications. Share core search logic between TUI and web interfaces.
 
 ## Architecture Overview
 
 ```
-shortcut-finder/
+katasumi/
 ├── packages/
 │   ├── core/              # Shared search & scraping logic
 │   ├── tui/               # Terminal interface
@@ -19,9 +19,10 @@ shortcut-finder/
 
 ### Core (Shared)
 - **Language**: TypeScript
+- **Database ORM**: Prisma (unified schema for SQLite + PostgreSQL)
 - **Search**: Keyword (fzf-like fuzzy) + Optional AI (OpenAI/Claude/Ollama)
 - **Scraping**: Cheerio (static HTML), Puppeteer (dynamic), possibly scrapy for complex cases
-- **Storage**: TBD (see Database Strategy below)
+- **Storage**: SQLite (TUI) + PostgreSQL (Web) - see Database Strategy below
 
 ### TUI
 - **Framework**: TBD - Need to evaluate Ink vs. simpler alternatives
@@ -51,7 +52,7 @@ shortcut-finder/
 Core shortcuts DB (curated) + On-demand scraping + Local cache
 
 - Ship TUI with embedded SQLite of popular apps (vim, tmux, vscode, etc.)
-- Cache scraped results locally (~/.shortcut-finder/cache/)
+- Cache scraped results locally (~/.katasumi/cache/)
 - Background update check (weekly) for core DB
 - On-demand AI scraping for long-tail apps
 - Community can contribute to core DB via GitHub
@@ -63,9 +64,9 @@ Core shortcuts DB (curated) + On-demand scraping + Local cache
 ```
 Database: SQLite
 Location: 
-  - Core DB: ~/.shortcut-finder/shortcuts.db (bundled, read-only)
-  - Cache DB: ~/.shortcut-finder/cache.db (user-scraped, read-write)
-  - Config: ~/.shortcut-finder/config.json (API keys, preferences)
+  - Core DB: ~/.katasumi/shortcuts.db (bundled, read-only)
+  - Cache DB: ~/.katasumi/cache.db (user-scraped, read-write)
+  - Config: ~/.katasumi/config.json (API keys, preferences)
 
 Pros:
 - Zero-config setup (just npm install -g)
@@ -210,14 +211,14 @@ Features:
 **How TUI Authenticates**:
 ```bash
 # One-time setup
-$ shortcut-finder login
+$ katasumi login
 ? Enter your email: user@example.com
 ? Enter your password: ••••••••
 ✓ Logged in successfully
-✓ API token saved to ~/.shortcut-finder/config.json
+✓ API token saved to ~/.katasumi/config.json
 
 # Or via web OAuth flow
-$ shortcut-finder login --web
+$ katasumi login --web
 → Opens browser to auth page
 ✓ Token received and saved
 ```
@@ -248,7 +249,7 @@ enum ConflictStrategy {
 }
 
 // User configures preference
-// ~/.shortcut-finder/config.json
+// ~/.katasumi/config.json
 {
   "sync": {
     "enabled": true,
@@ -376,7 +377,7 @@ CREATE TABLE sync_logs (
 **Challenges & Solutions**:
 
 ❗ **Challenge**: Keeping SQLite schema in sync with PostgreSQL
-✅ **Solution**: Shared TypeScript types + migration scripts for both
+✅ **Solution**: Prisma with unified schema.prisma file + generator for both databases
 
 ❗ **Challenge**: Large sync payload for users with many shortcuts
 ✅ **Solution**: Incremental sync (only changes since last sync) + pagination
@@ -385,7 +386,7 @@ CREATE TABLE sync_logs (
 ✅ **Solution**: Conflict detection + user-configurable resolution strategy
 
 ❗ **Challenge**: TUI needs to securely store API token
-✅ **Solution**: Store in ~/.shortcut-finder/config.json with 600 permissions
+✅ **Solution**: Store in ~/.katasumi/config.json with 600 permissions
 
 **Monetization Considerations**:
 
@@ -417,25 +418,190 @@ Phase 3 (Polish):
 
 ---
 
-**Implementation Plan**:
+**Implementation Plan with Prisma**:
 ```typescript
+// core/prisma/schema.prisma
+// Unified schema for both SQLite and PostgreSQL
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Use conditional datasource for different environments
+datasource db {
+  provider = "sqlite"  // or "postgresql" for web
+  url      = env("DATABASE_URL")
+}
+
+model Shortcut {
+  id            String   @id @default(uuid())
+  app           String
+  action        String
+  description   String?
+  keysMac       String?  @map("keys_mac")
+  keysWindows   String?  @map("keys_windows")
+  keysLinux     String?  @map("keys_linux")
+  context       String?
+  category      String?
+  tags          String[] // PostgreSQL array or JSON in SQLite
+  sourceType    String   @map("source_type")
+  sourceUrl     String   @map("source_url")
+  popularity    Float?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([app])
+  @@index([category])
+  @@map("shortcuts")
+}
+
+model AppInfo {
+  id            String   @id
+  name          String
+  displayName   String   @map("display_name")
+  category      String
+  platforms     String[] // JSON array
+  icon          String?
+  homepage      String?
+  docsUrl       String?  @map("docs_url")
+  shortcutCount Int      @map("shortcut_count")
+
+  @@map("app_info")
+}
+
+// For web (PostgreSQL only)
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  tier         String   @default("free")
+  apiTokenHash String?  @map("api_token_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  shortcuts    UserShortcut[]
+  collections  Collection[]
+  syncLogs     SyncLog[]
+
+  @@map("users")
+}
+
+model UserShortcut {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  app             String
+  action          String
+  description     String?
+  keysMac         String?  @map("keys_mac")
+  keysWindows     String?  @map("keys_windows")
+  keysLinux       String?  @map("keys_linux")
+  context         String?
+  category        String?
+  tags            String[]
+  sourceType      String   @map("source_type")
+  sourceUrl       String?  @map("source_url")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  syncedAt        DateTime? @map("synced_at")
+  conflictVersion Int      @default(1) @map("conflict_version")
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([app])
+  @@index([updatedAt])
+  @@map("user_shortcuts")
+}
+
+model Collection {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shortcuts   CollectionShortcut[]
+
+  @@map("collections")
+}
+
+model CollectionShortcut {
+  collectionId String   @map("collection_id")
+  shortcutId   String   @map("shortcut_id")
+  addedAt      DateTime @default(now()) @map("added_at")
+
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, shortcutId])
+  @@map("collection_shortcuts")
+}
+
+model SyncLog {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  action           String
+  recordsAffected  Int      @map("records_affected")
+  conflictsResolved Int     @map("conflicts_resolved")
+  status           String
+  errorMessage     String?  @map("error_message")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sync_logs")
+}
+
 // core/src/db/index.ts
+import { PrismaClient } from '@prisma/client';
+
 export interface DatabaseAdapter {
   search(query: string, filters?: Filter): Promise<Shortcut[]>;
   insert(shortcut: Shortcut): Promise<void>;
   update(id: string, shortcut: Partial<Shortcut>): Promise<void>;
 }
 
-export class SqliteAdapter implements DatabaseAdapter {
-  // For TUI
-  constructor(dbPath: string);
+export class PrismaAdapter implements DatabaseAdapter {
+  private prisma: PrismaClient;
+
+  constructor(databaseUrl: string) {
+    this.prisma = new PrismaClient({
+      datasources: { db: { url: databaseUrl } }
+    });
+  }
+
+  async search(query: string, filters?: Filter): Promise<Shortcut[]> {
+    return this.prisma.shortcut.findMany({
+      where: {
+        app: filters?.app,
+        category: filters?.category,
+        OR: [
+          { action: { contains: query } },
+          { description: { contains: query } },
+          { tags: { hasSome: [query] } }
+        ]
+      }
+    });
+  }
+
+  // Additional methods...
 }
 
-export class PostgresAdapter implements DatabaseAdapter {
-  // For Web
-  constructor(connectionString: string);
-}
+// Usage in TUI (SQLite)
+const tuiDb = new PrismaAdapter('file:~/.katasumi/shortcuts.db');
+
+// Usage in Web (PostgreSQL)
+const webDb = new PrismaAdapter(process.env.DATABASE_URL);
 ```
+
+**Prisma Benefits**:
+✅ Single schema.prisma defines structure for both databases
+✅ Type-safe database queries with autocomplete
+✅ Automatic migrations with `prisma migrate`
+✅ Supports both SQLite (TUI) and PostgreSQL (Web)
+✅ Introspection and seeding capabilities
+✅ Works seamlessly with TypeScript types
 
 #### 1.2 Search Engine Implementation
 
@@ -890,7 +1056,7 @@ The TUI supports **two distinct search modes** to accommodate different user int
 This is the default mode, optimized for focused learning of one app at a time.
 
 ```
-┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+┌─ Katasumi v1.0 ───────────────────────────────────────────┐
 │                                                                   │
 │ Mode: [App-First] | Platform: macOS | AI: OFF                   │
 │                                                                   │
@@ -908,7 +1074,7 @@ This is the default mode, optimized for focused learning of one app at a time.
 
                             ↓ User presses Enter ↓
 
-┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+┌─ Katasumi v1.0 ───────────────────────────────────────────┐
 │                                                                   │
 │ Mode: [App-First] | Platform: macOS | AI: OFF                   │
 │ App: Vim (342 shortcuts) | [F2] Change App                       │
@@ -941,7 +1107,7 @@ This is the default mode, optimized for focused learning of one app at a time.
 
                    ↓ User types "nav" in Quick Search ↓
 
-┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+┌─ Katasumi v1.0 ───────────────────────────────────────────┐
 │                                                                   │
 │ Mode: [App-First] | Platform: macOS | AI: OFF                   │
 │ App: Vim (342 shortcuts) | [F2] Change App                       │
@@ -970,7 +1136,7 @@ This is the default mode, optimized for focused learning of one app at a time.
 
              ↓ User presses F3 to focus Filters, then Enter on Context ↓
 
-┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+┌─ Katasumi v1.0 ───────────────────────────────────────────┐
 │                                                                   │
 │ Mode: [App-First] | Platform: macOS | AI: OFF                   │
 │ App: Vim (342 shortcuts) | [F2] Change App                       │
@@ -1066,7 +1232,7 @@ This is the default mode, optimized for focused learning of one app at a time.
 This mode uses natural language queries and can leverage AI for better results.
 
 ```
-┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+┌─ Katasumi v1.0 ───────────────────────────────────────────┐
 │                                                                   │
 │ Mode: [Full-Phrase] | Platform: macOS | AI: ON                  │
 │                                                                   │
@@ -1099,7 +1265,7 @@ This mode uses natural language queries and can leverage AI for better results.
 
               ↓ User types a more specific query ↓
 
-┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+┌─ Katasumi v1.0 ───────────────────────────────────────────┐
 │                                                                   │
 │ Mode: [Full-Phrase] | Platform: macOS | AI: ON                  │
 │                                                                   │
@@ -1129,7 +1295,7 @@ This mode uses natural language queries and can leverage AI for better results.
 
                  ↓ User turns AI off (F4) ↓
 
-┌─ Shortcut Finder v1.0 ───────────────────────────────────────────┐
+┌─ Katasumi v1.0 ───────────────────────────────────────────┐
 │                                                                   │
 │ Mode: [Full-Phrase] | Platform: macOS | AI: OFF                 │
 │                                                                   │
@@ -1685,8 +1851,8 @@ man vim | col -b > vim.txt
 ### Phase 5: MVP Launch (Week 4)
 
 **Deliverables**:
-1. TUI npm package: `npm install -g shortcut-finder`
-2. Web app: shortcutfinder.dev (or similar)
+1. TUI npm package: `npm install -g katasumi`
+2. Web app: katasumi.dev (or similar)
 3. Core shortcuts DB for 20 popular apps
 4. GitHub repo with contribution guide
 
