@@ -54,7 +54,7 @@
         "Change code in core and verify TUI/Web see changes without rebuild",
         "Check node_modules and verify workspace dependencies linked correctly"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
       "priorityRationale": "Monorepo must be set up first before any package development"
     },

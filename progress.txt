@@ -31,3 +31,39 @@ Verification:
 - Type definitions include proper JSDoc documentation
 - Optional fields correctly typed (keys.mac, keys.windows, keys.linux, context, category, source)
 - Enum and union types properly defined
+
+#### 2026-01-26: PHASE1-INFRA-001 - Monorepo Setup
+ Set up npm workspaces monorepo with packages for core, tui, and web
+- Created package.json files for @katasumi/tui and @katasumi/web packages
+- Configured npm workspaces in root package.json to include all packages
+- TUI package depends on core package via npm workspaces (file:../core)
+- Web package depends on core package via npm workspaces (file:../core)
+- Added turbo.json for build pipeline orchestration (build, dev, lint, test tasks)
+- Configured TypeScript composite projects with tsconfig references
+- Created tsconfig.base.json for shared TypeScript configuration
+- Updated .gitignore to exclude build artifacts (.turbo, *.tsbuildinfo)
+- All packages build successfully using turbo: npm run build
+- Verified TypeScript cross-package type resolution works correctly
+- Created test index.ts files in TUI and Web that import from core
+- Verified compiled output and runtime execution of TUI package
+
+Files created/modified:
+- packages/tui/package.json (TUI package configuration)
+- packages/tui/tsconfig.json (TypeScript config with reference to core)
+- packages/tui/src/index.ts (test entry point importing core types)
+- packages/web/package.json (Web package configuration)
+- packages/web/tsconfig.json (TypeScript config with reference to core)
+- packages/web/src/index.ts (test entry point importing core types)
+- tsconfig.base.json (shared TypeScript configuration)
+- turbo.json (build pipeline configuration)
+- package.json (added workspaces and turbo scripts)
+- package-lock.json (npm lockfile)
+- .gitignore (added .turbo and *.tsbuildinfo)
+
+Verification:
+- npm install successfully installs all workspace dependencies
+- npm run build executes turbo and builds all 3 packages in correct order
+- Core package builds first due to dependsOn in turbo.json
+- TUI and Web packages can import types from @katasumi/core
+- TypeScript compilation succeeds with no errors across all packages
+- node packages/tui/dist/index.js runs successfully and outputs test data
