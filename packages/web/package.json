@@ -1,0 +1,21 @@
+{
+  "name": "@katasumi/web",
+  "version": "1.0.0",
+  "description": "Web interface for Katasumi keyboard shortcut search",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "dev": "tsc --build --watch"
+  },
+  "keywords": ["shortcuts", "keyboard", "productivity", "web"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@katasumi/core": "file:../core"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3"
+  }
+}

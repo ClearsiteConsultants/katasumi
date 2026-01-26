@@ -3,11 +3,19 @@
   "version": "1.0.0",
   "description": "Keyboard shortcut search engine",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "pnpm --filter '@katasumi/core' build",
-    "dev": "pnpm --filter '@katasumi/core' dev"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
   },
   "keywords": ["shortcuts", "keyboard", "productivity"],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "turbo": "^1.11.3"
+  }
 }

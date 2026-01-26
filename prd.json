@@ -26,7 +26,7 @@
         "Generate TypeScript documentation and verify JSDoc appears",
         "Serialize Shortcut to JSON and verify structure matches schema"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
       "priorityRationale": "Schema types needed by all other DB work"
     },
