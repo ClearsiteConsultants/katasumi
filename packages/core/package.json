@@ -1,0 +1,17 @@
+{
+  "name": "@katasumi/core",
+  "version": "1.0.0",
+  "description": "Core types and database adapters for Katasumi",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["shortcuts", "keyboard", "productivity"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

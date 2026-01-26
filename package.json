@@ -1,0 +1,13 @@
+{
+  "name": "katasumi",
+  "version": "1.0.0",
+  "description": "Keyboard shortcut search engine",
+  "private": true,
+  "scripts": {
+    "build": "pnpm --filter '@katasumi/core' build",
+    "dev": "pnpm --filter '@katasumi/core' dev"
+  },
+  "keywords": ["shortcuts", "keyboard", "productivity"],
+  "author": "",
+  "license": "MIT"
+}
