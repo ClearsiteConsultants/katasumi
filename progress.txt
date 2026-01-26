@@ -67,3 +67,48 @@ Verification:
 - TUI and Web packages can import types from @katasumi/core
 - TypeScript compilation succeeds with no errors across all packages
 - node packages/tui/dist/index.js runs successfully and outputs test data
+
+#### 2026-01-26: PHASE1-INFRA-002 - Database Migrations
+✅ Implemented database migration system for SQLite and PostgreSQL schema versioning
+- Installed Prisma 7.x with @prisma/client and driver adapters
+- Created Prisma schema files for both SQLite (schema.prisma) and PostgreSQL (schema.postgres.prisma)
+- Implemented MigrationRunner class in src/migration-runner.ts for managing migrations
+- Created migration CLI tool in src/migrate.ts with up/down/status commands
+- Migrations stored in migrations/ directory with JavaScript format
+- Migration naming follows YYYYMMDD_HHMMSS_description.js convention
+- Each migration has up() and down() functions for applying and reverting changes
+- _migrations table automatically tracks applied migrations with id, name, applied_at
+- Created initial migration (20260126_221245_initial_schema.js) that creates shortcuts and app_info tables
+- Both tables include proper indexes on frequently queried columns
+- Schemas are compatible with both SQLite and PostgreSQL
+- Added npm scripts at root and package level: migrate, migrate:rollback, migrate:status
+- Integrated Prisma with libSQL adapter for SQLite support
+- Exported MigrationRunner and PrismaClient from core package
+
+Files created:
+- packages/core/prisma/schema.prisma (SQLite schema)
+- packages/core/prisma/schema.postgres.prisma (PostgreSQL schema)
+- packages/core/prisma.config.ts (Prisma configuration)
+- packages/core/src/migration-runner.ts (migration execution engine)
+- packages/core/src/migrate.ts (CLI tool for running migrations)
+- packages/core/migrations/20260126_221245_initial_schema.js (initial schema migration)
+- packages/core/migrations/README.md (migration documentation)
+- packages/core/.gitignore (excludes generated Prisma client and .env)
+
+Dependencies added:
+- @prisma/client (v7.3.0)
+- prisma (v7.3.0)
+- @prisma/adapter-libsql
+- @libsql/client
+- dotenv
+
+Verification:
+- ✅ Run 'npm run migrate' on fresh SQLite database - tables created successfully
+- ✅ Verify all tables created: shortcuts, app_info, _migrations
+- ✅ Check migrations table and verify initial migration recorded
+- ✅ Create test migration and verify it applies correctly
+- ✅ Run 'npm run migrate:rollback' and verify test table dropped
+- ✅ Migration status command shows pending and applied migrations
+- ✅ Schema matches between SQLite and PostgreSQL definitions
+- ✅ Migrations can be run from root: npm run migrate
+- ✅ All TypeScript code compiles without errors

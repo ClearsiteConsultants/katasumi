@@ -82,7 +82,7 @@
         "Run same migrations on PostgreSQL and verify tables created",
         "Verify schema matches between SQLite and PostgreSQL"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
       "priorityRationale": "Migration system (Prisma) needed before creating databases"
     },
