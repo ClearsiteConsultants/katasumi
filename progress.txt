@@ -1,0 +1,33 @@
+## Katasumi Development Progress
+
+### Completed Tasks
+
+#### 2026-01-26: PHASE1-DB-003 - Schema Definition
+✅ Defined unified Shortcut and AppInfo TypeScript types that work across both SQLite and PostgreSQL
+- Created `@katasumi/core` package with comprehensive type definitions
+- Implemented Shortcut interface with all required fields: id, app, action, keys, context, category, tags
+- Implemented Keys object supporting mac, windows, linux variants
+- Created Source object with type, url, scrapedAt, confidence fields
+- Implemented AppInfo interface with id, name, displayName, category, platforms, shortcutCount
+- Defined Platform type as union: 'mac' | 'windows' | 'linux'
+- Created SourceType enum: 'official', 'community', 'ai-scraped', 'user-added'
+- Added comprehensive JSDoc comments explaining each field's purpose
+- Types exported from core package for reuse in TUI and Web
+- Verified TypeScript compilation succeeds with no errors
+- Set up basic monorepo structure with pnpm workspace configuration
+
+Files created:
+- packages/core/src/types.ts (main type definitions)
+- packages/core/src/index.ts (exports)
+- packages/core/src/test-types.ts (type validation tests)
+- packages/core/package.json
+- packages/core/tsconfig.json
+- pnpm-workspace.yaml
+- package.json (root)
+- .gitignore
+
+Verification:
+- All TypeScript types compile without errors
+- Type definitions include proper JSDoc documentation
+- Optional fields correctly typed (keys.mac, keys.windows, keys.linux, context, category, source)
+- Enum and union types properly defined
