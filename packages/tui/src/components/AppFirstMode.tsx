@@ -6,6 +6,7 @@ import { useAppStore } from '../store.js';
 import { AppSelector } from './AppSelector.js';
 import { FiltersBar } from './FiltersBar.js';
 import { ResultsList } from './ResultsList.js';
+import { DetailView } from './DetailView.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -75,6 +76,8 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
   const setResults = useAppStore((state) => state.setResults);
   const filters = useAppStore((state) => state.filters);
   const platform = useAppStore((state) => state.platform);
+  const selectedShortcut = useAppStore((state) => state.selectedShortcut);
+  const selectShortcut = useAppStore((state) => state.selectShortcut);
 
   const [loading, setLoading] = useState(true);
 
@@ -165,6 +168,18 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
     );
   }
 
+  // Show detail view if a shortcut is selected
+  if (view === 'detail' && selectedShortcut) {
+    return (
+      <DetailView
+        shortcut={selectedShortcut}
+        platform={platform}
+        onBack={() => selectShortcut(null)}
+        dbAdapter={getDbAdapter()}
+      />
+    );
+  }
+
   if (!selectedApp) {
     // Show app selector
     return (
@@ -200,6 +215,7 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
         results={results}
         platform={platform}
         quickSearchQuery={quickSearchQuery}
+        onSelectShortcut={selectShortcut}
       />
     </Box>
   );

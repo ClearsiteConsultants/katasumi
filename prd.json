@@ -1,7 +1,7 @@
 {
   "project": "Katasumi",
   "version": "1.0.0",
-  "lastUpdated": "2026-01-27T21:55:11.186453Z",
+  "lastUpdated": "2026-01-27T22:06:04.785626+00:00",
   "requirements": [
     {
       "id": "PHASE1-DB-003",
@@ -369,7 +369,7 @@
       "description": "Implement reverse lookup: search by key combination to find what action it performs",
       "acceptanceCriteria": [
         "searchByKeys() accepts key string and optional platform",
-        "Normalizes key variants: 'Cmd+K', '⌘K', 'Command+K' all match",
+        "Normalizes key variants: 'Cmd+K', '\u2318K', 'Command+K' all match",
         "Returns shortcuts matching the key combination for specified platform",
         "Supports multi-platform search (returns shortcuts for all platforms)",
         "Case-insensitive matching",
@@ -378,7 +378,7 @@
       ],
       "stepsToVerify": [
         "Search for 'Cmd+K' on macOS platform and verify results",
-        "Search for '⌘K' and verify same results as 'Cmd+K'",
+        "Search for '\u2318K' and verify same results as 'Cmd+K'",
         "Search for 'Ctrl+K' on Windows platform and verify different results",
         "Search for 'j' in vim context and verify 'move down' result",
         "Search for nonexistent key 'Cmd+Shift+F99' and verify empty array",
@@ -478,7 +478,7 @@
         "Verify mode indicator shows 'Full-Phrase'",
         "Type 'split window' and verify cross-app results",
         "Verify results grouped by app (tmux, vim, VSCode, etc.)",
-        "Press F4 and verify AI toggle (ON → OFF → ON)",
+        "Press F4 and verify AI toggle (ON \u2192 OFF \u2192 ON)",
         "Verify AI indicator updates immediately",
         "With AI ON, search and verify AI insight message appears",
         "With AI OFF, verify 'Keyword search only' message",
@@ -521,9 +521,31 @@
         "Run 'npm run test --workspace=@katasumi/tui' to execute detail view tests",
         "Run 'npm test' from root to execute all package tests"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 3,
-      "priorityRationale": "Detail view depends on search modes working"
+      "priorityRationale": "Detail view depends on search modes working",
+      "completedAt": "2026-01-27T22:06:04.785613+00:00",
+      "implementation": {
+        "summary": "Implemented DetailView component with keyboard navigation, clipboard support, and related shortcuts",
+        "files": [
+          "packages/tui/src/components/DetailView.tsx",
+          "packages/tui/src/components/ResultsList.tsx",
+          "packages/tui/src/components/AppFirstMode.tsx",
+          "packages/tui/src/components/FullPhraseMode.tsx",
+          "packages/tui/src/__tests__/detail-view.test.ts"
+        ],
+        "features": [
+          "Arrow key navigation in results lists",
+          "Enter key to open detail view",
+          "Full shortcut information display with all platforms",
+          "Related shortcuts based on category, context, and tags",
+          "Clipboard copy with c key using clipboardy",
+          "URL opening with o key using open package",
+          "Esc key to return to results",
+          "Visual selection highlight with inverse text",
+          "Status messages for copy and URL operations"
+        ]
+      }
     },
     {
       "id": "PHASE2-TUI-005",
@@ -532,7 +554,7 @@
       "acceptanceCriteria": [
         "F5 or Cmd+P opens platform selector overlay",
         "Shows 4 options: macOS, Windows, Linux, All Platforms",
-        "Current platform marked with indicator (▸ or checkmark)",
+        "Current platform marked with indicator (\u25b8 or checkmark)",
         "Arrow keys navigate options",
         "Enter selects platform and closes overlay",
         "Esc closes overlay without changing platform",
@@ -575,7 +597,7 @@
         "Verify Tab moves between search input, filters, results",
         "Verify arrow keys work in all lists and dropdowns",
         "Verify Enter confirms in all contexts (select app, shortcut, dropdown)",
-        "Verify Esc backs out from detail view → results → app selector",
+        "Verify Esc backs out from detail view \u2192 results \u2192 app selector",
         "Verify focus indicator visible on all focused elements",
         "Try to find keyboard traps (should find none)",
         "Run 'npm run test --workspace=@katasumi/tui' to execute keyboard navigation tests",
@@ -682,7 +704,7 @@
         "Verify large search input appears",
         "Type 'how to split screen' and verify cross-app results",
         "Verify results grouped by app name",
-        "Click AI toggle and verify indicator changes ON → OFF",
+        "Click AI toggle and verify indicator changes ON \u2192 OFF",
         "Verify query count decrements for free users",
         "Login as premium user and verify 'Unlimited' shown",
         "Verify app icons/names displayed correctly",
@@ -864,7 +886,7 @@
         "Change Default Mode to Full-Phrase and click Save",
         "Verify config.json updated with new default mode",
         "Reopen settings and verify value persisted",
-        "Enter AI API key and verify it's masked (shows •••••)",
+        "Enter AI API key and verify it's masked (shows \u2022\u2022\u2022\u2022\u2022)",
         "Click Cancel and verify changes discarded",
         "Click Sync Now and verify sync initiated"
       ],
@@ -888,7 +910,7 @@
       "stepsToVerify": [
         "Press ? key and verify help overlay appears",
         "Verify Global section includes Ctrl+C, ?, Cmd+,, Cmd+P",
-        "Verify Navigation section includes ↑↓, Enter, Esc, /",
+        "Verify Navigation section includes \u2191\u2193, Enter, Esc, /",
         "Verify Search Modes section includes Tab, F2, F3, F4",
         "Verify Detail View section includes c, o",
         "Press Esc and verify overlay closes",
@@ -1086,9 +1108,9 @@
       "category": "Phase 3: Web - Keyboard Shortcuts",
       "description": "Implement all keyboard shortcuts matching TUI (with Cmd/Ctrl modifiers) and show shortcuts hint tooltip",
       "acceptanceCriteria": [
-        "Tab toggles search mode (App-First ↔ Full-Phrase)",
+        "Tab toggles search mode (App-First \u2194 Full-Phrase)",
         "/ or clicking search focuses input",
-        "↑↓ navigate results list",
+        "\u2191\u2193 navigate results list",
         "Enter opens detail modal",
         "Esc closes modal/dropdown/overlay",
         "Cmd/Ctrl+K opens app selector",
@@ -1102,7 +1124,7 @@
       "stepsToVerify": [
         "Press Tab and verify mode toggle",
         "Press / and verify search input focused",
-        "Search for shortcuts, then press ↑↓ and verify navigation",
+        "Search for shortcuts, then press \u2191\u2193 and verify navigation",
         "Press Enter and verify detail modal opens",
         "Press Esc and verify modal closes",
         "Press Cmd+K (Mac) or Ctrl+K (Windows) and verify app selector",

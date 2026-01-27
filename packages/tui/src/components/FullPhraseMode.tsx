@@ -3,6 +3,7 @@ import { Box, Text, useInput } from 'ink';
 import type { Shortcut, Platform, DatabaseAdapter } from '@katasumi/core';
 import { SQLiteAdapter, KeywordSearchEngine } from '@katasumi/core';
 import { useAppStore } from '../store.js';
+import { DetailView } from './DetailView.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -52,21 +53,38 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Shortcut[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const platform = useAppStore((state) => state.platform);
+  const selectedShortcut = useAppStore((state) => state.selectedShortcut);
+  const selectShortcut = useAppStore((state) => state.selectShortcut);
 
   // Handle keyboard input for the search field
   useInput((input, key) => {
+    if (view === 'detail') {
+      // Let DetailView handle input when in detail view
+      return;
+    }
+
     if (key.return) {
-      // Trigger search on Enter
-      if (query.trim().length > 0) {
+      // If Enter is pressed and there are results, show detail of selected result
+      if (results.length > 0 && selectedIndex < results.length) {
+        selectShortcut(results[selectedIndex]);
+      } else if (query.trim().length > 0) {
+        // Trigger search on Enter if no results
         performSearch(query);
       }
+    } else if (key.upArrow) {
+      setSelectedIndex(prev => Math.max(0, prev - 1));
+    } else if (key.downArrow) {
+      setSelectedIndex(prev => Math.min(results.length - 1, prev + 1));
     } else if (key.backspace || key.delete) {
       // Handle backspace
       setQuery(prev => prev.slice(0, -1));
+      setSelectedIndex(0);
     } else if (!key.ctrl && !key.meta && input.length === 1) {
       // Handle regular character input
       setQuery(prev => prev + input);
+      setSelectedIndex(0);
     }
   });
 
@@ -134,6 +152,18 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
     }
   };
 
+  // Show detail view if a shortcut is selected
+  if (view === 'detail' && selectedShortcut) {
+    return (
+      <DetailView
+        shortcut={selectedShortcut}
+        platform={platform}
+        onBack={() => selectShortcut(null)}
+        dbAdapter={getDbAdapter()}
+      />
+    );
+  }
+
   if (view === 'search' || view === 'results') {
     const groupedResults = groupResultsByApp(results);
 
@@ -176,42 +206,41 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
           </Box>
         ) : results.length > 0 ? (
           <Box flexDirection="column" marginTop={1}>
-            {groupedResults.map((group) => (
-              <Box key={group.app} flexDirection="column" marginBottom={1}>
-                <Box borderStyle="single" paddingX={1}>
-                  <Text bold color="cyan">
-                    {group.app}
+            <Box paddingX={2} marginBottom={1}>
+              <Text dimColor>Use ↑↓ to navigate, Enter to view details</Text>
+            </Box>
+            {results.slice(0, 20).map((shortcut, index) => {
+              const keys = getKeysForPlatform(shortcut);
+              const context = shortcut.context ? `[${shortcut.context}]` : '';
+              const isSelected = index === selectedIndex;
+              
+              return (
+                <Box key={shortcut.id} paddingX={2}>
+                  <Text inverse={isSelected}>
+                    {isSelected ? '▶ ' : '  '}
                   </Text>
-                </Box>
-                <Box flexDirection="column" paddingX={2}>
-                  {group.shortcuts.slice(0, 3).map((shortcut) => {
-                    const keys = getKeysForPlatform(shortcut);
-                    const context = shortcut.context ? `[${shortcut.context}]` : '';
-                    
-                    return (
-                      <Box key={shortcut.id}>
-                        <Box width={25}>
-                          <Text color="yellow">{keys}</Text>
-                        </Box>
-                        <Box width={40}>
-                          <Text>{shortcut.action}</Text>
-                        </Box>
-                        {context && (
-                          <Box>
-                            <Text dimColor>{context}</Text>
-                          </Box>
-                        )}
-                      </Box>
-                    );
-                  })}
-                  {group.shortcuts.length > 3 && (
-                    <Text dimColor>
-                      ... and {group.shortcuts.length - 3} more from {group.app}
-                    </Text>
+                  <Box width={15}>
+                    <Text color="cyan" bold inverse={isSelected}>{shortcut.app}</Text>
+                  </Box>
+                  <Box width={25}>
+                    <Text color="yellow" inverse={isSelected}>{keys}</Text>
+                  </Box>
+                  <Box width={35}>
+                    <Text inverse={isSelected}>{shortcut.action}</Text>
+                  </Box>
+                  {context && (
+                    <Box>
+                      <Text dimColor={!isSelected} inverse={isSelected}>{context}</Text>
+                    </Box>
                   )}
                 </Box>
+              );
+            })}
+            {results.length > 20 && (
+              <Box paddingX={2}>
+                <Text dimColor>... and {results.length - 20} more results</Text>
               </Box>
-            ))}
+            )}
           </Box>
         ) : query.trim().length > 0 ? (
           <Box marginTop={1} paddingX={2}>

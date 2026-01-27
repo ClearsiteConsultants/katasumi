@@ -29,7 +29,9 @@
   "license": "MIT",
   "dependencies": {
     "@katasumi/core": "file:../core",
+    "clipboardy": "^5.1.0",
     "ink": "^4.4.1",
+    "open": "^11.0.0",
     "react": "^18.3.1",
     "zustand": "^4.5.7"
   },
