@@ -1,0 +1,113 @@
+import React, { useEffect } from 'react';
+import { Box, Text, useInput } from 'ink';
+import type { AppInfo } from '@katasumi/core';
+import { useAppStore } from '../store.js';
+
+interface AppSelectorProps {
+  apps: AppInfo[];
+  query: string;
+  selectedIndex: number;
+  onSelectApp: (app: AppInfo) => void;
+  onQueryChange: (query: string) => void;
+  onIndexChange: (index: number) => void;
+}
+
+// Simple fuzzy match function
+function fuzzyMatch(text: string, query: string): boolean {
+  if (!query) return true;
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  let queryIndex = 0;
+  for (let i = 0; i < lowerText.length && queryIndex < lowerQuery.length; i++) {
+    if (lowerText[i] === lowerQuery[queryIndex]) {
+      queryIndex++;
+    }
+  }
+  return queryIndex === lowerQuery.length;
+}
+
+export function AppSelector({
+  apps,
+  query,
+  selectedIndex,
+  onSelectApp,
+  onQueryChange,
+  onIndexChange,
+}: AppSelectorProps) {
+  const focusSection = useAppStore((state) => state.focusSection);
+  const isFocused = focusSection === 'app-selector';
+
+  // Filter apps with fuzzy matching
+  const filteredApps = apps.filter((app) =>
+    fuzzyMatch(app.displayName, query) || fuzzyMatch(app.name, query)
+  );
+
+  useInput(
+    (input, key) => {
+      if (!isFocused) return;
+
+      if (key.return) {
+        // Select app on Enter
+        if (filteredApps[selectedIndex]) {
+          onSelectApp(filteredApps[selectedIndex]);
+        }
+      } else if (key.upArrow) {
+        // Navigate up
+        onIndexChange(Math.max(0, selectedIndex - 1));
+      } else if (key.downArrow) {
+        // Navigate down
+        onIndexChange(Math.min(filteredApps.length - 1, selectedIndex + 1));
+      } else if (key.backspace || key.delete) {
+        // Handle backspace
+        onQueryChange(query.slice(0, -1));
+      } else if (input && !key.ctrl && !key.meta) {
+        // Add character to query
+        onQueryChange(query + input);
+      }
+    },
+    { isActive: isFocused }
+  );
+
+  // Auto-adjust selected index when filtered list changes
+  useEffect(() => {
+    if (selectedIndex >= filteredApps.length && filteredApps.length > 0) {
+      onIndexChange(filteredApps.length - 1);
+    }
+  }, [filteredApps.length, selectedIndex, onIndexChange]);
+
+  return (
+    <Box flexDirection="column" borderStyle="single" borderColor={isFocused ? 'cyan' : 'white'} paddingX={1}>
+      <Text bold color={isFocused ? 'cyan' : 'white'}>
+        Select App {isFocused && '(F2)'}
+      </Text>
+      
+      <Box marginTop={1}>
+        <Text>
+          Search: <Text color="yellow">{query || '_'}</Text>
+        </Text>
+      </Box>
+
+      <Box flexDirection="column" marginTop={1}>
+        {filteredApps.length === 0 ? (
+          <Text dimColor>No apps found</Text>
+        ) : (
+          filteredApps.slice(0, 10).map((app, index) => {
+            const isSelected = index === selectedIndex;
+            return (
+              <Box key={app.id}>
+                <Text color={isSelected ? 'cyan' : undefined} bold={isSelected}>
+                  {isSelected ? '► ' : '  '}
+                  {app.displayName}
+                </Text>
+                <Text dimColor> ({app.shortcutCount} shortcuts)</Text>
+              </Box>
+            );
+          })
+        )}
+        {filteredApps.length > 10 && (
+          <Text dimColor>... and {filteredApps.length - 10} more</Text>
+        )}
+      </Box>
+    </Box>
+  );
+}

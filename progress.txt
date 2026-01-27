@@ -890,3 +890,76 @@ Implemented complete REST API endpoints for authentication and bidirectional syn
  All tests pass (npm test)
  Build successful for all packages
 
+
+## 2026-01-27 - PHASE2-TUI-002: App-First Mode Implementation
+
+### Summary
+Implemented complete App-First mode with app selector, filters, and results display.
+
+### Changes Made
+1. **Store Updates (store.ts)**
+   - Added App-First mode state: focusSection, availableApps, appQuery, selectedAppIndex, quickSearchQuery
+   - Added corresponding actions for managing App-First state
+   - Focus section tracking for keyboard navigation
+
+2. **New Components**
+   - **AppSelector.tsx**: App selection with fuzzy matching
+     - Displays list of available apps with autocomplete
+     - Fuzzy matching algorithm for flexible search
+     - Arrow key navigation (up/down)
+     - Enter to select app
+     - Shows app name, shortcut count
+   
+   - **FiltersBar.tsx**: Filter controls and quick search
+     - Displays Context, Category, Tags filters
+     - Quick Search input for filtering results
+     - Results count display
+     - Keyboard input handling
+   
+   - **ResultsList.tsx**: Display shortcuts
+     - Shows keys, action, context for each shortcut
+     - Platform-specific key display
+     - Quick search filtering
+     - Limited display (15 items) with overflow indicator
+
+3. **Updated Components**
+   - **AppFirstMode.tsx**: Complete rewrite
+     - Database integration using SQLiteAdapter
+     - Singleton pattern for database adapter
+     - Loads apps list on mount
+     - Loads shortcuts when app selected
+     - F2/F3 key handling via process.stdin
+     - Escape key for returning to app selector
+     - State management integration
+
+4. **Verification Script**
+   - Created verify-tui-002.ts
+   - 15 automated tests covering all components
+   - All tests passing
+
+### Testing
+- Build: ✅ Successful
+- Type checking: ✅ No errors
+- All core tests: ✅ 95/95 passed
+- All web tests: ✅ 4/4 passed
+- Verification: ✅ 15/15 tests passed
+
+### Features Implemented
+ App selector with autocomplete list
+ Fuzzy matching for app filtering
+ Arrow key navigation in app list
+ Enter to select app
+ Filters bar with Context, Category, Tags
+ Quick Search input
+ F3 key focuses filters bar
+ F2 key returns to app selector
+ Results display with keys, action, context
+ Results update based on quick search
+ Database integration for apps and shortcuts
+ Performance: Filter updates use React state (<100ms)
+
+### Notes
+- Database adapter uses singleton pattern to avoid multiple connections
+- Function keys (F2/F3) handled via process.stdin keypress events
+- Fallback to empty adapter if database not found (graceful degradation)
+- Manual testing still recommended for UX verification
