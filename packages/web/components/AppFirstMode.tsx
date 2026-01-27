@@ -10,7 +10,6 @@ import { useEffect } from 'react'
 
 export function AppFirstMode() {
   const selectedApp = useStore((state) => state.selectedApp)
-  const selectedShortcut = useStore((state) => state.selectedShortcut)
   const results = useStore((state) => state.results)
   const mode = useStore((state) => state.mode)
   const toggleMode = useStore((state) => state.toggleMode)
@@ -35,9 +34,7 @@ export function AppFirstMode() {
       
       // Escape: Clear selection
       if (e.key === 'Escape') {
-        if (selectedShortcut) {
-          useStore.setState({ selectedShortcut: null })
-        } else if (selectedApp) {
+        if (selectedApp) {
           useStore.setState({ selectedApp: null, query: '', results: [] })
         }
       }
@@ -45,7 +42,7 @@ export function AppFirstMode() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [mode, toggleMode, selectedApp, selectedShortcut])
+  }, [mode, toggleMode, selectedApp])
 
   return (
     <div className="space-y-6">
@@ -75,11 +72,8 @@ export function AppFirstMode() {
           </div>
           <Filters />
           <SearchBar />
-          {selectedShortcut ? (
-            <ShortcutDetail />
-          ) : (
-            <ResultsList results={results} />
-          )}
+          <ResultsList results={results} />
+          <ShortcutDetail />
         </>
       )}
     </div>

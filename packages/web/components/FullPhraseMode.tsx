@@ -6,7 +6,6 @@ import { ShortcutDetail } from './ShortcutDetail'
 import { useStore } from '@/lib/store'
 
 export function FullPhraseMode() {
-  const selectedShortcut = useStore((state) => state.selectedShortcut)
   const results = useStore((state) => state.results)
 
   return (
@@ -20,11 +19,8 @@ export function FullPhraseMode() {
         </p>
       </div>
       <SearchBar />
-      {selectedShortcut ? (
-        <ShortcutDetail />
-      ) : (
-        <ResultsList results={results} />
-      )}
+      <ResultsList results={results} />
+      <ShortcutDetail />
     </div>
   )
 }

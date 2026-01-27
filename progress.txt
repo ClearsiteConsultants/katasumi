@@ -1486,3 +1486,39 @@ Implemented Full-Phrase search mode UI with natural language input and cross-app
 ### Files Created
 - packages/web/__tests__/full-phrase-mode.test.ts
 
+
+## 2026-01-27 23:51 - PHASE3-WEB-005: Shortcut Detail Modal
+
+**Implemented:**
+- Converted ShortcutDetail component to use Radix Dialog for accessible modal behavior
+- Added copy-to-clipboard functionality for keyboard shortcuts with visual feedback
+- Added "Open Docs" button that opens source URL in new tab
+- Implemented related shortcuts section (shows up to 5 shortcuts from same app/category)
+- Modal is dismissable via Esc key, clicking outside, or close button (X)
+- Modal is scrollable when content exceeds viewport height
+- Related shortcuts are clickable and open their own detail modals
+- Updated AppFirstMode and FullPhraseMode to render modal unconditionally
+
+**Files modified:**
+- packages/web/components/ShortcutDetail.tsx - Complete modal implementation with Radix Dialog
+- packages/web/components/AppFirstMode.tsx - Render modal unconditionally
+- packages/web/components/FullPhraseMode.tsx - Render modal unconditionally
+- packages/web/package.json - Added @radix-ui/react-dialog dependency
+
+**Verification:**
+- ✓ All tests pass (19 tests in web package)
+- ✓ Build successful
+- ✓ Linting clean (no ESLint warnings or errors)
+- ✓ Type checking implicit via successful build
+
+**Acceptance Criteria Met:**
+- ✓ Clicking result opens detail modal
+- ✓ Modal shows: app, context, category, action, keys, description, related shortcuts, tags, source
+- ✓ Modal uses Radix Dialog accessible component
+- ✓ Copy button copies keys to clipboard
+- ✓ Open Docs button opens source URL in new tab
+- ✓ Esc key or click outside closes modal
+- ✓ Modal scrollable if content exceeds viewport height
+- ✓ Related shortcuts clickable (opens their detail modals)
+
+**Task Status:** Complete ✅
