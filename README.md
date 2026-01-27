@@ -118,7 +118,8 @@ katasumi/
 **Working on the TUI:**
 - Changes to `packages/tui/src/**` will auto-recompile via TypeScript watch mode
 - Changes to `packages/core/src/**` require rebuilding core: `npm run build --workspace=@katasumi/core`
-- Test the TUI by running: `node packages/tui/dist/index.js`
+- Test the TUI interactively by running: `npm run start:tui`
+- Or use the workspace command: `npm start --workspace=@katasumi/tui`
 
 **Working on the Web app:**
 - Changes to `packages/web/**` will hot-reload automatically via Next.js Fast Refresh
@@ -133,6 +134,21 @@ katasumi/
   ```
 - This regenerates Prisma clients and compiles TypeScript
 - Both TUI and Web will pick up the changes on their next rebuild/reload
+
+### Testing & Running
+
+**Run the TUI interactively:**
+```bash
+npm run start:tui
+```
+
+**Run the Web app:**
+```bash
+npm run start:web
+```
+Then visit http://localhost:3000
+
+**Note:** Make sure to run `npm run setup` first if you haven't already. The TUI requires the database to be seeded and the bundled shortcuts.db to be built.
 
 ### First-Time Setup Notes
 
