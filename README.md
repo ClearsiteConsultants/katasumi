@@ -80,12 +80,18 @@ katasumi/
    npm install
    ```
 
-3. **Build the core package (required before first run):**
+3. **Run first-time setup:**
    ```bash
-   npm run build
+   npm run setup
    ```
    
-   This step generates Prisma clients and compiles TypeScript. It's required before running `npm run dev` for the first time.
+   This step:
+   - Generates Prisma clients and compiles TypeScript
+   - Runs database migrations
+   - Seeds the database with 770+ shortcuts across 8 popular apps
+   - Builds the bundled shortcuts.db for the TUI
+   
+   This is required before running `npm run dev` for the first time.
 
 4. **Start development servers:**
    
@@ -130,12 +136,20 @@ katasumi/
 
 ### First-Time Setup Notes
 
-The build step is crucial on first setup as it:
+The setup step is crucial on first setup as it:
 - Generates Prisma clients for both SQLite and PostgreSQL
 - Compiles TypeScript to ensure type definitions are available
 - Creates necessary generated files in the `packages/core/src/generated` directory
+- Runs database migrations to create the schema
+- Seeds the database with curated shortcuts for 8 popular applications
+- Builds the bundled shortcuts.db file that ships with the TUI
 
-If you encounter type errors when running `npm run dev`, make sure you've run `npm run build` first.
+If you encounter type errors when running `npm run dev`, make sure you've run `npm run setup` first.
+
+**Note:** After the initial setup, you typically only need `npm run build` when:
+- Prisma schema files are modified
+- You pull changes that affect the core package
+- You want to rebuild without re-seeding the database
 
 ### Running Unobtrusively
 
