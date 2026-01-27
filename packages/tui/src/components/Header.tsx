@@ -1,14 +1,14 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { Platform } from '@katasumi/core';
+import type { PlatformOption } from '../store.js';
 
 interface HeaderProps {
   mode: 'app-first' | 'full-phrase';
-  platform: Platform;
+  platform: PlatformOption;
   aiEnabled: boolean;
 }
 
-function getPlatformDisplay(platform: Platform): string {
+function getPlatformDisplay(platform: PlatformOption): string {
   switch (platform) {
     case 'mac':
       return 'macOS';
@@ -16,6 +16,8 @@ function getPlatformDisplay(platform: Platform): string {
       return 'Windows';
     case 'linux':
       return 'Linux';
+    case 'all':
+      return 'All Platforms';
     default:
       return 'Unknown';
   }

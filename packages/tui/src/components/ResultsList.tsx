@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { Shortcut, Platform } from '@katasumi/core';
+import type { PlatformOption } from '../store.js';
 
 interface ResultsListProps {
   results: Shortcut[];
-  platform: Platform;
+  platform: PlatformOption;
   quickSearchQuery: string;
   onSelectShortcut?: (shortcut: Shortcut) => void;
 }
@@ -32,6 +33,15 @@ export function ResultsList({ results, platform, quickSearchQuery, onSelectShort
   });
 
   const getKeysForPlatform = (shortcut: Shortcut): string => {
+    if (platform === 'all') {
+      // Show all available keys when "all" is selected
+      const keys = [];
+      if (shortcut.keys.mac) keys.push(`⌘ ${shortcut.keys.mac}`);
+      if (shortcut.keys.windows) keys.push(`Win ${shortcut.keys.windows}`);
+      if (shortcut.keys.linux) keys.push(`Linux ${shortcut.keys.linux}`);
+      return keys.length > 0 ? keys.join(' | ') : 'N/A';
+    }
+    
     switch (platform) {
       case 'mac':
         return shortcut.keys.mac || shortcut.keys.linux || shortcut.keys.windows || 'N/A';

@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import type { Platform, Shortcut, AppInfo } from '@katasumi/core';
+import { loadPlatform, savePlatform } from './utils/config.js';
+
+export type PlatformOption = Platform | 'all';
 
 type FocusSection = 'app-selector' | 'filters' | 'results';
 
@@ -7,7 +10,7 @@ interface AppState {
   // UI State
   mode: 'app-first' | 'full-phrase';
   view: 'search' | 'results' | 'detail';
-  platform: Platform;
+  platform: PlatformOption;
   aiEnabled: boolean;
 
   // App-First Mode State
@@ -32,7 +35,7 @@ interface AppState {
   setMode: (mode: 'app-first' | 'full-phrase') => void;
   toggleMode: () => void;
   setView: (view: 'search' | 'results' | 'detail') => void;
-  setPlatform: (platform: Platform) => void;
+  setPlatform: (platform: PlatformOption) => void;
   toggleAI: () => void;
   
   // App-First Mode Actions
@@ -60,10 +63,14 @@ function detectPlatform(): Platform {
   }
 }
 
+function getInitialPlatform(): PlatformOption {
+  return loadPlatform() || detectPlatform();
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   mode: 'app-first',
   view: 'search',
-  platform: detectPlatform(),
+  platform: getInitialPlatform(),
   aiEnabled: false,
   
   // App-First Mode State
@@ -85,7 +92,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ mode: currentMode === 'app-first' ? 'full-phrase' : 'app-first', view: 'search' });
   },
   setView: (view) => set({ view }),
-  setPlatform: (platform) => set({ platform }),
+  setPlatform: (platform) => {
+    savePlatform(platform);
+    set({ platform });
+  },
   toggleAI: () => set((state) => ({ aiEnabled: !state.aiEnabled })),
   
   // App-First Mode Actions

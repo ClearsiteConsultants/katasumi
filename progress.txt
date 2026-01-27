@@ -1245,3 +1245,85 @@ TEST STATUS: ✓ All 30 tests passing
   ✓ Total 51 tests passing across all packages
   ✓ TypeScript compilation successful
   ✓ Build successful across all packages
+
+## 2026-01-27 - PHASE2-TUI-005: Platform Selector Implementation
+
+### Task: Implement global platform selector accessible via F5 or Cmd+P
+
+### What Was Done:
+1. **Created PlatformOption Type**
+   - Extended Platform type with 'all' option for UI layer
+   - Allows users to view shortcuts from all platforms simultaneously
+
+2. **Implemented PlatformSelector Component**
+   - Clean, bordered overlay showing 4 platform options (macOS, Windows, Linux, All Platforms)
+   - Arrow key navigation with visual selection indicator (▸)
+   - Current platform marked with checkmark (✓)
+   - Enter to select, Esc to cancel
+   - Properly typed with PlatformOption
+
+3. **Added Keybindings**
+   - F5 key opens platform selector
+   - Cmd+P (meta+p) also opens platform selector
+   - Updated GlobalKeybindings component to handle both shortcuts
+
+4. **Configuration Persistence**
+   - Created utils/config.ts with config file management
+   - Saves/loads platform preference to ~/.katasumi/config.json
+   - Platform preference persists across TUI restarts
+   - Silently handles errors (persistence is not critical)
+
+5. **Updated Store**
+   - Modified store to use PlatformOption type
+   - Loads platform from config on initialization
+   - Saves platform to config when changed via setPlatform
+   - Falls back to detected platform if no config exists
+
+6. **Updated Components for 'all' Platform**
+   - Header: Shows "All Platforms" when 'all' is selected
+   - ResultsList: Shows shortcuts from all platforms with platform prefixes when 'all' selected
+   - DetailView: Handles 'all' platform option in key display logic
+   - FullPhraseMode: Converts 'all' to undefined for search engine (searches all platforms)
+
+7. **Comprehensive Testing**
+   - Created platform-selector.test.ts with 5 tests
+   - Tests platform changes, config persistence, and 'all' option
+   - All 46 existing TUI tests still pass
+   - All core package tests pass
+
+### Acceptance Criteria Met:
+ F5 or Cmd+P opens platform selector overlay
+ Shows 4 options: macOS, Windows, Linux, All Platforms
+ Current platform marked with indicator (✓)
+ Arrow keys navigate options
+ Enter selects platform and closes overlay
+ Esc closes overlay without changing platform
+ Platform change updates all displayed shortcuts immediately
+ Platform preference persists in config.json
+
+### Files Created:
+- packages/tui/src/components/PlatformSelector.tsx
+- packages/tui/src/utils/config.ts
+- packages/tui/src/__tests__/platform-selector.test.ts
+
+### Files Modified:
+- packages/tui/src/App.tsx (added platform selector state and overlay)
+- packages/tui/src/store.ts (added PlatformOption type, config persistence)
+- packages/tui/src/components/GlobalKeybindings.tsx (added F5 and Cmd+P handlers)
+- packages/tui/src/components/Header.tsx (handle 'all' platform display)
+- packages/tui/src/components/ResultsList.tsx (handle 'all' platform for keys)
+- packages/tui/src/components/DetailView.tsx (handle 'all' platform for keys)
+- packages/tui/src/components/FullPhraseMode.tsx (convert 'all' to undefined for search)
+
+### Test Results:
+- All 5 platform selector tests pass
+- All 46 TUI tests pass
+- All core package tests pass
+- Total: 6 tasks, 6 successful
+
+### Notes:
+- When "All Platforms" is selected, shortcuts from all platforms are shown
+- ResultsList displays platform-specific keys with prefixes (⌘, Win, Linux) when showing all
+- Search engine treats 'all' as undefined (no platform filter)
+- Config file is created at ~/.katasumi/config.json on first platform change
+- Platform preference is loaded on TUI startup

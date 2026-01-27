@@ -5,6 +5,7 @@ interface GlobalKeybindingsProps {
   onToggleMode: () => void;
   onToggleAI: () => void;
   onShowHelp: () => void;
+  onShowPlatformSelector: () => void;
   onQuit: () => void;
 }
 
@@ -12,6 +13,7 @@ export function GlobalKeybindings({
   onToggleMode,
   onToggleAI,
   onShowHelp,
+  onShowPlatformSelector,
   onQuit,
 }: GlobalKeybindingsProps) {
   useInput((input, key) => {
@@ -29,6 +31,10 @@ export function GlobalKeybindings({
     else if (key.tab) {
       onToggleMode();
     }
+    // Platform selector on Cmd+P (meta+p)
+    else if (key.meta && input === 'p') {
+      onShowPlatformSelector();
+    }
   });
 
   // Handle F-keys via process stdin
@@ -36,6 +42,8 @@ export function GlobalKeybindings({
     const handleKeypress = (str: string, key: any) => {
       if (key && key.name === 'f4') {
         onToggleAI();
+      } else if (key && key.name === 'f5') {
+        onShowPlatformSelector();
       }
     };
 
@@ -45,7 +53,7 @@ export function GlobalKeybindings({
         process.stdin.removeListener('keypress', handleKeypress);
       };
     }
-  }, [onToggleAI]);
+  }, [onToggleAI, onShowPlatformSelector]);
 
   return null;
 }

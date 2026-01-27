@@ -3,6 +3,7 @@ import { Box, Text, useInput } from 'ink';
 import type { Shortcut, Platform, DatabaseAdapter } from '@katasumi/core';
 import { SQLiteAdapter, KeywordSearchEngine } from '@katasumi/core';
 import { useAppStore } from '../store.js';
+import type { PlatformOption } from '../store.js';
 import { DetailView } from './DetailView.js';
 import { logError, getUserFriendlyMessage } from '../utils/error-logger.js';
 import * as path from 'path';
@@ -110,10 +111,13 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
       const adapter = getDbAdapter();
       const searchEngine = new KeywordSearchEngine(adapter);
       
+      // Convert PlatformOption to Platform (undefined for 'all')
+      const platformFilter: Platform | undefined = platform === 'all' ? undefined : platform;
+      
       // Use keyword search for now (AI search would go here if aiEnabled)
       const searchResults = await searchEngine.fuzzySearch(
         searchQuery,
-        { platform },
+        { platform: platformFilter },
         30 // Get top 30 results across all apps
       );
       

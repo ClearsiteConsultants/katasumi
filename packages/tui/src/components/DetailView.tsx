@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { Shortcut, Platform, DatabaseAdapter } from '@katasumi/core';
+import type { PlatformOption } from '../store.js';
 import clipboard from 'clipboardy';
 import open from 'open';
 
 interface DetailViewProps {
   shortcut: Shortcut;
-  platform: Platform;
+  platform: PlatformOption;
   onBack: () => void;
   dbAdapter: DatabaseAdapter;
 }
@@ -99,6 +100,11 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
   };
 
   const getKeysForPlatform = (): string => {
+    if (platform === 'all') {
+      // For "all", prefer mac, then windows, then linux
+      return shortcut.keys.mac || shortcut.keys.windows || shortcut.keys.linux || 'N/A';
+    }
+    
     switch (platform) {
       case 'mac':
         return shortcut.keys.mac || shortcut.keys.linux || shortcut.keys.windows || 'N/A';
@@ -245,7 +251,9 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
           <Text bold>Related Shortcuts:</Text>
           <Box flexDirection="column" marginTop={1}>
             {relatedShortcuts.map((related) => {
-              const relatedKeys = related.keys[platform] || related.keys.linux || related.keys.windows || 'N/A';
+              const relatedKeys = platform === 'all' 
+                ? (related.keys.mac || related.keys.windows || related.keys.linux || 'N/A')
+                : (related.keys[platform as Platform] || related.keys.linux || related.keys.windows || 'N/A');
               return (
                 <Box key={related.id}>
                   <Box width={20}>
