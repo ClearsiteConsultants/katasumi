@@ -185,9 +185,15 @@ Katasumi uses a hybrid approach:
 - **On-Demand Scraping**: AI-powered scraping for long-tail applications
 - **Community Contributions**: Core database enhanced by community via GitHub
 
+## 📚 Documentation
+
+- **[API Documentation](docs/api/index.html)** - Complete TypeDoc-generated API reference for the core package
+- [DEVELOPMENT_PRIORITIES.md](DEVELOPMENT_PRIORITIES.md) - Development roadmap and priorities
+- [katasumi-plan.md](katasumi-plan.md) - Detailed project planning
+
 ## 🛠️ Development
 
-This project is currently in early development. See [DEVELOPMENT_PRIORITIES.md](DEVELOPMENT_PRIORITIES.md) for the development roadmap and [katasumi-plan.md](katasumi-plan.md) for detailed project planning.
+This project is currently in early development. See the documentation links above for more details.
 
 ## 📝 License
 

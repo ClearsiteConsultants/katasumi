@@ -655,3 +655,52 @@ Next steps for web development:
 - PHASE3-WEB-003: Connect to PostgreSQL database
 - PHASE3-WEB-004: Implement user authentication
 - PHASE3-WEB-005: Add collection management UI
+
+## 2026-01-27 - PHASE1-DOCS-002: API Documentation
+
+**Task Completed:** Generate API documentation for core package using TypeDoc
+
+### What Was Done:
+1. **Installed TypeDoc**: Added typedoc as devDependency to core package
+2. **Configured TypeDoc**: Created typedoc.json with proper configuration:
+   - Entry point: src/index.ts
+   - Output: docs/api/ directory
+   - Includes search functionality, navigation, and categorization
+3. **Added npm script**: Added "docs" script to core package.json to generate documentation
+4. **Generated documentation**: Successfully generated HTML documentation with:
+   - All public interfaces (Shortcut, AppInfo, Keys, Source, DatabaseAdapter, etc.)
+   - All classes (SQLiteAdapter, PostgresAdapter, MigrationRunner, KeywordSearchEngine)
+   - All enums and type aliases
+   - Built-in search functionality
+   - Responsive navigation
+5. **Created CI/CD workflow**: Added .github/workflows/docs.yml to auto-generate and deploy docs to GitHub Pages on push to main
+6. **Updated README**: Added documentation section with link to API docs
+
+### Verification:
+- ✅ TypeDoc installed and configured
+- ✅ Documentation generated at docs/api/
+- ✅ All exports documented (interfaces, classes, types, enums)
+- ✅ Search functionality included (search.js)
+- ✅ GitHub Actions workflow created
+- ✅ README updated with documentation link
+- ✅ All tests pass (61/61)
+- ✅ Build completes successfully
+
+### Files Modified:
+- packages/core/package.json (added typedoc devDependency and docs script)
+- packages/core/typedoc.json (created)
+- .github/workflows/docs.yml (created)
+- README.md (added documentation section)
+- prd.json (marked PHASE1-DOCS-002 as complete)
+
+### Acceptance Criteria Met:
+ TypeDoc configured in core package
+ API docs generated in docs/api/ directory
+ Documentation covers all public interfaces and classes
+ Code examples included in JSDoc comments (existing comments preserved)
+ Documentation includes search functionality
+ README links to API documentation
+ Documentation auto-generated in CI pipeline
+   Documentation deployment to GitHub Pages (workflow configured, awaits repository setup)
+
+**Status:** Complete and ready for deployment

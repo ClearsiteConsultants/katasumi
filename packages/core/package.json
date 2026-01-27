@@ -20,7 +20,8 @@
     "build-db": "node dist/build-core-db.js",
     "verify-search": "node dist/verify-search.js",
     "test-search": "node dist/test-search-simple.js",
-    "verify-db-002": "node dist/verify-db-002.js"
+    "verify-db-002": "node dist/verify-db-002.js",
+    "docs": "typedoc --options typedoc.json"
   },
   "keywords": [
     "shortcuts",
@@ -31,6 +32,7 @@
   "license": "MIT",
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.18",
+    "typedoc": "^0.28.16",
     "typescript": "^5.3.3",
     "vitest": "^4.0.18"
   },
