@@ -7,6 +7,7 @@ import { AppSelector } from './AppSelector.js';
 import { FiltersBar } from './FiltersBar.js';
 import { ResultsList } from './ResultsList.js';
 import { DetailView } from './DetailView.js';
+import { logError, getUserFriendlyMessage } from '../utils/error-logger.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -19,6 +20,11 @@ const __dirname = dirname(__filename);
 interface AppFirstModeProps {
   selectedApp: AppInfo | null;
   view: 'search' | 'results' | 'detail';
+}
+
+interface AppFirstModeState {
+  loading: boolean;
+  error: string | null;
 }
 
 // Singleton database adapter
@@ -80,16 +86,26 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
   const selectShortcut = useAppStore((state) => state.selectShortcut);
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load available apps on mount
   useEffect(() => {
     const loadApps = async () => {
       try {
+        setError(null);
         const adapter = getDbAdapter();
         const apps = await adapter.getApps();
-        setAvailableApps(apps);
+        
+        if (apps.length === 0) {
+          setError('No apps found in database. Please run database setup.');
+          logError('No apps found', new Error('Database returned empty apps list'));
+        } else {
+          setAvailableApps(apps);
+        }
       } catch (error) {
-        console.error('Error loading apps:', error);
+        const friendlyMessage = getUserFriendlyMessage(error);
+        setError(friendlyMessage);
+        logError('Error loading apps', error);
         setAvailableApps([]);
       } finally {
         setLoading(false);
@@ -109,11 +125,20 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
 
     const loadShortcuts = async () => {
       try {
+        setError(null);
         const adapter = getDbAdapter();
         const shortcuts = await adapter.getShortcutsByApp(selectedApp.name);
-        setResults(shortcuts);
+        
+        if (shortcuts.length === 0) {
+          // This is not an error - just an empty result
+          setResults([]);
+        } else {
+          setResults(shortcuts);
+        }
       } catch (error) {
-        console.error('Error loading shortcuts:', error);
+        const friendlyMessage = getUserFriendlyMessage(error);
+        setError(friendlyMessage);
+        logError(`Error loading shortcuts for app: ${selectedApp.name}`, error);
         setResults([]);
       }
     };
@@ -164,6 +189,26 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
         marginY={1}
       >
         <Text>Loading apps...</Text>
+      </Box>
+    );
+  }
+
+  // Show error if database failed to load
+  if (error) {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor="red"
+        paddingX={2}
+        paddingY={1}
+        marginY={1}
+      >
+        <Text color="red" bold>Error:</Text>
+        <Text color="red">{error}</Text>
+        <Box marginTop={1}>
+          <Text dimColor>Check ~/.katasumi/error.log for details</Text>
+        </Box>
       </Box>
     );
   }

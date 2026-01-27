@@ -89,7 +89,11 @@ export function AppSelector({
 
       <Box flexDirection="column" marginTop={1}>
         {filteredApps.length === 0 ? (
-          <Text dimColor>No apps found</Text>
+          <Text dimColor>
+            {query 
+              ? `No apps match your search "${query}". Try a different query.`
+              : 'No apps found in database.'}
+          </Text>
         ) : (
           filteredApps.slice(0, 10).map((app, index) => {
             const isSelected = index === selectedIndex;

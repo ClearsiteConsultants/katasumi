@@ -50,7 +50,13 @@ export function ResultsList({ results, platform, quickSearchQuery, onSelectShort
       
       {filteredResults.length === 0 ? (
         <Box marginTop={1}>
-          <Text dimColor>No shortcuts found</Text>
+          <Text dimColor>
+            {quickSearchQuery 
+              ? `No shortcuts found for "${quickSearchQuery}". Try adjusting your search query.`
+              : results.length === 0
+                ? 'No shortcuts found. Try adjusting filters or search query.'
+                : `No shortcuts match "${quickSearchQuery}".`}
+          </Text>
         </Box>
       ) : (
         <Box flexDirection="column" marginTop={1}>

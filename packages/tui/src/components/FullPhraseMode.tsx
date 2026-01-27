@@ -4,6 +4,7 @@ import type { Shortcut, Platform, DatabaseAdapter } from '@katasumi/core';
 import { SQLiteAdapter, KeywordSearchEngine } from '@katasumi/core';
 import { useAppStore } from '../store.js';
 import { DetailView } from './DetailView.js';
+import { logError, getUserFriendlyMessage } from '../utils/error-logger.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -54,6 +55,7 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
   const [results, setResults] = useState<Shortcut[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const platform = useAppStore((state) => state.platform);
   const selectedShortcut = useAppStore((state) => state.selectedShortcut);
   const selectShortcut = useAppStore((state) => state.selectShortcut);
@@ -103,6 +105,7 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
 
   const performSearch = async (searchQuery: string) => {
     setIsSearching(true);
+    setError(null);
     try {
       const adapter = getDbAdapter();
       const searchEngine = new KeywordSearchEngine(adapter);
@@ -116,7 +119,9 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
       
       setResults(searchResults);
     } catch (error) {
-      console.error('Error performing search:', error);
+      const friendlyMessage = getUserFriendlyMessage(error);
+      setError(friendlyMessage);
+      logError(`Error performing search for query: ${searchQuery}`, error);
       setResults([]);
     } finally {
       setIsSearching(false);
@@ -200,7 +205,15 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
         </Box>
 
         {/* Results */}
-        {isSearching ? (
+        {error ? (
+          <Box marginTop={1} paddingX={2} borderStyle="single" borderColor="red">
+            <Text color="red" bold>Error: </Text>
+            <Text color="red">{error}</Text>
+            <Box marginTop={1}>
+              <Text dimColor>Check ~/.katasumi/error.log for details</Text>
+            </Box>
+          </Box>
+        ) : isSearching ? (
           <Box marginTop={1} paddingX={2}>
             <Text dimColor>Searching...</Text>
           </Box>
@@ -244,7 +257,7 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
           </Box>
         ) : query.trim().length > 0 ? (
           <Box marginTop={1} paddingX={2}>
-            <Text dimColor>No results found for "{query}"</Text>
+            <Text dimColor>No results found for "{query}". Try a different search query.</Text>
           </Box>
         ) : null}
       </Box>
