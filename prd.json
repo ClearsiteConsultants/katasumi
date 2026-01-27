@@ -354,7 +354,9 @@
         "Disable network and verify fallback to keyword search",
         "Call explainShortcut() on 'Ctrl+w v' and verify plain English explanation",
         "Search with invalid API key and verify graceful error handling",
-        "Measure search time and verify <2 seconds for network-based AI"
+        "Measure search time and verify <2 seconds for network-based AI",
+        "Run 'npm run test --workspace=@katasumi/core' to execute AI search engine tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -380,7 +382,9 @@
         "Search for 'j' in vim context and verify 'move down' result",
         "Search for nonexistent key 'Cmd+Shift+F99' and verify empty array",
         "Search for 'cmd+k' (lowercase) and verify matches 'Cmd+K'",
-        "Search across all platforms and verify results include mac/windows/linux variants"
+        "Search across all platforms and verify results include mac/windows/linux variants",
+        "Run 'npm run test --workspace=@katasumi/core' to execute searchByKeys tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -409,7 +413,9 @@
         "Verify shortcuts appear in database with correct user_id",
         "GET /api/sync/pull with since timestamp and verify only recent shortcuts",
         "POST to /api/auth/logout and verify token is invalidated",
-        "Use invalidated token on sync endpoint and verify 401"
+        "Use invalidated token on sync endpoint and verify 401",
+        "Run 'npm run test --workspace=@katasumi/web' to execute API endpoint tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -439,7 +445,9 @@
         "Type 'move' in Quick Search and verify results filter",
         "Press F3 and verify focus moves to Context filter",
         "Press F2 and verify return to app selector",
-        "Measure filter response time and verify <100ms"
+        "Measure filter response time and verify <100ms",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute App-First mode tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -469,7 +477,9 @@
         "Press F4 and verify AI toggle (ON \u2192 OFF \u2192 ON)",
         "Verify AI indicator updates immediately",
         "With AI ON, search and verify AI insight message appears",
-        "With AI OFF, verify 'Keyword search only' message"
+        "With AI OFF, verify 'Keyword search only' message",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute Full-Phrase mode tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -501,7 +511,9 @@
         "Press 'c' key and verify keys copied to clipboard (paste to verify)",
         "Press 'o' key and verify browser opens with source URL",
         "Press Esc and verify return to results view",
-        "Verify related shortcuts section shows relevant alternatives"
+        "Verify related shortcuts section shows relevant alternatives",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute detail view tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -529,7 +541,9 @@
         "Verify search results now show Windows key variants",
         "Press F5 again and verify Windows is marked as current",
         "Check ~/.katasumi/config.json and verify platform saved",
-        "Restart TUI and verify platform preference loaded"
+        "Restart TUI and verify platform preference loaded",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute platform selector tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -557,7 +571,9 @@
         "Verify Enter confirms in all contexts (select app, shortcut, dropdown)",
         "Verify Esc backs out from detail view \u2192 results \u2192 app selector",
         "Verify focus indicator visible on all focused elements",
-        "Try to find keyboard traps (should find none)"
+        "Try to find keyboard traps (should find none)",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute keyboard navigation tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -586,7 +602,9 @@
         "Login with created account and verify redirect to search page",
         "Login with wrong password and verify error message",
         "Click Google OAuth button and verify OAuth flow initiates",
-        "Check database and verify password is hashed (not plaintext)"
+        "Check database and verify password is hashed (not plaintext)",
+        "Run 'npm run test --workspace=@katasumi/web' to execute authentication tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -615,7 +633,9 @@
         "Type in Quick Search and verify results filter in <100ms",
         "Press Cmd+K and verify app selector reopens",
         "Resize to mobile width and verify filters stack vertically",
-        "Initiate search and verify loading spinner appears"
+        "Initiate search and verify loading spinner appears",
+        "Run 'npm run test --workspace=@katasumi/web' to execute App-First mode UI tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -643,7 +663,9 @@
         "Click AI toggle and verify indicator changes ON \u2192 OFF",
         "Verify query count decrements for free users",
         "Login as premium user and verify 'Unlimited' shown",
-        "Verify app icons/names displayed correctly"
+        "Verify app icons/names displayed correctly",
+        "Run 'npm run test --workspace=@katasumi/web' to execute Full-Phrase mode UI tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -671,7 +693,9 @@
         "Press Esc and verify modal closes",
         "Click outside modal and verify it closes",
         "Find shortcut with long description and verify scrolling works",
-        "Click related shortcut and verify its modal opens"
+        "Click related shortcut and verify its modal opens",
+        "Run 'npm run test --workspace=@katasumi/web' to execute detail modal tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -699,7 +723,9 @@
         "Make sync request without auth header and verify 401",
         "Login and make GET /api/sync/pull with valid token",
         "Verify user's shortcuts returned",
-        "Make POST /api/sync/push with new shortcut and verify saved"
+        "Make POST /api/sync/push with new shortcut and verify saved",
+        "Run 'npm run test --workspace=@katasumi/web' to execute API route tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 3,
@@ -727,7 +753,9 @@
         "Verify badges show correct status (build passing, etc.)",
         "Check license file matches README (MIT)",
         "Verify table of contents links work",
-        "Review screenshots/GIFs and verify they're current"
+        "Review screenshots/GIFs and verify they're current",
+        "Run 'npm run test --workspace=@katasumi/core' to verify documentation links",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -755,7 +783,8 @@
         "Create git tag v1.0.0 and verify npm publish workflow runs",
         "Check npm registry and verify TUI package published",
         "Push to main and verify Vercel deployment workflow runs",
-        "Check Vercel and verify web app deployed"
+        "Check Vercel and verify web app deployed",
+        "Run 'npm test' from root to verify CI pipeline tests pass"
       ],
       "passes": false,
       "priority": 4,
@@ -783,7 +812,9 @@
         "Check sync_logs table and verify conflict was logged",
         "Set strategy='manual' and verify user is prompted",
         "Verify conflict_version incremented after resolution",
-        "Set strategy='merge' and verify tags from both versions combined"
+        "Set strategy='merge' and verify tags from both versions combined",
+        "Run 'npm run test --workspace=@katasumi/core' to execute conflict resolution tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -840,7 +871,9 @@
         "Verify Detail View section includes c, o",
         "Press Esc and verify overlay closes",
         "Resize terminal to small height and verify help scrollable",
-        "Open help in App-First mode vs Full-Phrase and verify differences"
+        "Open help in App-First mode vs Full-Phrase and verify differences",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute help overlay tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -868,7 +901,9 @@
         "Check config.json and verify token stored",
         "Run 'ls -la ~/.katasumi/config.json' and verify 600 permissions",
         "Run 'katasumi login --web' and verify browser opens",
-        "With invalid credentials, verify error message displayed"
+        "With invalid credentials, verify error message displayed",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute login command tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -896,7 +931,9 @@
         "Type in app selector and measure filter update time (<50ms)",
         "Navigate to detail view and measure render time (<50ms)",
         "Monitor memory with process.memoryUsage() and verify <100MB",
-        "Log SQLite query times and verify <10ms"
+        "Log SQLite query times and verify <10ms",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute performance tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -924,7 +961,9 @@
         "Configure invalid AI API key and search, verify fallback to keyword",
         "As free user, exceed 5 AI queries and verify rate limit message",
         "Check error.log and verify errors logged with timestamps",
-        "Verify no stack traces shown in UI (only in log file)"
+        "Verify no stack traces shown in UI (only in log file)",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute error handling tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -952,7 +991,9 @@
         "Verify settings test opens panel and saves changes",
         "Check snapshots and verify UI layout captured",
         "Run tests headless in CI and verify passing",
-        "Check coverage and verify >60%"
+        "Check coverage and verify >60%",
+        "Run 'npm run test --workspace=@katasumi/tui' to execute integration tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -980,7 +1021,9 @@
         "Edit custom shortcut and verify changes saved",
         "Delete custom shortcut and verify removed from list",
         "Click Sync Now and verify last sync time updates",
-        "Click Export and verify JSON file downloads"
+        "Click Export and verify JSON file downloads",
+        "Run 'npm run test --workspace=@katasumi/web' to execute dashboard tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -1008,7 +1051,9 @@
         "Resize to 768px and verify two-column layout",
         "Resize to 1024px and verify full desktop layout with sidebar",
         "On mobile, verify hamburger menu works",
-        "Open detail modal on mobile and verify full-screen display"
+        "Open detail modal on mobile and verify full-screen display",
+        "Run 'npm run test --workspace=@katasumi/web' to execute responsive design tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -1041,7 +1086,9 @@
         "Press Cmd+K (Mac) or Ctrl+K (Windows) and verify app selector",
         "Press Cmd+A and verify AI toggle",
         "Press ? and verify help overlay with all shortcuts",
-        "Verify help overlay lists all keyboard shortcuts with descriptions"
+        "Verify help overlay lists all keyboard shortcuts with descriptions",
+        "Run 'npm run test --workspace=@katasumi/web' to execute keyboard shortcut tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -1070,7 +1117,9 @@
         "Verify same search results appear",
         "Click Share button and verify URL copied to clipboard",
         "Check page source and verify Open Graph meta tags present",
-        "Navigate through app, then press browser back button and verify works"
+        "Navigate through app, then press browser back button and verify works",
+        "Run 'npm run test --workspace=@katasumi/web' to execute URL sharing tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -1102,7 +1151,9 @@
         "Enable screen reader and navigate through app",
         "Verify all functionality accessible via screen reader",
         "Verify skip link appears on tab and works",
-        "Test with keyboard only (no mouse) and verify full functionality"
+        "Test with keyboard only (no mouse) and verify full functionality",
+        "Run 'npm run test --workspace=@katasumi/web' to execute accessibility tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -1130,7 +1181,9 @@
         "Check test runs in Chrome, Firefox, Safari",
         "Verify mobile viewport test runs at 375px width",
         "Check visual regression screenshots for diffs",
-        "Run in CI and verify passing"
+        "Run in CI and verify passing",
+        "Run 'npm run test:e2e --workspace=@katasumi/web' to execute E2E tests",
+        "Run 'npm test' from root to execute all package tests"
       ],
       "passes": false,
       "priority": 4,
@@ -1188,7 +1241,8 @@
         "Review PR checklist and verify items are actionable",
         "Verify code style guide matches .eslintrc and .prettierrc",
         "Follow development setup and verify repo runs locally",
-        "Verify Code of Conduct link works"
+        "Verify Code of Conduct link works",
+        "Run 'npm test' from root to verify documentation tests"
       ],
       "passes": false,
       "priority": 5,
