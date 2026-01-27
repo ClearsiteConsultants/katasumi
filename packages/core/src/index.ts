@@ -6,3 +6,4 @@ export * from './postgres-adapter';
 export * from './keyword-search-engine';
 export * from './ai-search-engine';
 export { PrismaClient } from './generated/prisma';
+export { PrismaClient as PrismaClientPostgres } from './generated/prisma-postgres';

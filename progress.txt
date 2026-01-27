@@ -817,3 +817,76 @@ TECHNICAL NOTES:
 - All 33 keyword search engine tests pass (including 15 new searchByKeys tests)
 - All 95 core package tests pass
 - Build successful with no TypeScript errors
+
+## 2026-01-27 - PHASE1-SYNC-001: REST API Endpoints for Authentication and Sync
+
+### Implementation Summary
+Implemented complete REST API endpoints for authentication and bidirectional sync between TUI and cloud:
+
+**Authentication Endpoints:**
+- POST /api/auth/signup - Creates new user accounts with email/password, returns JWT token
+- POST /api/auth/login - Authenticates users with email/password, returns JWT token
+- POST /api/auth/logout - Invalidates JWT tokens
+
+**Sync Endpoints:**
+- GET /api/sync/pull - Returns shortcuts modified since provided timestamp, requires JWT auth
+- POST /api/sync/push - Accepts array of shortcuts and writes to database, requires JWT auth
+- GET /api/sync/status - Returns last sync timestamp and pending changes count, requires JWT auth
+
+**Technical Implementation:**
+- Created JWT-based authentication system with bcryptjs for password hashing
+- Implemented middleware for token extraction and validation
+- Added token invalidation system for logout functionality
+- Created Prisma schema for PostgreSQL with User, UserShortcut, Collection, and SyncLog models
+- Implemented proper error handling and HTTP status codes (401 for unauthorized, 409 for conflicts, etc.)
+- Used Prisma adapter for PostgreSQL connectivity in Next.js environment
+- All sync endpoints validate user_id matches token user_id to prevent unauthorized access
+- Added sync logging for audit trail
+
+**Testing:**
+- Created vitest test suite for authentication utilities
+- All tests passing (4/4 tests in auth.test.ts)
+- Type checking passing across all packages
+- Build successful for all packages
+
+**Files Created/Modified:**
+- packages/web/lib/auth.ts - JWT and password utilities
+- packages/web/lib/db.ts - Prisma client and database operations
+- packages/web/app/api/auth/signup/route.ts - Signup endpoint
+- packages/web/app/api/auth/login/route.ts - Login endpoint  
+- packages/web/app/api/auth/logout/route.ts - Logout endpoint
+- packages/web/app/api/sync/pull/route.ts - Pull sync endpoint
+- packages/web/app/api/sync/push/route.ts - Push sync endpoint
+- packages/web/app/api/sync/status/route.ts - Sync status endpoint
+- packages/web/prisma/schema.prisma - PostgreSQL schema for web app
+- packages/web/prisma.config.ts - Prisma configuration
+- packages/web/__tests__/auth.test.ts - Authentication tests
+- packages/web/vitest.config.ts - Test configuration
+- packages/core/src/index.ts - Added PostgreSQL Prisma client export
+
+**Dependencies Added:**
+- bcryptjs, @types/bcryptjs - Password hashing
+- jsonwebtoken, @types/jsonwebtoken - JWT token generation/verification
+- pg, @types/pg - PostgreSQL driver
+- @prisma/adapter-pg - Prisma PostgreSQL adapter
+- dotenv - Environment variable management
+
+### Acceptance Criteria Met
+ POST /api/auth/login accepts email/password and returns JWT token
+ POST /api/auth/signup creates new user account
+ POST /api/auth/logout invalidates JWT token
+ GET /api/sync/pull returns shortcuts modified since provided timestamp
+ POST /api/sync/push accepts array of shortcuts and writes to database
+ GET /api/sync/status returns last sync timestamp and pending changes count
+ All sync endpoints require valid JWT token in Authorization header
+ Endpoints return 401 for invalid/expired tokens
+ Push endpoint validates user_id matches token user_id
+
+### Verification Steps Completed
+ Created authentication system with signup/login/logout
+ Implemented JWT token generation and validation
+ Created sync endpoints with proper authorization
+ Verified type checking passes
+ All tests pass (npm test)
+ Build successful for all packages
+

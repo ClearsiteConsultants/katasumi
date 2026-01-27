@@ -1,0 +1,98 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { extractToken, verifyToken, isTokenInvalidated } from '@/lib/auth';
+import { prisma } from '@/lib/db';
+
+/**
+ * GET /api/sync/pull
+ * Pull shortcuts modified since provided timestamp
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // Verify authentication
+    const authHeader = request.headers.get('Authorization');
+    const token = extractToken(authHeader);
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: 'No token provided' },
+        { status: 401 }
+      );
+    }
+    
+    if (isTokenInvalidated(token)) {
+      return NextResponse.json(
+        { error: 'Token has been invalidated' },
+        { status: 401 }
+      );
+    }
+    
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+    
+    // Get since parameter from query string
+    const searchParams = request.nextUrl.searchParams;
+    const sinceParam = searchParams.get('since');
+    
+    let since: Date | undefined;
+    if (sinceParam) {
+      since = new Date(sinceParam);
+      if (isNaN(since.getTime())) {
+        return NextResponse.json(
+          { error: 'Invalid since timestamp' },
+          { status: 400 }
+        );
+      }
+    }
+    
+    // Pull shortcuts for this user
+    const shortcuts = await prisma.userShortcut.findMany({
+      where: {
+        userId: payload.userId,
+        ...(since && { updatedAt: { gte: since } }),
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+    
+    // Transform to API format
+    const result = shortcuts.map(s => ({
+      id: s.id,
+      app: s.app,
+      action: s.action,
+      keys: {
+        mac: s.keysMac || undefined,
+        windows: s.keysWindows || undefined,
+        linux: s.keysLinux || undefined,
+      },
+      context: s.context || undefined,
+      category: s.category || undefined,
+      tags: s.tags.split(',').filter(t => t.trim()),
+      source: {
+        type: s.sourceType,
+        url: s.sourceUrl || '',
+        scrapedAt: s.sourceScrapedAt || new Date(),
+        confidence: s.sourceConfidence || 1.0,
+      },
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    }));
+    
+    return NextResponse.json({
+      shortcuts: result,
+      count: result.length,
+      pulledAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Pull error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
