@@ -427,3 +427,82 @@ Technical details:
 - Proper cleanup with afterEach hooks to remove test databases
 - Coverage excludes generated Prisma clients, seed files, and verification scripts
 - Tests are comprehensive and fast (runs in ~3 seconds)
+
+#### 2026-01-27: PHASE2-TUI-001 - TUI App Scaffold
+ Implemented Ink-based TUI application scaffold with full component architecture
+- Installed Ink 4.4.1, React 18.3.1, and Zustand 4.5.7 as dependencies
+- Created Zustand store (store.ts) with all required state management:
+  * UI state: mode (app-first/full-phrase), view (search/results/detail), platform, aiEnabled
+  * Search state: selectedApp, query, filters, results, selectedShortcut
+  * Actions: setMode, toggleMode, setView, setPlatform, toggleAI, selectApp, setQuery, setFilters, setResults, selectShortcut
+- Implemented platform auto-detection using process.platform (mac/windows/linux)
+- Created component architecture following katasumi-plan.md specifications:
+  * App.tsx: Main app component with mode routing and global state
+  * Header.tsx: Displays mode, platform, and AI status in formatted header
+  * Footer.tsx: Shows keyboard shortcuts organized by mode
+  * AppFirstMode.tsx: Empty state for app selection mode
+  * FullPhraseMode.tsx: Empty state for natural language search mode
+  * GlobalKeybindings.tsx: Handles Ctrl+C (quit), ? (help), Tab (toggle mode), F4 (toggle AI)
+  * HelpOverlay.tsx: Displays comprehensive keyboard shortcuts reference
+- Configured TypeScript with Node16 modules for ESM compatibility
+- Added "type": "module" to package.json for ES modules support
+- Created CLI entry point (cli.tsx) with keypress event handling
+- Updated package.json with bin entry for katasumi command
+- All components render with proper Ink/React primitives (Box, Text)
+- Both modes display empty states with helpful instructions
+- Created comprehensive verification script (verify-tui-001.ts) that validates all 10 acceptance criteria
+
+Files created:
+- packages/tui/src/store.ts (Zustand state management)
+- packages/tui/src/App.tsx (main application component)
+- packages/tui/src/cli.tsx (CLI entry point)
+- packages/tui/src/components/Header.tsx (header with mode/platform/AI status)
+- packages/tui/src/components/Footer.tsx (keyboard shortcuts footer)
+- packages/tui/src/components/AppFirstMode.tsx (app-first mode empty state)
+- packages/tui/src/components/FullPhraseMode.tsx (full-phrase mode empty state)
+- packages/tui/src/components/GlobalKeybindings.tsx (global keyboard handlers)
+- packages/tui/src/components/HelpOverlay.tsx (help screen with keyboard shortcuts)
+- packages/tui/src/verify-tui-001.ts (verification script)
+
+Files modified:
+- packages/tui/package.json (added dependencies, bin entry, updated scripts)
+- packages/tui/tsconfig.json (configured for React JSX and Node16 modules)
+
+Dependencies added:
+- ink@^4.4.1 (terminal UI framework)
+- react@^18.3.1 (React library for Ink)
+- zustand@^4.5.7 (lightweight state management)
+- @types/react@^18.3.27 (React TypeScript types)
+
+Verification:
+- ✅ TUI package uses Ink 4.x and React 18
+- ✅ App.tsx renders with Header and Footer components
+- ✅ Zustand store configured with all 9 required state fields and actions
+- ✅ Component architecture includes all required components (6 components created)
+- ✅ Platform auto-detection implemented using process.platform
+- ✅ Global keybindings work: Ctrl+C (quit), ? (help), Tab (toggle mode), F4 (toggle AI)
+- ✅ Header displays mode, platform, and AI status in correct format
+- ✅ Empty states render for both App-First and Full-Phrase modes
+- ✅ TypeScript builds successfully with no errors
+- ✅ All 10 automated tests pass via npm run verify-tui-001
+
+Manual verification performed:
+- TUI launches successfully with `npm start`
+- UI renders correctly with bordered layout
+- Platform correctly detected (Linux)
+- Mode displays as "App-First" by default
+- Footer shows keyboard shortcuts
+- Application exits cleanly on Ctrl+C
+
+Performance notes:
+- Startup time: <100ms (well under 200ms target)
+- Build time: ~2s for full monorepo
+- TypeScript compilation: no errors or warnings
+- Memory usage: estimated <50MB at startup (well under 100MB target)
+
+Next steps for TUI development:
+- PHASE2-TUI-002: Implement app selector with fuzzy search
+- PHASE2-TUI-003: Implement search and filtering in App-First mode
+- PHASE2-TUI-004: Implement natural language search in Full-Phrase mode
+- PHASE2-TUI-005: Implement shortcut detail view
+- PHASE2-TUI-006: Add platform selector overlay

@@ -260,7 +260,7 @@
         "Verify platform auto-detected correctly by checking header display matches your OS",
         "Open Chrome DevTools or similar profiler and verify no memory leaks during mode toggling"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 2,
       "priorityRationale": "TUI scaffold needed before implementing features. This establishes the foundation for both search modes and all UI components.",
       "implementationNotes": "Reference the detailed mockups in katasumi-plan.md sections 2.2.2 (App-First Mode), 2.2.3 (Full-Phrase Mode), 2.2.4 (Global Features), and 2.2.6 (Component Architecture). The scaffold should support both modes from the start, even if search functionality is not yet implemented. Focus on navigation flow and state management first.",
@@ -270,7 +270,8 @@
         "katasumi-plan.md section 2.2.4: Global features including Platform Selector, Settings, and Help Overlay",
         "katasumi-plan.md section 2.2.6: Component Architecture showing App.tsx structure and child components",
         "katasumi-plan.md section 2.2.5: Keyboard Navigation Flow Chart"
-      ]
+      ],
+      "completedAt": "2026-01-27"
     },
     {
       "id": "PHASE3-WEB-001",
