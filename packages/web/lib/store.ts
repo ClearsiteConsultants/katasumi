@@ -28,6 +28,7 @@ interface AppState {
   filters: SearchFilters
   results: Shortcut[]
   selectedShortcut: Shortcut | null
+  selectedResultIndex: number
   
   // Actions
   setMode: (mode: SearchMode) => void
@@ -45,6 +46,8 @@ interface AppState {
   setFilters: (filters: SearchFilters) => void
   setResults: (results: Shortcut[]) => void
   selectShortcut: (shortcut: Shortcut | null) => void
+  setSelectedResultIndex: (index: number) => void
+  navigateResults: (direction: 'up' | 'down') => void
 }
 
 // Detect platform from user agent or default
@@ -76,6 +79,7 @@ export const useStore = create<AppState>((set) => ({
   filters: {},
   results: [],
   selectedShortcut: null,
+  selectedResultIndex: -1,
   
   // UI actions
   setMode: (mode) => set({ mode }),
@@ -96,6 +100,19 @@ export const useStore = create<AppState>((set) => ({
   selectApp: (selectedApp) => set({ selectedApp }),
   setQuery: (query) => set({ query }),
   setFilters: (filters) => set({ filters }),
-  setResults: (results) => set({ results }),
+  setResults: (results) => set({ results, selectedResultIndex: -1 }),
   selectShortcut: (selectedShortcut) => set({ selectedShortcut }),
+  setSelectedResultIndex: (selectedResultIndex) => set({ selectedResultIndex }),
+  navigateResults: (direction) => set((state) => {
+    if (state.results.length === 0) return state
+    
+    let newIndex = state.selectedResultIndex
+    if (direction === 'down') {
+      newIndex = Math.min(state.results.length - 1, newIndex + 1)
+    } else {
+      newIndex = Math.max(0, newIndex - 1)
+    }
+    
+    return { selectedResultIndex: newIndex }
+  }),
 }))

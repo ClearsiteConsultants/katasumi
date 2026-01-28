@@ -1,7 +1,7 @@
 {
   "project": "Katasumi",
   "version": "1.0.0",
-  "lastUpdated": "2026-01-28T00:30:00.000Z",
+  "lastUpdated": "2026-01-28T23:57:58.743Z",
   "requirements": [
     {
       "id": "PHASE1-DB-003",
@@ -619,7 +619,9 @@
       "passes": true,
       "priority": 3,
       "priorityRationale": "Keyboard navigation should be built into features as they develop",
-      "relatedRequirements": ["PHASE3-WEB-014 - Update to vi-style shortcuts (replaces F-keys with a/p/g/f)"],
+      "relatedRequirements": [
+        "PHASE3-WEB-014 - Update to vi-style shortcuts (replaces F-keys with a/p/g/f)"
+      ],
       "implementationNotes": [
         "NOTE: This requirement needs to be updated to match PHASE3-WEB-014 vi-style shortcuts",
         "Created comprehensive keyboard navigation test suite in packages/tui/src/__tests__/keyboard-navigation.test.ts",
@@ -1230,10 +1232,30 @@
         "Run 'npm run test --workspace=@katasumi/web' to execute keyboard shortcut tests",
         "Run 'npm test' from root to execute all package tests"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
       "priorityRationale": "UPDATED: Now P1 - keyboard shortcuts are critical for keyboard-first tool. See PHASE3-WEB-014 for vi-style implementation that replaces F-keys.",
-      "relatedRequirements": ["PHASE3-WEB-014 - Superseded by vi-style shortcuts requirement"]
+      "relatedRequirements": [
+        "PHASE3-WEB-014 - Superseded by vi-style shortcuts requirement"
+      ],
+      "implementationNotes": [
+        "Implemented all keyboard shortcuts with Cmd/Ctrl modifiers",
+        "Tab - toggles between App-First and Full-Phrase modes",
+        "/ - focuses search input field",
+        "↑↓ - navigate through search results with visual highlighting",
+        "Enter - opens detail modal for selected result",
+        "Esc - closes modals, overlays, and dropdowns in priority order",
+        "Cmd/Ctrl+K - opens app selector",
+        "Cmd/Ctrl+F - focuses filters dropdown",
+        "Cmd/Ctrl+A - toggles AI mode",
+        "Cmd/Ctrl+P - opens platform selector",
+        "Cmd/Ctrl+, - opens settings",
+        "? - opens keyboard shortcuts help overlay",
+        "Help overlay comprehensively lists all shortcuts with descriptions",
+        "Added selectedResultIndex state to track keyboard navigation",
+        "Results automatically scroll into view when navigating with keyboard",
+        "All shortcuts ignore input when user is typing in text fields"
+      ]
     },
     {
       "id": "PHASE3-WEB-010",

@@ -31,27 +31,55 @@ export function HelpOverlay() {
             </h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Toggle Mode</span>
+                <span className="text-gray-700 dark:text-gray-300">Toggle Mode (App-First ↔ Full-Phrase)</span>
                 <kbd className="kbd">Tab</kbd>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-700 dark:text-gray-300">Toggle AI</span>
-                <kbd className="kbd">F4</kbd>
+                <div className="flex gap-2">
+                  <kbd className="kbd">Cmd+A</kbd>
+                  <span className="text-gray-500">or</span>
+                  <kbd className="kbd">Ctrl+A</kbd>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Open App Selector</span>
+                <div className="flex gap-2">
+                  <kbd className="kbd">Cmd+K</kbd>
+                  <span className="text-gray-500">or</span>
+                  <kbd className="kbd">Ctrl+K</kbd>
+                </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-700 dark:text-gray-300">Platform Selector</span>
-                <kbd className="kbd">F5</kbd>
+                <div className="flex gap-2">
+                  <kbd className="kbd">Cmd+P</kbd>
+                  <span className="text-gray-500">or</span>
+                  <kbd className="kbd">Ctrl+P</kbd>
+                </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Help</span>
-                <kbd className="kbd">?</kbd>
+                <span className="text-gray-700 dark:text-gray-300">Focus Filters</span>
+                <div className="flex gap-2">
+                  <kbd className="kbd">Cmd+F</kbd>
+                  <span className="text-gray-500">or</span>
+                  <kbd className="kbd">Ctrl+F</kbd>
+                </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-700 dark:text-gray-300">Settings</span>
-                <kbd className="kbd">Cmd+,</kbd> or <kbd className="kbd">Ctrl+,</kbd>
+                <div className="flex gap-2">
+                  <kbd className="kbd">Cmd+,</kbd>
+                  <span className="text-gray-500">or</span>
+                  <kbd className="kbd">Ctrl+,</kbd>
+                </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Close Overlay</span>
+                <span className="text-gray-700 dark:text-gray-300">Keyboard Shortcuts Help</span>
+                <kbd className="kbd">?</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Close Modal/Overlay</span>
                 <kbd className="kbd">Esc</kbd>
               </div>
             </div>
@@ -63,15 +91,18 @@ export function HelpOverlay() {
             </h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Focus Search</span>
+                <span className="text-gray-700 dark:text-gray-300">Focus Search Input</span>
                 <kbd className="kbd">/</kbd>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Navigate Results</span>
-                <kbd className="kbd">↑</kbd> <kbd className="kbd">↓</kbd>
+                <span className="text-gray-700 dark:text-gray-300">Navigate Results Up/Down</span>
+                <div className="flex gap-2">
+                  <kbd className="kbd">↑</kbd>
+                  <kbd className="kbd">↓</kbd>
+                </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Select Result</span>
+                <span className="text-gray-700 dark:text-gray-300">Open Selected Result Detail</span>
                 <kbd className="kbd">Enter</kbd>
               </div>
             </div>

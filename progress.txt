@@ -1644,3 +1644,57 @@ Notes:
 - Global npm package not yet published, added note about this in Quick Install
 - Type checking via base tsconfig shows pre-existing type errors in TUI (JSX issues), but packages build successfully
 - All package tests pass successfully
+
+---
+Date: 2026-01-28
+Task: PHASE3-WEB-009 - Implement keyboard shortcuts
+Status: COMPLETED
+
+Changes Made:
+1. Updated app/page.tsx to handle all keyboard shortcuts:
+   - Tab: Toggle mode (with isTyping check)
+   - /: Focus search input
+   - Cmd/Ctrl+A: Toggle AI
+   - Cmd/Ctrl+P: Open platform selector
+   - ?: Open help overlay
+   - Cmd/Ctrl+,: Open settings
+   - Esc: Close overlays (with priority for detail modal)
+
+2. Enhanced lib/store.ts:
+   - Added selectedResultIndex state
+   - Added setSelectedResultIndex and navigateResults actions
+   - Reset selectedResultIndex when results change
+
+3. Updated components/ResultsList.tsx:
+   - Added keyboard navigation with arrow keys
+   - Added Enter key support to open detail modal
+   - Visual highlighting for selected result
+   - Auto-scroll selected result into view
+   - Used refs array to track result elements
+
+4. Enhanced components/HelpOverlay.tsx:
+   - Comprehensive list of all keyboard shortcuts
+   - Clear descriptions with Cmd/Ctrl variants
+   - Organized by Global Shortcuts and Navigation
+
+5. Updated components/Filters.tsx:
+   - Added Cmd/Ctrl+F support to focus filter dropdown
+   - Enhanced Dropdown component with Escape handling
+   - Forward ref support for external focus control
+
+All acceptance criteria met:
+ Tab toggles search mode
+ / focuses search input
+ ↑↓ navigate results with visual feedback
+ Enter opens detail modal
+ Esc closes modal/dropdown/overlay (priority order)
+ Cmd/Ctrl+K opens app selector
+ Cmd/Ctrl+F focuses filters
+ Cmd/Ctrl+A toggles AI
+ Cmd/Ctrl+P opens platform selector
+ Cmd/Ctrl+, opens settings
+ ? opens keyboard shortcuts help
+ Help overlay shows all shortcuts with descriptions
+
+Tests: All 25 tests passing
+Type checks: Build successful

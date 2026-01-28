@@ -9,11 +9,13 @@ interface DropdownProps {
   value: string | undefined
   onChange: (value: string | undefined) => void
   placeholder: string
+  forwardRef?: React.RefObject<HTMLButtonElement>
 }
 
-function Dropdown({ label, options, value, onChange, placeholder }: DropdownProps) {
+function Dropdown({ label, options, value, onChange, placeholder, forwardRef }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -21,13 +23,27 @@ function Dropdown({ label, options, value, onChange, placeholder }: DropdownProp
         setIsOpen(false)
       }
     }
+    
+    // Close dropdown on Escape
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false)
+        buttonRef.current?.blur()
+      }
+    }
+    
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen])
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        ref={forwardRef || buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
@@ -71,6 +87,20 @@ export function Filters() {
   const selectedApp = useStore((state) => state.selectedApp)
   const [categories, setCategories] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
+  const categoryButtonRef = useRef<HTMLButtonElement>(null)
+
+  // Handle Cmd+F to focus filters
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault()
+        categoryButtonRef.current?.click()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   useEffect(() => {
     // Fetch available categories and tags for the selected app
@@ -123,6 +153,7 @@ export function Filters() {
           value={filters.category}
           onChange={handleCategoryChange}
           placeholder="All Categories"
+          forwardRef={categoryButtonRef}
         />
         <Dropdown
           label="Tag"
