@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Shortcut } from '@katasumi/core'
+import { isAIConfigured } from './config'
 
 export type SearchMode = 'app-first' | 'full-phrase'
 export type Platform = 'mac' | 'windows' | 'linux' | 'all'
@@ -88,7 +89,14 @@ export const useStore = create<AppState>((set) => ({
     mode: state.mode === 'app-first' ? 'full-phrase' : 'app-first'
   })),
   setPlatform: (platform) => set({ platform }),
-  toggleAI: () => set((state) => ({ aiEnabled: !state.aiEnabled })),
+  toggleAI: () => set((state) => {
+    // Only allow enabling AI if it's configured
+    if (!state.aiEnabled && !isAIConfigured()) {
+      // Open settings to configure AI
+      return { showSettings: true }
+    }
+    return { aiEnabled: !state.aiEnabled }
+  }),
   setShowHelp: (showHelp) => set({ showHelp }),
   setShowPlatformSelector: (showPlatformSelector) => set({ showPlatformSelector }),
   setShowSettings: (showSettings) => set({ showSettings }),

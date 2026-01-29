@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Platform, Shortcut, AppInfo } from '@katasumi/core';
-import { loadPlatform, savePlatform } from './utils/config.js';
+import { loadPlatform, savePlatform, isAIConfigured } from './utils/config.js';
 
 export type PlatformOption = Platform | 'all';
 
@@ -99,7 +99,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     savePlatform(platform);
     set({ platform });
   },
-  toggleAI: () => set((state) => ({ aiEnabled: !state.aiEnabled })),
+  toggleAI: () => set((state) => {
+    // Only allow enabling AI if it's configured
+    if (!state.aiEnabled && !isAIConfigured()) {
+      // In TUI, we can't show a settings panel, so just keep it disabled
+      // User needs to configure via config file or web interface
+      return state;
+    }
+    return { aiEnabled: !state.aiEnabled };
+  }),
   setInputMode: (isInputMode) => set({ isInputMode }),
   
   // App-First Mode Actions

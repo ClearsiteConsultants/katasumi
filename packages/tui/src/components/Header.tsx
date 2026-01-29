@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import type { PlatformOption } from '../store.js';
+import { isAIConfigured } from '../utils/config.js';
 
 interface HeaderProps {
   mode: 'app-first' | 'full-phrase';
@@ -25,7 +26,8 @@ function getPlatformDisplay(platform: PlatformOption): string {
 
 export function Header({ mode, platform, aiEnabled }: HeaderProps) {
   const modeDisplay = mode === 'app-first' ? 'App-First' : 'Full-Phrase';
-  const aiStatus = aiEnabled ? 'ON' : 'OFF';
+  const aiConfigured = isAIConfigured();
+  const aiStatus = aiEnabled ? 'ON' : (aiConfigured ? 'OFF' : 'OFF - Not Configured');
   const platformDisplay = getPlatformDisplay(platform);
 
   return (

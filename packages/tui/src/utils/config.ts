@@ -1,13 +1,22 @@
 import fs from 'fs';
 import path from 'path';
 import type { Platform } from '@katasumi/core';
+import type { AIProvider } from '@katasumi/core';
 
 export type PlatformOption = Platform | 'all';
+
+export interface AIConfig {
+  provider: AIProvider;
+  apiKey?: string;
+  model?: string;
+  baseUrl?: string;
+}
 
 interface Config {
   platform?: PlatformOption;
   aiEnabled?: boolean;
   mode?: 'app-first' | 'full-phrase';
+  ai?: AIConfig;
 }
 
 const CONFIG_DIR = path.join(process.env.HOME || '~', '.katasumi');
@@ -50,4 +59,24 @@ export function savePlatform(platform: PlatformOption): void {
 export function loadPlatform(): PlatformOption | undefined {
   const config = loadConfig();
   return config.platform;
+}
+
+export function saveAIConfig(aiConfig: AIConfig): void {
+  saveConfig({ ai: aiConfig });
+}
+
+export function loadAIConfig(): AIConfig | undefined {
+  const config = loadConfig();
+  return config.ai;
+}
+
+export function isAIConfigured(): boolean {
+  const aiConfig = loadAIConfig();
+  if (!aiConfig) return false;
+  
+  // Ollama doesn't require an API key
+  if (aiConfig.provider === 'ollama') return true;
+  
+  // Other providers require an API key
+  return !!aiConfig.apiKey && aiConfig.apiKey.trim().length > 0;
 }

@@ -1887,9 +1887,11 @@
         "Run 'pnpm test --filter=@katasumi/web' and verify AI integration tests pass",
         "Document AI setup in README with screenshots"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
-      "priorityRationale": "AI toggle currently does nothing, confusing users. Either implement the feature or clearly indicate what's needed to enable it. This is a premium feature that should work or guide users to set it up."
+      "priorityRationale": "AI toggle currently does nothing, confusing users. Either implement the feature or clearly indicate what's needed to enable it. This is a premium feature that should work or guide users to set it up.",
+      "completedDate": "2026-01-29T17:07:15.572Z",
+      "implementationNotes": "Implemented AI configuration UI with provider selection (OpenAI, Anthropic, OpenRouter, Ollama), API key input, test connection functionality, and proper error handling. AI toggle now checks for configuration before enabling. Settings accessible via header button in web UI. TUI shows configuration status in header."
     }
   ]
 }

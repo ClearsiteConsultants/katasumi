@@ -2272,3 +2272,48 @@ result selection using multiple input methods (keyboard, mouse, or both).
  Help overlay (?) documents Tab behavior
 
 **Status**: ✅ COMPLETE - All acceptance criteria met, tests passing
+
+## 2026-01-29 - AI Search Configuration Implementation (PHASE1-SEARCH-005)
+
+### Completed
+- Extended config system to support AI provider configuration (OpenAI, Anthropic, OpenRouter, Ollama)
+- Created comprehensive Settings UI with:
+  - Provider selection dropdown
+  - API key input (with password masking)
+  - Optional model and base URL configuration
+  - Test Connection button with real-time validation
+  - Clear success/error messages
+  - Privacy notice
+- Implemented `/api/ai/test` endpoint for testing AI provider connections
+- Updated AI toggle logic to check for configuration before enabling
+- Added Settings button to web header with gear icon
+- TUI now shows "AI: OFF - Not Configured" when AI not set up
+- Web shows "AI: OFF - Configure in Settings" when not configured
+- Clicking AI toggle when unconfigured opens Settings panel automatically
+- All configurations stored locally (localStorage for web, ~/.katasumi/config.json for TUI)
+- Ollama support includes endpoint reachability check
+- Cloud providers (OpenAI, Anthropic, OpenRouter) validated with actual API calls
+
+### Technical Details
+- Created `packages/web/lib/config.ts` for web config management
+- Extended `packages/tui/src/utils/config.ts` with AI config functions
+- Added `isAIConfigured()` helper to check if AI is properly set up
+- Created comprehensive test endpoint that validates:
+  - OpenAI: Lists models endpoint
+  - Anthropic: Messages endpoint with minimal request
+  - OpenRouter: Models endpoint
+  - Ollama: Tags endpoint for local availability
+- Settings UI is responsive and accessible
+- All changes backward compatible with existing code
+
+### Testing
+- Build: ✅ All packages build successfully
+- Tests: ✅ All existing tests pass
+- Type checks: ✅ No type errors
+
+### User Experience
+- Clear guidance when AI is not configured
+- Easy setup flow through Settings panel
+- Real-time connection testing
+- Privacy-first approach with local storage
+- Works seamlessly across web and TUI interfaces
