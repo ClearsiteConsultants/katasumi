@@ -8,6 +8,7 @@ import { FiltersBar } from './FiltersBar.js';
 import { ResultsList } from './ResultsList.js';
 import { DetailView } from './DetailView.js';
 import { logError, getUserFriendlyMessage } from '../utils/error-logger.js';
+import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -87,6 +88,8 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const terminalSize = useTerminalSize();
 
   // Load available apps on mount
   useEffect(() => {
@@ -179,6 +182,39 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
     );
   }
 
+  // Show terminal size warnings
+  if (terminalSize.isTooSmall) {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor="yellow"
+        paddingX={2}
+        paddingY={1}
+        marginY={1}
+      >
+        <Text color="yellow" bold>⚠ Terminal too small</Text>
+        <Text color="yellow">Please resize your terminal to at least 20 rows (current: {terminalSize.rows})</Text>
+      </Box>
+    );
+  }
+
+  if (terminalSize.isTooNarrow) {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor="yellow"
+        paddingX={2}
+        paddingY={1}
+        marginY={1}
+      >
+        <Text color="yellow" bold>⚠ Terminal too narrow</Text>
+        <Text color="yellow">Please resize your terminal to at least 80 columns (current: {terminalSize.columns})</Text>
+      </Box>
+    );
+  }
+
   // Show error if database failed to load
   if (error) {
     return (
@@ -247,6 +283,7 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
         platform={platform}
         quickSearchQuery={quickSearchQuery}
         onSelectShortcut={selectShortcut}
+        maxVisibleResults={terminalSize.availableRows}
       />
     </Box>
   );

@@ -6,6 +6,7 @@ import { useAppStore } from '../store.js';
 import type { PlatformOption } from '../store.js';
 import { DetailView } from './DetailView.js';
 import { logError, getUserFriendlyMessage } from '../utils/error-logger.js';
+import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -60,6 +61,8 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
   const platform = useAppStore((state) => state.platform);
   const selectedShortcut = useAppStore((state) => state.selectedShortcut);
   const selectShortcut = useAppStore((state) => state.selectShortcut);
+  
+  const terminalSize = useTerminalSize();
 
   // Handle keyboard input for the search field
   useInput((input, key) => {
@@ -175,6 +178,40 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
 
   if (view === 'search' || view === 'results') {
     const groupedResults = groupResultsByApp(results);
+    const maxVisibleResults = terminalSize.availableRows;
+
+    // Show terminal size warnings
+    if (terminalSize.isTooSmall) {
+      return (
+        <Box
+          flexDirection="column"
+          borderStyle="single"
+          borderColor="yellow"
+          paddingX={2}
+          paddingY={1}
+          marginY={1}
+        >
+          <Text color="yellow" bold>⚠ Terminal too small</Text>
+          <Text color="yellow">Please resize your terminal to at least 20 rows (current: {terminalSize.rows})</Text>
+        </Box>
+      );
+    }
+
+    if (terminalSize.isTooNarrow) {
+      return (
+        <Box
+          flexDirection="column"
+          borderStyle="single"
+          borderColor="yellow"
+          paddingX={2}
+          paddingY={1}
+          marginY={1}
+        >
+          <Text color="yellow" bold>⚠ Terminal too narrow</Text>
+          <Text color="yellow">Please resize your terminal to at least 80 columns (current: {terminalSize.columns})</Text>
+        </Box>
+      );
+    }
 
     return (
       <Box flexDirection="column" marginY={1}>
@@ -226,7 +263,7 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
             <Box paddingX={2} marginBottom={1}>
               <Text dimColor>Use ↑↓ to navigate, Enter to view details</Text>
             </Box>
-            {results.slice(0, 20).map((shortcut, index) => {
+            {results.slice(0, maxVisibleResults).map((shortcut, index) => {
               const keys = getKeysForPlatform(shortcut);
               const context = shortcut.context ? `[${shortcut.context}]` : '';
               const isSelected = index === selectedIndex;
@@ -253,9 +290,9 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
                 </Box>
               );
             })}
-            {results.length > 20 && (
+            {results.length > maxVisibleResults && (
               <Box paddingX={2}>
-                <Text dimColor>... and {results.length - 20} more results</Text>
+                <Text dimColor>... {results.length - maxVisibleResults} more results (scroll with ↑↓)</Text>
               </Box>
             )}
           </Box>

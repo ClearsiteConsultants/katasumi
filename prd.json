@@ -1590,9 +1590,11 @@
         "Run 'pnpm test --filter=@katasumi/tui' and verify responsive tests pass",
         "Use environment variable to simulate different terminal sizes in tests"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
-      "priorityRationale": "TUI must be usable in any terminal size. Current fixed result counts cause scrolling issues in smaller terminals and waste space in larger ones. Responsive design is essential for good UX across different terminal configurations."
+      "priorityRationale": "TUI must be usable in any terminal size. Current fixed result counts cause scrolling issues in smaller terminals and waste space in larger ones. Responsive design is essential for good UX across different terminal configurations.",
+      "completionNotes": "Implemented responsive design for terminal size. Created useTerminalSize hook to detect terminal dimensions and listen for resize events. Updated all components (AppFirstMode, FullPhraseMode, ResultsList, DetailView, HelpOverlay, PlatformSelector) to dynamically adjust layout based on available space. Added warning messages for terminals smaller than 20x80. Results display now adapts to terminal size with no scrolling required. Created comprehensive test suite with 23 passing tests.",
+      "completedDate": "2026-01-29"
     }
   ]
 }

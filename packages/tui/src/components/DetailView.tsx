@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { Shortcut, Platform, DatabaseAdapter } from '@katasumi/core';
 import type { PlatformOption } from '../store.js';
+import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import clipboard from 'clipboardy';
 import open from 'open';
 
@@ -16,6 +17,9 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
   const [relatedShortcuts, setRelatedShortcuts] = useState<Shortcut[]>([]);
   const [copyStatus, setCopyStatus] = useState<string>('');
   const [urlOpenStatus, setUrlOpenStatus] = useState<string>('');
+  
+  const terminalSize = useTerminalSize();
+  const maxRelatedShortcuts = Math.max(2, Math.min(5, Math.floor(terminalSize.availableRows / 3)));
 
   // Load related shortcuts
   useEffect(() => {
@@ -40,7 +44,7 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
           })
           .filter(item => item.score > 0)
           .sort((a, b) => b.score - a.score)
-          .slice(0, 5)
+          .slice(0, maxRelatedShortcuts)
           .map(item => item.shortcut);
         
         setRelatedShortcuts(scored);
@@ -51,7 +55,7 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
     };
 
     loadRelated();
-  }, [shortcut, dbAdapter]);
+  }, [shortcut, dbAdapter, maxRelatedShortcuts]);
 
   // Handle keyboard input
   useInput((input, key) => {
@@ -127,6 +131,45 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
 
   const allKeys = getAllKeys();
   const currentKeys = getKeysForPlatform();
+  
+  // Show terminal size warnings
+  if (terminalSize.isTooSmall) {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor="yellow"
+        paddingX={2}
+        paddingY={1}
+        marginY={1}
+      >
+        <Text color="yellow" bold>⚠ Terminal too small</Text>
+        <Text color="yellow">Please resize your terminal to at least 20 rows (current: {terminalSize.rows})</Text>
+        <Box marginTop={1}>
+          <Text dimColor>Press Esc to go back</Text>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (terminalSize.isTooNarrow) {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor="yellow"
+        paddingX={2}
+        paddingY={1}
+        marginY={1}
+      >
+        <Text color="yellow" bold>⚠ Terminal too narrow</Text>
+        <Text color="yellow">Please resize your terminal to at least 80 columns (current: {terminalSize.columns})</Text>
+        <Box marginTop={1}>
+          <Text dimColor>Press Esc to go back</Text>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box flexDirection="column" marginY={1}>

@@ -1,11 +1,36 @@
 import React from 'react';
 import { Box, Text } from 'ink';
+import { useTerminalSize } from '../hooks/useTerminalSize.js';
 
 interface HelpOverlayProps {
   onClose: () => void;
 }
 
 export function HelpOverlay({ onClose }: HelpOverlayProps) {
+  const terminalSize = useTerminalSize();
+  
+  // Show warning if terminal is too small
+  if (terminalSize.isTooSmall || terminalSize.isTooNarrow) {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor="yellow"
+        paddingX={2}
+        paddingY={1}
+      >
+        <Text color="yellow" bold>⚠ Terminal too small to show help</Text>
+        <Text color="yellow">
+          {terminalSize.isTooSmall && `Resize to at least 20 rows (current: ${terminalSize.rows})`}
+          {terminalSize.isTooNarrow && `Resize to at least 80 columns (current: ${terminalSize.columns})`}
+        </Text>
+        <Box marginTop={1}>
+          <Text dimColor>[Esc] Close</Text>
+        </Box>
+      </Box>
+    );
+  }
+  
   return (
     <Box
       flexDirection="column"

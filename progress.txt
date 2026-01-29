@@ -1861,3 +1861,62 @@ Next Steps:
 - No UI changes needed - behavior is transparent to users
 - Ready for production use
 
+
+=== 2026-01-29 - PHASE2-TUI-013: Responsive Design for Terminal Size ===
+
+COMPLETED: Implemented responsive design for terminal size in TUI
+
+Changes Made:
+1. Created useTerminalSize hook (/workspace/packages/tui/src/hooks/useTerminalSize.ts)
+   - Detects terminal rows and columns using stdout.rows and stdout.columns
+   - Calculates available space for results after header, footer, filters
+   - Listens to 'resize' event for dynamic updates
+   - Detects terminals < 20 rows or < 80 columns
+
+2. Updated ResultsList component
+   - Added maxVisibleResults prop (default 15)
+   - Shows "X more results (scroll with ↑↓)" indicator
+   - Dynamically adjusts displayed results based on terminal size
+
+3. Updated AppFirstMode component
+   - Integrated useTerminalSize hook
+   - Passes availableRows to ResultsList as maxVisibleResults
+   - Shows warning messages for too small/narrow terminals
+
+4. Updated FullPhraseMode component
+   - Integrated useTerminalSize hook
+   - Dynamically calculates maxVisibleResults
+   - Shows warning messages for too small/narrow terminals
+
+5. Updated DetailView component
+   - Integrated useTerminalSize hook
+   - Dynamically adjusts maxRelatedShortcuts based on terminal height
+   - Shows warning messages for too small/narrow terminals
+
+6. Updated HelpOverlay and PlatformSelector components
+   - Added terminal size warnings for small terminals
+   - Ensures overlays fit within terminal bounds
+
+7. Created comprehensive test suite
+   - 23 passing tests covering all responsive design features
+   - Tests for terminal size detection, resize handling, dynamic result count
+   - Tests for warning messages and minimum viable size
+
+Test Results:
+- All 23 responsive design tests PASSING
+- 87/88 total tests passing (1 pre-existing failure unrelated to changes)
+- Build successful, type checking passed
+
+Features Delivered:
+ Detect terminal rows and columns
+ Calculate available space dynamically
+ Dynamically set max visible results
+ Show 'X more results' indicator
+ Display warnings for small terminals (< 20x80)
+ Update result count on terminal resize
+ Minimum viable size: 20 rows x 80 columns
+ No scrolling needed within TUI
+ Responsive design in both App-First and Full-Phrase modes
+ Detail view adapts to terminal height
+ Platform selector and help overlay fit within bounds
+

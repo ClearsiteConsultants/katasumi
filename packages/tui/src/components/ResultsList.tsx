@@ -8,9 +8,10 @@ interface ResultsListProps {
   platform: PlatformOption;
   quickSearchQuery: string;
   onSelectShortcut?: (shortcut: Shortcut) => void;
+  maxVisibleResults?: number;
 }
 
-export function ResultsList({ results, platform, quickSearchQuery, onSelectShortcut }: ResultsListProps) {
+export function ResultsList({ results, platform, quickSearchQuery, onSelectShortcut, maxVisibleResults = 15 }: ResultsListProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Filter results by quick search query
@@ -70,7 +71,7 @@ export function ResultsList({ results, platform, quickSearchQuery, onSelectShort
         </Box>
       ) : (
         <Box flexDirection="column" marginTop={1}>
-          {filteredResults.slice(0, 15).map((shortcut, index) => {
+          {filteredResults.slice(0, maxVisibleResults).map((shortcut, index) => {
             const keys = getKeysForPlatform(shortcut);
             const context = shortcut.context ? `[${shortcut.context}]` : '';
             const isSelected = index === selectedIndex;
@@ -94,8 +95,8 @@ export function ResultsList({ results, platform, quickSearchQuery, onSelectShort
               </Box>
             );
           })}
-          {filteredResults.length > 15 && (
-            <Text dimColor>... and {filteredResults.length - 15} more</Text>
+          {filteredResults.length > maxVisibleResults && (
+            <Text dimColor>... {filteredResults.length - maxVisibleResults} more results (scroll with ↑↓)</Text>
           )}
         </Box>
       )}

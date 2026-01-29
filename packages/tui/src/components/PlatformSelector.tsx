@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import { useInput } from 'ink';
 import type { Platform } from '@katasumi/core';
+import { useTerminalSize } from '../hooks/useTerminalSize.js';
 
 export type PlatformOption = Platform | 'all';
 
@@ -28,6 +29,7 @@ export function PlatformSelector({
   const [selectedIndex, setSelectedIndex] = useState(
     PLATFORMS.indexOf(currentPlatform)
   );
+  const terminalSize = useTerminalSize();
 
   useInput((input, key) => {
     if (key.escape) {
@@ -40,6 +42,28 @@ export function PlatformSelector({
       setSelectedIndex((prev) => (prev < PLATFORMS.length - 1 ? prev + 1 : 0));
     }
   });
+  
+  // Show warning if terminal is too small
+  if (terminalSize.isTooSmall || terminalSize.isTooNarrow) {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor="yellow"
+        paddingX={2}
+        paddingY={1}
+      >
+        <Text color="yellow" bold>⚠ Terminal too small</Text>
+        <Text color="yellow">
+          {terminalSize.isTooSmall && `Resize to at least 20 rows (current: ${terminalSize.rows})`}
+          {terminalSize.isTooNarrow && `Resize to at least 80 columns (current: ${terminalSize.columns})`}
+        </Text>
+        <Box marginTop={1}>
+          <Text dimColor>[Esc] Close</Text>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box
