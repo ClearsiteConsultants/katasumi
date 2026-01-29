@@ -8,11 +8,17 @@ interface FiltersBarProps {
 
 export function FiltersBar({ onQuickSearchChange }: FiltersBarProps) {
   const focusSection = useAppStore((state) => state.focusSection);
+  const setInputMode = useAppStore((state) => state.setInputMode);
   const quickSearchQuery = useAppStore((state) => state.quickSearchQuery);
   const filters = useAppStore((state) => state.filters);
   const results = useAppStore((state) => state.results);
   
   const isFocused = focusSection === 'filters';
+
+  // Update input mode when focus changes
+  React.useEffect(() => {
+    setInputMode(isFocused);
+  }, [isFocused, setInputMode]);
 
   useInput(
     (input, key) => {

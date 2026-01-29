@@ -35,7 +35,13 @@ export function AppSelector({
   onIndexChange,
 }: AppSelectorProps) {
   const focusSection = useAppStore((state) => state.focusSection);
+  const setInputMode = useAppStore((state) => state.setInputMode);
   const isFocused = focusSection === 'app-selector';
+
+  // Update input mode when focus changes
+  useEffect(() => {
+    setInputMode(isFocused);
+  }, [isFocused, setInputMode]);
 
   // Filter apps with fuzzy matching
   const filteredApps = apps.filter((app) =>

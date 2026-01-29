@@ -1,5 +1,6 @@
 import React from 'react';
 import { useInput } from 'ink';
+import { useAppStore } from '../store.js';
 
 interface GlobalKeybindingsProps {
   onToggleMode: () => void;
@@ -16,28 +17,34 @@ export function GlobalKeybindings({
   onShowPlatformSelector,
   onQuit,
 }: GlobalKeybindingsProps) {
+  const isInputMode = useAppStore((state) => state.isInputMode);
+
   useInput((input, key) => {
-    // Quit on Ctrl+C or q
+    // Always allow Ctrl+C to quit
     if (key.ctrl && input === 'c') {
       onQuit();
-    } else if (input === 'q') {
-      onQuit();
+      return;
     }
-    // Help on ?
-    else if (input === '?') {
-      onShowHelp();
-    }
-    // Toggle mode on Tab
-    else if (key.tab) {
+
+    // Always allow Tab to toggle mode
+    if (key.tab) {
       onToggleMode();
+      return;
     }
-    // Vi-style shortcuts (home row keys)
-    // a - Toggle AI
-    else if (input === 'a') {
+
+    // Skip other global shortcuts when in input mode
+    if (isInputMode) {
+      return;
+    }
+
+    // Navigation mode shortcuts (only active when NOT in input mode)
+    if (input === 'q') {
+      onQuit();
+    } else if (input === '?') {
+      onShowHelp();
+    } else if (input === 'a') {
       onToggleAI();
-    }
-    // p - Platform selector
-    else if (input === 'p') {
+    } else if (input === 'p') {
       onShowPlatformSelector();
     }
   });

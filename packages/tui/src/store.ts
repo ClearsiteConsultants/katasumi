@@ -12,6 +12,7 @@ interface AppState {
   view: 'search' | 'results' | 'detail';
   platform: PlatformOption;
   aiEnabled: boolean;
+  isInputMode: boolean;
 
   // App-First Mode State
   focusSection: FocusSection;
@@ -37,6 +38,7 @@ interface AppState {
   setView: (view: 'search' | 'results' | 'detail') => void;
   setPlatform: (platform: PlatformOption) => void;
   toggleAI: () => void;
+  setInputMode: (isInputMode: boolean) => void;
   
   // App-First Mode Actions
   setFocusSection: (section: FocusSection) => void;
@@ -72,6 +74,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   view: 'search',
   platform: getInitialPlatform(),
   aiEnabled: false,
+  isInputMode: false,
   
   // App-First Mode State
   focusSection: 'app-selector',
@@ -97,6 +100,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ platform });
   },
   toggleAI: () => set((state) => ({ aiEnabled: !state.aiEnabled })),
+  setInputMode: (isInputMode) => set({ isInputMode }),
   
   // App-First Mode Actions
   setFocusSection: (section) => set({ focusSection: section }),

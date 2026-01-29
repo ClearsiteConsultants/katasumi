@@ -151,19 +151,22 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
 
   // Handle g/f navigation (vi-style shortcuts)
   useInput((input, key) => {
+    // Check if we're in input mode
+    const isInputMode = useAppStore.getState().isInputMode;
+    
     if (key.escape && selectedApp) {
       selectApp(null);
       setAppQuery('');
       setQuickSearchQuery('');
       setFocusSection('app-selector');
-    } else if (input === 'g' && selectedApp) {
-      // g: Go to app selector (return to app selection)
+    } else if (!isInputMode && input === 'g' && selectedApp) {
+      // g: Go to app selector (return to app selection) - only in navigation mode
       selectApp(null);
       setAppQuery('');
       setQuickSearchQuery('');
       setFocusSection('app-selector');
-    } else if (input === 'f' && selectedApp) {
-      // f: Focus filters bar
+    } else if (!isInputMode && input === 'f' && selectedApp) {
+      // f: Focus filters bar - only in navigation mode
       setFocusSection('filters');
     }
   });

@@ -1624,9 +1624,11 @@
         "Create test: verify Escape transitions from input mode to navigation mode",
         "Run 'pnpm test --filter=@katasumi/tui' and verify input mode tests pass"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
-      "priorityRationale": "Critical UX bug - users cannot type certain letters in search without triggering global shortcuts. Makes search functionality unusable for queries containing a, p, g, f characters."
+      "priorityRationale": "Critical UX bug - users cannot type certain letters in search without triggering global shortcuts. Makes search functionality unusable for queries containing a, p, g, f characters.",
+      "implementationNotes": "Implemented input mode handling system:\n1. Added isInputMode flag to store.ts to track when user is typing in input fields\n2. Modified GlobalKeybindings.tsx to check isInputMode and skip single-key shortcuts (a, p, g, f, q, ?) when in input mode\n3. Always allow Ctrl+C and Tab shortcuts regardless of mode\n4. Updated AppSelector.tsx to set input mode when focused\n5. Updated FiltersBar.tsx to set input mode when focused\n6. Updated FullPhraseMode.tsx with:\n   - isInputFocused state to track input focus\n   - Escape key handler to exit input mode (unfocus) without clearing query\n   - Slash key (/) handler to enter input mode from navigation mode\n   - Enter key exits input mode after executing search\n   - Visual indicators showing \"(Input Mode)\" vs \"(Navigation Mode)\"\n   - Cyan border when in input mode, white in navigation mode\n7. Updated AppFirstMode.tsx to check input mode before handling g/f shortcuts\n8. Created comprehensive test suite (input-mode-handling.test.ts) with 26 tests\n9. All tests pass, TypeScript compilation successful",
+      "dateCompleted": "2026-01-29T16:34:31.832Z"
     },
     {
       "id": "PHASE2-TUI-015",

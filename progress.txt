@@ -1920,3 +1920,69 @@ Features Delivered:
  Detail view adapts to terminal height
  Platform selector and help overlay fit within bounds
 
+
+## 2026-01-29 - PHASE2-TUI-014: Input Mode Handling Bug Fix
+
+**Task:** Fix global keyboard shortcuts firing when search input is active - distinguish between input mode and navigation mode
+
+**Changes Made:**
+
+1. **Store Updates (store.ts):**
+   - Added `isInputMode: boolean` state to track when user is in input mode
+   - Added `setInputMode` action to update input mode state
+
+2. **GlobalKeybindings Component (GlobalKeybindings.tsx):**
+   - Added check for `isInputMode` before processing single-key shortcuts
+   - Ctrl+C and Tab always work regardless of mode
+   - Single-key shortcuts (a, p, g, f, q, ?) only work in navigation mode
+   - Prevents accidental triggering when typing in search inputs
+
+3. **AppSelector Component (AppSelector.tsx):**
+   - Added useEffect to set input mode when component is focused
+   - Sets `isInputMode` to true when `focusSection === 'app-selector'`
+
+4. **FiltersBar Component (FiltersBar.tsx):**
+   - Added useEffect to set input mode when component is focused
+   - Sets `isInputMode` to true when `focusSection === 'filters'`
+
+5. **FullPhraseMode Component (FullPhraseMode.tsx):**
+   - Added `isInputFocused` local state to track input focus
+   - Implemented Escape key to exit input mode (unfocus) without clearing query
+   - Implemented slash key (/) to enter input mode from navigation mode
+   - Enter key executes search and exits input mode
+   - Added visual indicators:
+     * Border color changes: cyan (input mode) vs white (navigation mode)
+     * Mode label shows "(Input Mode)" vs "(Navigation Mode)"
+     * Query text color changes based on mode
+     * Context-appropriate help text for each mode
+   - useEffect updates global input mode based on local focus state
+
+6. **AppFirstMode Component (AppFirstMode.tsx):**
+   - Added check for input mode before processing 'g' and 'f' shortcuts
+   - Prevents these shortcuts from firing when typing in search/filter inputs
+
+7. **Tests (input-mode-handling.test.ts):**
+   - Created comprehensive test suite with 26 tests
+   - Tests cover input mode state management, component behavior, visual indicators
+   - All tests pass successfully
+
+**Results:**
+- ✅ All 26 new tests pass
+- ✅ TypeScript compilation successful
+- ✅ Users can now type 'a', 'p', 'g', 'f' in search inputs without triggering global shortcuts
+- ✅ Clear visual feedback when in input vs navigation mode
+- ✅ Escape/slash keys provide intuitive mode switching
+- ✅ Tab and Ctrl+C continue to work in all modes
+
+**Acceptance Criteria Met:**
+- [x] Global single-key shortcuts do NOT trigger when search input has focus
+- [x] Typing letters in search inserts characters, not triggering shortcuts
+- [x] Escape unfocuses input without clearing query
+- [x] After Escape, global shortcuts work again
+- [x] Tab always works to toggle modes
+- [x] Ctrl/Cmd modifiers work in both modes
+- [x] Clear visual indicators for input vs navigation mode
+- [x] Enter executes search and exits input mode
+- [x] Slash key focuses search from navigation mode
+- [x] Comprehensive tests created and passing
+

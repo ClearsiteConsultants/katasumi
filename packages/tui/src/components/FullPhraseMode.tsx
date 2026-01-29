@@ -58,11 +58,18 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isInputFocused, setIsInputFocused] = useState(true); // Track if input is focused
   const platform = useAppStore((state) => state.platform);
   const selectedShortcut = useAppStore((state) => state.selectedShortcut);
   const selectShortcut = useAppStore((state) => state.selectShortcut);
+  const setInputMode = useAppStore((state) => state.setInputMode);
   
   const terminalSize = useTerminalSize();
+
+  // Set input mode based on whether input is focused
+  useEffect(() => {
+    setInputMode(isInputFocused && view !== 'detail');
+  }, [isInputFocused, view, setInputMode]);
 
   // Handle keyboard input for the search field
   useInput((input, key) => {
@@ -71,13 +78,43 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
       return;
     }
 
+    // Escape key: unfocus input (exit input mode) without clearing query
+    if (key.escape) {
+      setIsInputFocused(false);
+      return;
+    }
+
+    // Slash key: focus input (enter input mode) when NOT in input mode
+    if (input === '/' && !isInputFocused) {
+      setIsInputFocused(true);
+      return;
+    }
+
+    // Only handle input when in input mode
+    if (!isInputFocused) {
+      // In navigation mode, arrow keys navigate results
+      if (key.upArrow) {
+        setSelectedIndex(prev => Math.max(0, prev - 1));
+      } else if (key.downArrow) {
+        setSelectedIndex(prev => Math.min(results.length - 1, prev + 1));
+      } else if (key.return) {
+        // Enter key: select shortcut if in navigation mode
+        if (results.length > 0 && selectedIndex < results.length) {
+          selectShortcut(results[selectedIndex]);
+        }
+      }
+      return;
+    }
+
+    // Input mode: handle search input
     if (key.return) {
-      // If Enter is pressed and there are results, show detail of selected result
+      // Enter key: execute search and exit input mode
       if (results.length > 0 && selectedIndex < results.length) {
         selectShortcut(results[selectedIndex]);
+        setIsInputFocused(false);
       } else if (query.trim().length > 0) {
-        // Trigger search on Enter if no results
         performSearch(query);
+        setIsInputFocused(false);
       }
     } else if (key.upArrow) {
       setSelectedIndex(prev => Math.max(0, prev - 1));
@@ -219,16 +256,23 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
         <Box
           flexDirection="column"
           borderStyle="single"
+          borderColor={isInputFocused ? 'cyan' : 'white'}
           paddingX={2}
           paddingY={1}
         >
-          <Text bold>Search across all apps</Text>
+          <Text bold color={isInputFocused ? 'cyan' : 'white'}>
+            Search across all apps {isInputFocused ? '(Input Mode)' : '(Navigation Mode)'}
+          </Text>
           <Box marginTop={1}>
-            <Text dimColor>Type to search, press Enter to trigger search manually</Text>
+            <Text dimColor>
+              {isInputFocused
+                ? 'Type to search, Esc to exit input mode'
+                : 'Press / to enter input mode, ↑↓ to navigate'}
+            </Text>
           </Box>
           <Box marginTop={1}>
             <Text>Query: </Text>
-            <Text bold color="cyan">{query || '_'}</Text>
+            <Text bold color={isInputFocused ? 'cyan' : 'yellow'}>{query || '_'}</Text>
           </Box>
         </Box>
 
