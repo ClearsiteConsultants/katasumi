@@ -23,6 +23,50 @@ export function ResultsList({ results }: ResultsListProps) {
       const target = e.target as HTMLElement
       const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
       
+      // Escape - Exit keyboard navigation mode (unfocus current result)
+      if (e.key === 'Escape' && !isTyping && selectedResultIndex >= 0) {
+        e.preventDefault()
+        setSelectedResultIndex(-1)
+        return
+      }
+      
+      // Tab/Shift+Tab - Cycle through results when in keyboard navigation mode
+      if (e.key === 'Tab' && !isTyping && results.length > 0) {
+        e.preventDefault()
+        if (e.shiftKey) {
+          // Shift+Tab - go backwards
+          if (selectedResultIndex <= 0) {
+            setSelectedResultIndex(results.length - 1)
+          } else {
+            navigateResults('up')
+          }
+        } else {
+          // Tab - go forwards
+          if (selectedResultIndex === results.length - 1) {
+            setSelectedResultIndex(0)
+          } else if (selectedResultIndex === -1) {
+            setSelectedResultIndex(0)
+          } else {
+            navigateResults('down')
+          }
+        }
+        return
+      }
+      
+      // Ctrl+Home - Jump to first result
+      if (e.key === 'Home' && e.ctrlKey && !isTyping && results.length > 0) {
+        e.preventDefault()
+        setSelectedResultIndex(0)
+        return
+      }
+      
+      // Ctrl+End - Jump to last result
+      if (e.key === 'End' && e.ctrlKey && !isTyping && results.length > 0) {
+        e.preventDefault()
+        setSelectedResultIndex(results.length - 1)
+        return
+      }
+      
       // Arrow navigation (only if not typing and we have results)
       if (!isTyping && results.length > 0) {
         if (e.key === 'ArrowDown') {
@@ -40,10 +84,23 @@ export function ResultsList({ results }: ResultsListProps) {
         }
       }
     }
+    
+    // Handle click outside to exit keyboard navigation
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      // If clicked element is not a result button, exit keyboard navigation
+      if (!target.closest('[data-result-item]')) {
+        setSelectedResultIndex(-1)
+      }
+    }
 
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [results, selectedResultIndex, navigateResults, selectShortcut])
+    window.addEventListener('click', handleClickOutside)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('click', handleClickOutside)
+    }
+  }, [results, selectedResultIndex, navigateResults, selectShortcut, setSelectedResultIndex])
 
   // Scroll selected result into view
   useEffect(() => {
@@ -113,9 +170,10 @@ export function ResultsList({ results }: ResultsListProps) {
                         setSelectedResultIndex(globalIndex)
                         selectShortcut(shortcut)
                       }}
+                      data-result-item
                       className={`w-full text-left px-6 py-4 rounded-lg border transition-colors ${
                         selectedResultIndex === globalIndex
-                          ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30'
+                          ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30 shadow-lg'
                           : 'border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20'
                       }`}
                     >
@@ -159,9 +217,10 @@ export function ResultsList({ results }: ResultsListProps) {
                 setSelectedResultIndex(index)
                 selectShortcut(shortcut)
               }}
+              data-result-item
               className={`w-full text-left px-6 py-4 rounded-lg border transition-colors ${
                 selectedResultIndex === index
-                  ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30'
+                  ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30 shadow-lg'
                   : 'border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20'
               }`}
             >

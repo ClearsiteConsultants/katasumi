@@ -109,9 +109,17 @@ export const useStore = create<AppState>((set) => ({
     
     let newIndex = state.selectedResultIndex
     if (direction === 'down') {
-      newIndex = Math.min(state.results.length - 1, newIndex + 1)
+      if (newIndex === -1) {
+        newIndex = 0
+      } else {
+        newIndex = Math.min(state.results.length - 1, newIndex + 1)
+      }
     } else {
-      newIndex = Math.max(0, newIndex - 1)
+      if (newIndex === -1) {
+        newIndex = state.results.length - 1
+      } else {
+        newIndex = Math.max(0, newIndex - 1)
+      }
     }
     
     return { selectedResultIndex: newIndex }

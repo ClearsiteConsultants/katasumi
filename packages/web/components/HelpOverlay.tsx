@@ -90,6 +90,28 @@ export function HelpOverlay() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Cycle Through Results</span>
+                <div className="flex gap-2">
+                  <kbd className="kbd">Tab</kbd>
+                  <kbd className="kbd">Shift+Tab</kbd>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Jump to First Result</span>
+                <kbd className="kbd">Ctrl+Home</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Jump to Last Result</span>
+                <kbd className="kbd">Ctrl+End</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Exit Navigation Mode</span>
+                <div className="flex gap-2">
+                  <kbd className="kbd">Esc</kbd>
+                  <span className="text-gray-500">or click outside</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-gray-700 dark:text-gray-300">Open Selected Result Detail</span>
                 <kbd className="kbd">Enter</kbd>
               </div>

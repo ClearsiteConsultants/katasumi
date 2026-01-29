@@ -2147,3 +2147,82 @@ Search input now remains visible at top of screen regardless of result count, te
  Filter changes immediately update results list
  Works with platform already filtered
 
+
+================================================================================
+Date: 2026-01-29T16:57:00Z
+Task: PHASE3-WEB-016 - Exit Keyboard Navigation in Full-Phrase Mode
+Status: COMPLETE
+================================================================================
+
+WHAT WAS DONE:
+--------------
+Implemented comprehensive keyboard navigation exit functionality in Full-Phrase mode:
+
+1. ResultsList.tsx - Enhanced keyboard navigation:
+   - Escape key: Exits keyboard navigation mode (sets selectedResultIndex to -1)
+   - Tab: Cycles forward through results (wraps from last to first)
+   - Shift+Tab: Cycles backward through results (wraps from first to last)
+   - Ctrl+Home: Jumps to first result
+   - Ctrl+End: Jumps to last result
+   - Arrow Up/Down: Navigate results (with -1 state initialization)
+   - Enter: Opens selected result detail
+   - Click outside: Exits keyboard navigation mode
+   - Added data-result-item attribute for click-outside detection
+   - Enhanced visual indicator: Added shadow-lg class to selected results
+
+2. store.ts - Improved navigateResults:
+   - Handle -1 (no selection) state properly
+   - Navigate down from -1 goes to index 0
+   - Navigate up from -1 goes to last result
+
+3. HelpOverlay.tsx - Updated documentation:
+   - Added Tab/Shift+Tab cycling through results
+   - Added Ctrl+Home (jump to first) and Ctrl+End (jump to last)
+   - Added "Exit Navigation Mode" with Escape or click outside
+   - Clear, comprehensive keyboard navigation section
+
+4. keyboard-navigation.test.tsx - New test suite:
+   - Test Escape key exits navigation
+   - Test Tab/Shift+Tab cycling with wrapping
+   - Test Ctrl+Home/End jumping
+   - Test Arrow key navigation
+   - Test Enter opens result
+   - Test click outside exits navigation
+   - Test visual indicator (shadow-lg)
+   - Test empty results handling
+   - Test store navigateResults logic
+   - All 35 tests passing (3 new keyboard navigation tests)
+
+VERIFICATION:
+-------------
+ Tests passing: npm test --filter=@katasumi/web (35/35 tests)
+ Linting passing: npm run lint (no warnings or errors)
+ Build successful: Next.js build completed
+ All acceptance criteria met:
+   - Escape key unfocuses result and exits keyboard navigation
+   - '/' key focuses search input (already implemented in page.tsx)
+   - Visual indicator (shadow-lg) shows keyboard navigation mode
+   - Tab/Shift+Tab cycles through results
+   - Click outside exits keyboard navigation
+   - Ctrl+Home/End jumps to first/last result
+   - Clear documentation in help overlay
+
+FILES CHANGED:
+--------------
+- packages/web/components/ResultsList.tsx (enhanced keyboard navigation)
+- packages/web/lib/store.ts (improved navigateResults)
+- packages/web/components/HelpOverlay.tsx (updated documentation)
+- packages/web/__tests__/keyboard-navigation.test.tsx (new test file)
+
+NOTES:
+------
+The implementation provides a complete keyboard navigation experience that:
+- Is intuitive and follows standard UX patterns
+- Works seamlessly with existing keyboard shortcuts
+- Provides clear visual feedback (shadow-lg on selected results)
+- Handles edge cases (empty results, boundary wrapping)
+- Is fully tested and documented
+
+Users can now easily exit keyboard navigation mode and have full control over
+result selection using multiple input methods (keyboard, mouse, or both).
+
