@@ -17,6 +17,8 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
   const [relatedShortcuts, setRelatedShortcuts] = useState<Shortcut[]>([]);
   const [copyStatus, setCopyStatus] = useState<string>('');
   const [urlOpenStatus, setUrlOpenStatus] = useState<string>('');
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const [atBoundary, setAtBoundary] = useState<'top' | 'bottom' | null>(null);
   
   const terminalSize = useTerminalSize();
   const maxRelatedShortcuts = Math.max(2, Math.min(5, Math.floor(terminalSize.availableRows / 3)));
@@ -59,6 +61,15 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
 
   // Handle keyboard input
   useInput((input, key) => {
+    const maxScroll = relatedShortcuts.length;
+    const halfPage = Math.floor(maxRelatedShortcuts / 2);
+    const fullPage = maxRelatedShortcuts;
+
+    // Clear boundary feedback after a short delay
+    const clearBoundary = () => {
+      setTimeout(() => setAtBoundary(null), 1000);
+    };
+
     if (key.escape) {
       onBack();
     } else if (input === 'c' || input === 'C') {
@@ -67,6 +78,42 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
     } else if (input === 'o' || input === 'O') {
       // Open source URL
       handleOpenUrl();
+    } else if (key.upArrow) {
+      setScrollOffset(prev => Math.max(0, prev - 1));
+    } else if (key.downArrow) {
+      setScrollOffset(prev => Math.min(maxScroll, prev + 1));
+    } else if (key.ctrl && input === 'u') {
+      // Ctrl+U: Scroll up half page
+      const newOffset = Math.max(0, scrollOffset - halfPage);
+      if (newOffset === 0 && scrollOffset === 0) {
+        setAtBoundary('top');
+        clearBoundary();
+      }
+      setScrollOffset(newOffset);
+    } else if (key.ctrl && input === 'd') {
+      // Ctrl+D: Scroll down half page
+      const newOffset = Math.min(maxScroll, scrollOffset + halfPage);
+      if (newOffset === maxScroll && scrollOffset === maxScroll) {
+        setAtBoundary('bottom');
+        clearBoundary();
+      }
+      setScrollOffset(newOffset);
+    } else if (key.ctrl && input === 'b') {
+      // Ctrl+B: Scroll up full page
+      const newOffset = Math.max(0, scrollOffset - fullPage);
+      if (newOffset === 0 && scrollOffset === 0) {
+        setAtBoundary('top');
+        clearBoundary();
+      }
+      setScrollOffset(newOffset);
+    } else if (key.ctrl && input === 'f') {
+      // Ctrl+F: Scroll down full page
+      const newOffset = Math.min(maxScroll, scrollOffset + fullPage);
+      if (newOffset === maxScroll && scrollOffset === maxScroll) {
+        setAtBoundary('bottom');
+        clearBoundary();
+      }
+      setScrollOffset(newOffset);
     }
   });
 
@@ -319,8 +366,10 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
       )}
 
       {/* Footer */}
-      <Box marginTop={1} borderStyle="single" paddingX={2}>
+      <Box marginTop={1} borderStyle="single" paddingX={2} justifyContent="space-between">
         <Text>
+          <Text bold color="cyan">↑↓ Ctrl+U/D/F/B</Text>
+          <Text dimColor>:scroll </Text>
           <Text bold color="cyan">c</Text>
           <Text dimColor>:copy </Text>
           <Text bold color="cyan">o</Text>
@@ -329,6 +378,14 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
           <Text dimColor>:back</Text>
         </Text>
       </Box>
+      
+      {atBoundary && (
+        <Box marginTop={1} paddingX={2}>
+          <Text color="yellow">
+            {atBoundary === 'top' ? '▲ At top' : '▼ At bottom'}
+          </Text>
+        </Box>
+      )}
     </Box>
   );
 }

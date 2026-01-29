@@ -59,6 +59,7 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(true); // Track if input is focused
+  const [atBoundary, setAtBoundary] = useState<'top' | 'bottom' | null>(null);
   const platform = useAppStore((state) => state.platform);
   const selectedShortcut = useAppStore((state) => state.selectedShortcut);
   const selectShortcut = useAppStore((state) => state.selectShortcut);
@@ -78,6 +79,15 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
       return;
     }
 
+    const maxVisibleResults = terminalSize.availableRows;
+    const halfPage = Math.floor(maxVisibleResults / 2);
+    const fullPage = maxVisibleResults;
+
+    // Clear boundary feedback after a short delay
+    const clearBoundary = () => {
+      setTimeout(() => setAtBoundary(null), 1000);
+    };
+
     // Escape key: unfocus input (exit input mode) without clearing query
     if (key.escape) {
       setIsInputFocused(false);
@@ -92,11 +102,43 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
 
     // Only handle input when in input mode
     if (!isInputFocused) {
-      // In navigation mode, arrow keys navigate results
+      // In navigation mode, handle page navigation and arrow keys
       if (key.upArrow) {
         setSelectedIndex(prev => Math.max(0, prev - 1));
       } else if (key.downArrow) {
         setSelectedIndex(prev => Math.min(results.length - 1, prev + 1));
+      } else if (key.ctrl && input === 'u') {
+        // Ctrl+U: Scroll up half page
+        const newIndex = Math.max(0, selectedIndex - halfPage);
+        if (newIndex === 0 && selectedIndex === 0) {
+          setAtBoundary('top');
+          clearBoundary();
+        }
+        setSelectedIndex(newIndex);
+      } else if (key.ctrl && input === 'd') {
+        // Ctrl+D: Scroll down half page
+        const newIndex = Math.min(results.length - 1, selectedIndex + halfPage);
+        if (newIndex === results.length - 1 && selectedIndex === results.length - 1) {
+          setAtBoundary('bottom');
+          clearBoundary();
+        }
+        setSelectedIndex(newIndex);
+      } else if (key.ctrl && input === 'b') {
+        // Ctrl+B: Scroll up full page
+        const newIndex = Math.max(0, selectedIndex - fullPage);
+        if (newIndex === 0 && selectedIndex === 0) {
+          setAtBoundary('top');
+          clearBoundary();
+        }
+        setSelectedIndex(newIndex);
+      } else if (key.ctrl && input === 'f') {
+        // Ctrl+F: Scroll down full page
+        const newIndex = Math.min(results.length - 1, selectedIndex + fullPage);
+        if (newIndex === results.length - 1 && selectedIndex === results.length - 1) {
+          setAtBoundary('bottom');
+          clearBoundary();
+        }
+        setSelectedIndex(newIndex);
       } else if (key.return) {
         // Enter key: select shortcut if in navigation mode
         if (results.length > 0 && selectedIndex < results.length) {
@@ -216,6 +258,14 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
   if (view === 'search' || view === 'results') {
     const groupedResults = groupResultsByApp(results);
     const maxVisibleResults = terminalSize.availableRows;
+    
+    // Calculate visible range with centering
+    const startIndex = Math.max(0, selectedIndex - Math.floor(maxVisibleResults / 2));
+    const endIndex = Math.min(results.length, startIndex + maxVisibleResults);
+    const visibleResults = results.slice(startIndex, endIndex);
+    const positionText = results.length > 0 
+      ? `${selectedIndex + 1} of ${results.length}` 
+      : '0 of 0';
 
     // Show terminal size warnings
     if (terminalSize.isTooSmall) {
@@ -304,13 +354,24 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
           </Box>
         ) : results.length > 0 ? (
           <Box flexDirection="column" marginTop={1}>
-            <Box paddingX={2} marginBottom={1}>
-              <Text dimColor>Use ↑↓ to navigate, Enter to view details</Text>
+            <Box paddingX={2} marginBottom={1} justifyContent="space-between">
+              <Text dimColor>Use ↑↓ Ctrl+U/D/F/B, / to search, Enter for details</Text>
+              {results.length > 0 && (
+                <Text dimColor>[{positionText}]</Text>
+              )}
             </Box>
-            {results.slice(0, maxVisibleResults).map((shortcut, index) => {
+            {atBoundary && (
+              <Box paddingX={2} marginBottom={1}>
+                <Text color="yellow">
+                  {atBoundary === 'top' ? '▲ At top of results' : '▼ At bottom of results'}
+                </Text>
+              </Box>
+            )}
+            {visibleResults.map((shortcut, index) => {
               const keys = getKeysForPlatform(shortcut);
               const context = shortcut.context ? `[${shortcut.context}]` : '';
-              const isSelected = index === selectedIndex;
+              const actualIndex = startIndex + index;
+              const isSelected = actualIndex === selectedIndex;
               
               return (
                 <Box key={shortcut.id} paddingX={2}>
@@ -335,8 +396,10 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
               );
             })}
             {results.length > maxVisibleResults && (
-              <Box paddingX={2}>
-                <Text dimColor>... {results.length - maxVisibleResults} more results (scroll with ↑↓)</Text>
+              <Box paddingX={2} marginTop={1}>
+                <Text dimColor>
+                  Showing {startIndex + 1}-{endIndex} of {results.length} results
+                </Text>
               </Box>
             )}
           </Box>

@@ -51,7 +51,11 @@ export function HelpOverlay({ onClose }: HelpOverlayProps) {
         <Text dimColor />
         <Text bold>Navigation:</Text>
         <Text>  /                Focus search</Text>
-        <Text>  ↑↓               Navigate results</Text>
+        <Text>  ↑↓               Navigate results (single step)</Text>
+        <Text>  Ctrl+U           Scroll up half page</Text>
+        <Text>  Ctrl+D           Scroll down half page</Text>
+        <Text>  Ctrl+B           Scroll up full page</Text>
+        <Text>  Ctrl+F           Scroll down full page</Text>
         <Text>  Enter            Select / Show details</Text>
         <Text>  Esc              Back / Close / Unfocus</Text>
         <Text dimColor />

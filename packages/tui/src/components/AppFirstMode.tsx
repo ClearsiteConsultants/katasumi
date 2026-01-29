@@ -286,6 +286,7 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
         platform={platform}
         quickSearchQuery={quickSearchQuery}
         onSelectShortcut={selectShortcut}
+        onFocusSearch={() => setFocusSection('filters')}
         maxVisibleResults={terminalSize.availableRows}
       />
     </Box>
