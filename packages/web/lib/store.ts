@@ -5,6 +5,7 @@ export type SearchMode = 'app-first' | 'full-phrase'
 export type Platform = 'mac' | 'windows' | 'linux' | 'all'
 
 export interface SearchFilters {
+  context?: string
   category?: string
   tag?: string
 }

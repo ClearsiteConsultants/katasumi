@@ -32,6 +32,7 @@ export function SearchBar() {
         query: searchQuery,
         platform: platform === 'all' ? '' : platform,
         ...(mode === 'app-first' && selectedApp && { app: selectedApp }),
+        ...(filters.context && { context: filters.context }),
         ...(filters.category && { category: filters.category }),
         ...(filters.tag && { tag: filters.tag }),
       })

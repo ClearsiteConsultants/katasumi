@@ -30,15 +30,6 @@ export function AppFirstMode() {
         return
       }
       
-      // f - Focus filters (vi-style, only when not typing)
-      if (e.key === 'f' && !isTyping && selectedApp) {
-        e.preventDefault()
-        // Focus the first filter input/select element
-        const filterElement = document.querySelector('.filters-container input, .filters-container select') as HTMLElement
-        filterElement?.focus()
-        return
-      }
-      
       // Cmd+K (Mac) or Ctrl+K (Windows/Linux): Change app (also works)
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()

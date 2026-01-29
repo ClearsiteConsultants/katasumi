@@ -1,7 +1,7 @@
 {
   "project": "Katasumi",
   "version": "1.0.0",
-  "lastUpdated": "2026-01-29T16:45:46.303Z",
+  "lastUpdated": "2026-01-29T16:51:31.991Z",
   "requirements": [
     {
       "id": "PHASE1-DB-003",
@@ -1764,9 +1764,11 @@
         "Run 'pnpm test --filter=@katasumi/web' and verify filter hotkey tests pass",
         "Test in Chrome, Firefox, Safari for keyboard compatibility"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
-      "priorityRationale": "Keyboard-first design requires ability to change filters without mouse. Missing this makes web UI less efficient than TUI for power users."
+      "priorityRationale": "Keyboard-first design requires ability to change filters without mouse. Missing this makes web UI less efficient than TUI for power users.",
+      "completionNotes": "Implemented keyboard shortcuts for filter dropdowns in App-First mode:\n- Added 'c' key to focus Context filter dropdown\n- Added 't' key to focus Tags filter dropdown  \n- Added 'r' key to focus Category filter dropdown\n- Arrow keys navigate dropdown options when focused\n- Enter key selects highlighted dropdown option\n- Escape key closes dropdown and returns focus\n- Visual hints show available filter shortcuts (e.g., '(c)ontext, (t)ags')\n- Keyboard shortcuts only work in navigation mode (not when typing in search)\n- Filter changes immediately update results list\n- Works with platform already filtered\n- Added context filter support to SearchFilters interface\n- Updated API route to support context filtering\n- Created comprehensive test suite for filter functionality",
+      "lastUpdated": "2026-01-29T16:51:31.990Z"
     },
     {
       "id": "PHASE3-WEB-016",

@@ -2111,3 +2111,39 @@ Task is complete and passes all requirements. Ready to move to next priority ite
 **Key Achievement:**
 Search input now remains visible at top of screen regardless of result count, terminal size, or mode. The layout properly constrains scrollable content while keeping critical UI elements (header, search input, footer) fixed and always visible.
 
+
+## 2026-01-29 - PHASE3-WEB-015: Filter Hotkeys in App-First Mode
+
+**Status**: ✅ Complete
+
+**Changes Made**:
+1. Added context filter support to SearchFilters interface in lib/store.ts
+2. Updated Filters.tsx component:
+   - Added context dropdown with refs for keyboard access
+   - Implemented keyboard shortcuts: 'c' for context, 'r' for category, 't' for tags
+   - Added arrow key navigation within dropdowns
+   - Added visual hints showing hotkey for each filter (e.g., "(c)")
+   - Implemented Escape key to close dropdown and return focus
+   - Only trigger shortcuts when not typing in input field
+3. Updated SearchBar.tsx to include context filter in API parameters
+4. Updated API route (app/api/search/route.ts) to support context filtering
+5. Removed redundant 'f' shortcut from AppFirstMode.tsx (replaced by specific filter shortcuts)
+6. Created comprehensive test suite (__tests__/filter-hotkeys.test.tsx) with 7 passing tests
+
+**Test Results**:
+- All 32 tests pass (5 test files)
+- Build successful with no TypeScript errors
+- Filter hotkeys tests verify context/category/tag filter functionality
+
+**Acceptance Criteria Met**:
+ After app selected, 'c' key focuses Context filter dropdown
+ After app selected, 't' key focuses Tags filter dropdown
+ After app selected, 'r' key focuses Category filter
+ Arrow keys navigate dropdown options when focused
+ Enter key selects highlighted dropdown option
+ Escape key closes dropdown and returns focus to results
+ Keyboard shortcuts only work in navigation mode (not when typing in search)
+ Visual hint shows available filter shortcuts
+ Filter changes immediately update results list
+ Works with platform already filtered
+

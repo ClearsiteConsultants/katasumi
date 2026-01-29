@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get('q') || searchParams.get('query') || ''
     const app = searchParams.get('app') || undefined
     const platform = searchParams.get('platform') as Platform | undefined
+    const context = searchParams.get('context') || undefined
     const category = searchParams.get('category') || undefined
     const tag = searchParams.get('tag') || undefined
     const limit = parseInt(searchParams.get('limit') || '50')
@@ -29,10 +30,15 @@ export async function GET(request: NextRequest) {
       limit
     )
 
-    // Filter by tag if specified (tags are not directly supported in fuzzySearch filters)
+    // Filter by context and tag if specified (not directly supported in fuzzySearch filters)
     let filteredResults = results
+    if (context) {
+      filteredResults = filteredResults.filter(shortcut =>
+        shortcut.context?.toLowerCase().includes(context.toLowerCase())
+      )
+    }
     if (tag) {
-      filteredResults = results.filter(shortcut =>
+      filteredResults = filteredResults.filter(shortcut =>
         shortcut.tags.some(t => t.toLowerCase().includes(tag.toLowerCase()))
       )
     }
