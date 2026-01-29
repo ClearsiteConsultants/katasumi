@@ -56,8 +56,8 @@ export default function Home() {
         return
       }
       
-      // Tab - Toggle mode (works everywhere except in typing mode without modifiers)
-      if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !isTyping) {
+      // Tab - Toggle mode (works ALWAYS, even when typing)
+      if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault()
         toggleMode()
         return

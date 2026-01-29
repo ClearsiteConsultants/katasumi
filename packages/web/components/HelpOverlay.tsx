@@ -34,6 +34,10 @@ export function HelpOverlay() {
                 <span className="text-gray-700 dark:text-gray-300">Toggle Mode (App-First ↔ Full-Phrase)</span>
                 <kbd className="kbd">Tab</kbd>
               </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400 pl-4">Works anywhere, even in search input</span>
+                <span></span>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-700 dark:text-gray-300">Toggle AI</span>
                 <kbd className="kbd">a</kbd>
@@ -90,10 +94,17 @@ export function HelpOverlay() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Cycle Through Results</span>
+                <span className="text-gray-700 dark:text-gray-300">Browser Tab Navigation</span>
                 <div className="flex gap-2">
-                  <kbd className="kbd">Tab</kbd>
+                  <kbd className="kbd">Ctrl+Tab</kbd>
+                  <span className="text-gray-500">browser tabs</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Browser Focus Navigation</span>
+                <div className="flex gap-2">
                   <kbd className="kbd">Shift+Tab</kbd>
+                  <span className="text-gray-500">browser default</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">

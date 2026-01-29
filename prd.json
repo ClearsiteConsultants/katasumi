@@ -1834,7 +1834,22 @@
       ],
       "passes": false,
       "priority": 1,
-      "priorityRationale": "Tab key is the primary way to switch modes. Not working during search input breaks core navigation flow and user expectations."
+      "priorityRationale": "Tab key is the primary way to switch modes. Not working during search input breaks core navigation flow and user expectations.",
+      "implementationNotes": [
+        "Modified app/page.tsx: Removed !isTyping condition from Tab handler (line 59-64)",
+        "Tab key now toggles mode even when search input is focused",
+        "Modified components/SearchBar.tsx: Added Tab preventDefault in onKeyDown handler (line 89-95)",
+        "Prevents Tab from cycling through form elements - only toggles mode",
+        "Modified components/HelpOverlay.tsx: Updated Tab documentation (line 32-38, 86-103)",
+        "Added clarification that Tab works anywhere, even in search input",
+        "Documented Ctrl+Tab for browser tab switching",
+        "Documented Shift+Tab behavior as browser default",
+        "Created __tests__/tab-toggle-mode.test.tsx: 9 passing tests",
+        "Tests verify mode toggle preserves query, platform, filters, and selected app",
+        "All existing tests still pass (44 total tests)",
+        "TypeScript type checks pass"
+      ],
+      "completedAt": "2026-01-29T17:01:01.597Z"
     },
     {
       "id": "PHASE1-SEARCH-005",

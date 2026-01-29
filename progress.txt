@@ -2226,3 +2226,49 @@ The implementation provides a complete keyboard navigation experience that:
 Users can now easily exit keyboard navigation mode and have full control over
 result selection using multiple input methods (keyboard, mouse, or both).
 
+
+## 2026-01-29 - PHASE3-WEB-017: Tab Toggle Mode During Input
+
+**Task**: Fix Tab key to toggle between App-First and Full-Phrase modes even when search input is active
+
+**Changes Made**:
+1. **app/page.tsx** (line 59-64):
+   - Removed `!isTyping` condition from Tab key handler
+   - Tab now works ALWAYS, even when typing in search input
+   - Modifiers (Ctrl+Tab, Shift+Tab) still work for browser defaults
+
+2. **components/SearchBar.tsx** (line 89-95):
+   - Added Tab preventDefault in onKeyDown handler
+   - Prevents Tab from cycling through form elements
+   - Global handler takes over to toggle mode
+
+3. **components/HelpOverlay.tsx**:
+   - Added clarification that Tab works "anywhere, even in search input"
+   - Updated documentation to show Ctrl+Tab for browser tab switching
+   - Clarified Shift+Tab stays as browser default (focus navigation)
+   - Removed conflicting "Cycle Through Results" section for Tab/Shift+Tab
+
+4. **__tests__/tab-toggle-mode.test.tsx**:
+   - Created 9 comprehensive tests for Tab toggle behavior
+   - Tests verify mode toggle preserves: query, platform, filters, selected app
+   - Tests verify multiple sequential toggles work correctly
+   - All tests passing
+
+**Test Results**:
+- New tests: 9/9 passing
+- All web tests: 44/44 passing
+- TypeScript: No errors
+
+**Acceptance Criteria Met**:
+ Tab key always toggles mode, even when search input has focus
+ Tab does NOT cycle through form elements when in search input
+ Mode toggle preserves current search query
+ Mode toggle preserves selected platform
+ Clear visual feedback when mode switches (existing animation preserved)
+ After mode toggle, focus remains in search input (if was focused before)
+ Works consistently in both App-First and Full-Phrase modes
+ Ctrl+Tab (browser shortcut) still works for browser tab switching
+ Shift+Tab behavior clearly documented (stays as browser default)
+ Help overlay (?) documents Tab behavior
+
+**Status**: ✅ COMPLETE - All acceptance criteria met, tests passing

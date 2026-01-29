@@ -87,6 +87,13 @@ export function SearchBar() {
             value={localQuery}
             onChange={(e) => setLocalQuery(e.target.value)}
             onKeyDown={(e) => {
+              // Prevent Tab from cycling through form elements
+              // Tab should only toggle mode (handled by global keydown handler)
+              if (e.key === 'Tab') {
+                e.preventDefault()
+                // The global handler will toggle mode
+                return
+              }
               if (e.key === 'Enter') {
                 // After Enter, unfocus so user can use shortcuts on results
                 setTimeout(() => {
