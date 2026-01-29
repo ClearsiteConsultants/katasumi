@@ -1595,6 +1595,237 @@
       "priorityRationale": "TUI must be usable in any terminal size. Current fixed result counts cause scrolling issues in smaller terminals and waste space in larger ones. Responsive design is essential for good UX across different terminal configurations.",
       "completionNotes": "Implemented responsive design for terminal size. Created useTerminalSize hook to detect terminal dimensions and listen for resize events. Updated all components (AppFirstMode, FullPhraseMode, ResultsList, DetailView, HelpOverlay, PlatformSelector) to dynamically adjust layout based on available space. Added warning messages for terminals smaller than 20x80. Results display now adapts to terminal size with no scrolling required. Created comprehensive test suite with 23 passing tests.",
       "completedDate": "2026-01-29"
+    },
+    {
+      "id": "PHASE2-TUI-014",
+      "category": "Phase 2: TUI - Bug Fix - Input Mode Handling",
+      "description": "Fix global keyboard shortcuts (a, p, g, f, etc.) firing when search input is active - distinguish between input mode and navigation mode",
+      "acceptanceCriteria": [
+        "Global single-key shortcuts (a, p, g, f) do NOT trigger when search input has focus",
+        "Typing 'a' in search input inserts the character 'a', not toggle AI",
+        "Typing 'p' in search input inserts 'p', not open platform selector",
+        "Escape key unfocuses search input (exits input mode) without clearing query",
+        "After pressing Escape, global shortcuts work again (now in navigation mode)",
+        "Tab key always works to toggle between App-First and Full-Phrase modes",
+        "Ctrl/Cmd modifier shortcuts work in both input and navigation modes",
+        "Clear visual indicator when in input mode vs navigation mode (cursor style/color)",
+        "Enter key executes search and exits input mode (unfocuses input)",
+        "Slash key (/) focuses search input from anywhere in navigation mode"
+      ],
+      "stepsToVerify": [
+        "Launch TUI, focus search input, type 'platform' and verify no platform selector opens",
+        "Type 'a' in search input and verify it doesn't toggle AI, just inserts 'a'",
+        "Press Escape and verify input unfocused but query preserved",
+        "After Escape, press 'p' and verify platform selector opens (navigation mode)",
+        "Focus search input again, press Tab and verify mode toggles",
+        "Type query, press Enter, verify search executes and input unfocused",
+        "Press '/' from results list and verify search input gets focused",
+        "Create test: simulate typing in input and verify global shortcuts don't fire",
+        "Create test: verify Escape transitions from input mode to navigation mode",
+        "Run 'pnpm test --filter=@katasumi/tui' and verify input mode tests pass"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Critical UX bug - users cannot type certain letters in search without triggering global shortcuts. Makes search functionality unusable for queries containing a, p, g, f characters."
+    },
+    {
+      "id": "PHASE2-TUI-015",
+      "category": "Phase 2: TUI - Bug Fix - Vim-style Page Navigation",
+      "description": "Add vim-style page navigation (Ctrl+U, Ctrl+D, Ctrl+F, Ctrl+B) and forward slash search for faster result navigation",
+      "acceptanceCriteria": [
+        "Ctrl+U scrolls up half a page (or N/2 results where N is visible count)",
+        "Ctrl+D scrolls down half a page",
+        "Ctrl+F scrolls down full page (N visible results)",
+        "Ctrl+B scrolls up full page",
+        "Forward slash (/) in navigation mode focuses search input",
+        "Page navigation respects result boundaries (doesn't go past first/last)",
+        "Smooth scrolling indicator shows current position (e.g., '5-15 of 50')",
+        "Works in both App-First and Full-Phrase result lists",
+        "Page navigation works in detail view for long descriptions",
+        "Visual feedback when at top/bottom of results"
+      ],
+      "stepsToVerify": [
+        "Search for query with 50+ results",
+        "Press Ctrl+D and verify selection jumps down half page",
+        "Press Ctrl+U and verify selection jumps up half page",
+        "Press Ctrl+F and verify selection jumps down full page",
+        "Press Ctrl+B and verify selection jumps up full page",
+        "At bottom of results, press Ctrl+D and verify no jump past end",
+        "At top of results, press Ctrl+U and verify no jump past start",
+        "Press '/' and verify search input gets focus",
+        "Create tests for page navigation boundary conditions",
+        "Run 'pnpm test --filter=@katasumi/tui' and verify page navigation tests pass"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Scrolling one-by-one through many results is tedious. Vim-style navigation is expected by power users and significantly improves navigation efficiency."
+    },
+    {
+      "id": "PHASE2-TUI-016",
+      "category": "Phase 2: TUI - Bug Fix - Search Input Visibility",
+      "description": "Fix responsive layout bug where search input disappears when many results are shown",
+      "acceptanceCriteria": [
+        "Search input always visible at the top of the screen",
+        "Search input never scrolls off screen regardless of result count",
+        "Header (with mode indicator) always visible",
+        "Results list starts below search input with proper spacing",
+        "Footer (with keyboard hints) always visible at bottom",
+        "Content between header and footer scrolls, but header/footer stay fixed",
+        "Works correctly when terminal is resized while results are displayed",
+        "Search input has minimum 1 line + padding (doesn't get compressed)",
+        "Layout tested with 1, 10, 50, 100+ results"
+      ],
+      "stepsToVerify": [
+        "Search for query that returns 100+ results",
+        "Verify search input remains visible at top",
+        "Scroll through results and verify header doesn't move",
+        "Resize terminal while viewing results and verify layout maintains",
+        "Test with maximum visible results and verify no overlap",
+        "Test in both App-First and Full-Phrase modes",
+        "Create test that simulates large result sets and verifies header visibility",
+        "Create test for terminal resize with many results",
+        "Run 'pnpm test --filter=@katasumi/tui' and verify layout tests pass",
+        "Manual test: search for 'copy' and verify input stays visible"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Search input disappearing is a critical UX bug that makes the app unusable. Users cannot see what they're searching for or modify their query."
+    },
+    {
+      "id": "PHASE3-WEB-015",
+      "category": "Phase 3: Web - Bug Fix - Filter Hotkeys in App-First Mode",
+      "description": "Add keyboard shortcuts to change filter dropdowns in App-First mode after selecting an app",
+      "acceptanceCriteria": [
+        "After app selected, 'c' key focuses Context filter dropdown",
+        "After app selected, 't' key focuses Tags filter dropdown",
+        "After app selected, 'r' key focuses Category filter (if applicable)",
+        "Arrow keys navigate dropdown options when focused",
+        "Enter key selects highlighted dropdown option",
+        "Escape key closes dropdown and returns focus to results",
+        "Keyboard shortcuts only work in navigation mode (not when typing in search)",
+        "Visual hint shows available filter shortcuts (e.g., '(c)ontext, (t)ags')",
+        "Filter changes immediately update results list",
+        "Works with platform already filtered"
+      ],
+      "stepsToVerify": [
+        "Select an app in App-First mode",
+        "Press 'c' and verify Context filter dropdown opens",
+        "Use arrow keys to navigate, Enter to select",
+        "Press 't' and verify Tags filter dropdown opens",
+        "Press Escape and verify dropdown closes",
+        "Type in search input and verify 'c'/'t' keys don't trigger filters",
+        "Create test for keyboard filter navigation",
+        "Create test verifying shortcuts don't work during search input",
+        "Run 'pnpm test --filter=@katasumi/web' and verify filter hotkey tests pass",
+        "Test in Chrome, Firefox, Safari for keyboard compatibility"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Keyboard-first design requires ability to change filters without mouse. Missing this makes web UI less efficient than TUI for power users."
+    },
+    {
+      "id": "PHASE3-WEB-016",
+      "category": "Phase 3: Web - Bug Fix - Exit Keyboard Navigation in Full Phrase Mode",
+      "description": "Add way to exit keyboard navigation in Full-Phrase mode results and return focus to search input",
+      "acceptanceCriteria": [
+        "Escape key unfocuses current result (exits keyboard navigation)",
+        "After Escape, user can click anywhere or use '/' to refocus search",
+        "Slash key (/) focuses search input from anywhere",
+        "Visual indicator shows when in keyboard navigation mode vs free mode",
+        "Tab key cycles through results when in keyboard navigation mode",
+        "Shift+Tab cycles backwards through results",
+        "Clicking outside results exits keyboard navigation mode",
+        "Ctrl+Home jumps to first result",
+        "Ctrl+End jumps to last result",
+        "Clear documentation in help overlay (?) about navigation exit"
+      ],
+      "stepsToVerify": [
+        "Search in Full-Phrase mode, navigate results with arrow keys",
+        "Press Escape and verify no result is highlighted/focused",
+        "Press '/' and verify search input gets focus",
+        "Navigate results, press Ctrl+Home and verify first result selected",
+        "Press Ctrl+End and verify last result selected",
+        "Click outside results and verify navigation mode exits",
+        "Press Tab multiple times and verify it cycles through results",
+        "Create test for keyboard navigation exit behaviors",
+        "Run 'pnpm test --filter=@katasumi/web' and verify navigation tests pass",
+        "Test with keyboard-only navigation (no mouse)"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Users get stuck in keyboard navigation with no way to exit. Critical UX issue that makes web UI frustrating to use with keyboard."
+    },
+    {
+      "id": "PHASE3-WEB-017",
+      "category": "Phase 3: Web - Bug Fix - Tab Toggle Mode During Input",
+      "description": "Fix Tab key to toggle between App-First and Full-Phrase modes even when search input is active",
+      "acceptanceCriteria": [
+        "Tab key always toggles mode, even when search input has focus",
+        "Tab does NOT cycle through form elements when in search input",
+        "Mode toggle preserves current search query",
+        "Mode toggle preserves selected platform",
+        "Clear visual feedback when mode switches (animation/transition)",
+        "After mode toggle, focus remains in search input (if was focused before)",
+        "Works consistently in both App-First and Full-Phrase modes",
+        "Ctrl+Tab (browser shortcut) still works for browser tab switching",
+        "Shift+Tab behavior clearly documented (stays as browser default or custom?)",
+        "Help overlay (?) documents Tab behavior"
+      ],
+      "stepsToVerify": [
+        "Focus search input in App-First mode",
+        "Press Tab and verify mode switches to Full-Phrase",
+        "Verify search query preserved after toggle",
+        "Verify focus stays in search input",
+        "Press Tab again and verify mode switches back to App-First",
+        "Test with non-empty search query and verify query preserved",
+        "Test with platform filter active and verify filter preserved",
+        "Create test for Tab behavior with search input focused",
+        "Run 'pnpm test --filter=@katasumi/web' and verify Tab toggle tests pass",
+        "Test in Chrome, Firefox, Safari for consistent behavior"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Tab key is the primary way to switch modes. Not working during search input breaks core navigation flow and user expectations."
+    },
+    {
+      "id": "PHASE1-SEARCH-005",
+      "category": "Phase 1: Search - AI Feature Implementation",
+      "description": "Implement AI search functionality or show clear indication of what setup is needed to enable it",
+      "acceptanceCriteria": [
+        "When AI is ON in App-First mode: web search for apps matching query with keyboard shortcuts",
+        "When AI is ON in Full-Phrase mode: AI analyzes query and ranks results by semantic relevance",
+        "If API key not configured: show 'AI: OFF - Configure API key in Settings' message",
+        "Settings panel has AI provider selection (OpenAI, Anthropic, OpenRouter, Ollama)",
+        "Settings panel has API key input field",
+        "Settings panel has 'Test Connection' button to verify AI setup",
+        "AI provider saves to config.json",
+        "AI toggle (F4/a key) only enables if API key is configured",
+        "Clear error messages if AI call fails (rate limit, invalid key, etc.)",
+        "AI search respects user's privacy (local-first, data not stored in cloud without consent)",
+        "Performance: AI search completes in <2s or shows loading indicator",
+        "In App-First mode with AI: suggest new apps with keyboard shortcuts user might want",
+        "Web scraping for new apps requires user confirmation before adding to database",
+        "All AI features clearly documented in help overlay and README"
+      ],
+      "stepsToVerify": [
+        "Toggle AI to ON without API key and verify 'configure API key' message",
+        "Open Settings, enter OpenAI API key, save",
+        "Click 'Test Connection' and verify success message",
+        "Toggle AI to ON and verify 'AI: ON' indicator shows",
+        "Search in Full-Phrase mode with AI and verify results are semantically ranked",
+        "Search in App-First mode with AI for app name and verify suggestions",
+        "Test with invalid API key and verify clear error message",
+        "Test AI rate limit handling (mock or real limit)",
+        "Create test for AI configuration flow",
+        "Create test for AI search with mocked AI responses",
+        "Run 'pnpm test --filter=@katasumi/core' and verify AI tests pass",
+        "Run 'pnpm test --filter=@katasumi/tui' and verify AI integration tests pass",
+        "Run 'pnpm test --filter=@katasumi/web' and verify AI integration tests pass",
+        "Document AI setup in README with screenshots"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "AI toggle currently does nothing, confusing users. Either implement the feature or clearly indicate what's needed to enable it. This is a premium feature that should work or guide users to set it up."
     }
   ]
 }
