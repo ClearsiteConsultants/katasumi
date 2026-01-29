@@ -22,6 +22,20 @@ export interface ScoredShortcut {
 }
 
 /**
+ * App name abbreviations and aliases for smart matching
+ */
+const APP_NAME_MAP: Record<string, string[]> = {
+  'vscode': ['vscode', 'vs code', 'visual studio code', 'vsc', 'code'],
+  'vim': ['vim', 'vi'],
+  'bash': ['bash', 'shell', 'terminal'],
+  'git': ['git'],
+  'tmux': ['tmux', 'tm'],
+  'gnome': ['gnome'],
+  'macos': ['macos', 'mac os', 'osx', 'os x', 'mac'],
+  'windows': ['windows', 'win'],
+};
+
+/**
  * Keyword-based search engine with fuzzy matching and ranking
  */
 export class KeywordSearchEngine {
@@ -66,10 +80,38 @@ export class KeywordSearchEngine {
       return shortcuts.slice(0, limit);
     }
 
+    const normalizedQuery = query.toLowerCase().trim();
+    
+    // Detect app name in query (smart filtering)
+    const detectedApp = this.detectAppInQuery(normalizedQuery, shortcuts);
+    
+    // If app detected, filter shortcuts to that app only
+    if (detectedApp) {
+      shortcuts = shortcuts.filter(s => s.app.toLowerCase() === detectedApp.toLowerCase());
+    }
+
+    // Remove app name from query for scoring if detected
+    let scoringQuery = normalizedQuery;
+    if (detectedApp) {
+      // Remove the detected app name and its aliases from the query
+      const appAliases = APP_NAME_MAP[detectedApp] || [detectedApp];
+      for (const alias of appAliases) {
+        const aliasPattern = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+        scoringQuery = scoringQuery.replace(aliasPattern, '').trim();
+      }
+      // Clean up extra spaces
+      scoringQuery = scoringQuery.replace(/\s+/g, ' ').trim();
+    }
+
+    // If query is just an app name (scoring query is empty), return all shortcuts for that app
+    if (scoringQuery === '' && detectedApp) {
+      return shortcuts.slice(0, limit);
+    }
+
     // Score each shortcut based on query relevance
     const scoredShortcuts = shortcuts.map(shortcut => ({
       shortcut,
-      score: this.scoreShortcut(shortcut, query.toLowerCase().trim()),
+      score: this.scoreShortcut(shortcut, scoringQuery),
     }));
 
     // Filter out shortcuts with score 0
@@ -80,6 +122,66 @@ export class KeywordSearchEngine {
 
     // Return top N results
     return relevantShortcuts.slice(0, limit).map(s => s.shortcut);
+  }
+
+  /**
+   * Detect if query contains an app name and return the matched app
+   * @param query Normalized query string (lowercase)
+   * @param shortcuts Available shortcuts to detect apps from
+   * @returns Detected app name or null
+   */
+  private detectAppInQuery(query: string, shortcuts: Shortcut[]): string | null {
+    // Get unique app names from shortcuts
+    const availableApps = new Set(shortcuts.map(s => s.app.toLowerCase()));
+    
+    // Check each word in query against app names and abbreviations
+    const queryWords = query.split(/\s+/);
+    
+    for (const [appName, aliases] of Object.entries(APP_NAME_MAP)) {
+      // Only consider apps that exist in our shortcuts
+      if (!availableApps.has(appName.toLowerCase())) {
+        continue;
+      }
+      
+      // Check if any alias matches any query word (exact or fuzzy)
+      for (const alias of aliases) {
+        for (const word of queryWords) {
+          // Exact match
+          if (word === alias.toLowerCase()) {
+            return appName;
+          }
+          
+          // Fuzzy match for abbreviations (e.g., "vsc" matches "vscode")
+          if (word.length >= 2 && alias.length >= 3) {
+            if (alias.toLowerCase().startsWith(word)) {
+              return appName;
+            }
+          }
+        }
+        
+        // Check if the full query starts with the alias
+        if (query.startsWith(alias.toLowerCase() + ' ') || 
+            query === alias.toLowerCase()) {
+          return appName;
+        }
+      }
+    }
+    
+    // Fallback: check if query starts with any available app name directly
+    for (const appName of availableApps) {
+      if (query.startsWith(appName + ' ') || query === appName) {
+        return appName;
+      }
+      
+      // Check for common abbreviations by checking if app name starts with query word
+      for (const word of queryWords) {
+        if (word.length >= 2 && appName.startsWith(word) && word.length >= appName.length * 0.4) {
+          return appName;
+        }
+      }
+    }
+    
+    return null;
   }
 
   /**

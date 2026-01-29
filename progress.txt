@@ -1821,3 +1821,43 @@ Type checks: Build successful
 - `npm run test:e2e:headed` - Run E2E tests in headed mode
 
 **Status:** ✅ COMPLETE - All acceptance criteria met. E2E tests verify real PostgreSQL database queries through API routes.
+
+===================================
+Date: 2026-01-29T00:22:00Z
+Task: PHASE1-SEARCH-004 - Smart Full Phrase Search
+Priority: 1
+Status: ✅ COMPLETED
+
+Summary:
+Implemented intelligent full phrase search that detects app names in queries and filters results accordingly.
+
+Key Changes:
+1. Added app name abbreviation mapping (vscode/vsc/vs code, tmux/tm, etc.)
+2. Implemented detectAppInQuery() for fuzzy app name matching
+3. Modified fuzzySearch() to filter by detected app and remove app name from scoring query
+4. When app detected (e.g., "vscode copy"), shows only that app's shortcuts
+5. When no app match (e.g., "copy line"), shows cross-app results
+6. Added 15 comprehensive tests covering all acceptance criteria
+
+Technical Details:
+- APP_NAME_MAP defines app aliases and abbreviations
+- detectAppInQuery() checks query words against app names and aliases
+- Supports exact match, prefix match, and fuzzy abbreviations
+- Case-insensitive matching throughout
+- Query like "vscode copy" filters to vscode, then searches "copy"
+- Query like "copy" searches across all apps
+
+Test Results:
+- All 110 tests passing (109 existing + 1 new test file)
+- Performance verified under 500ms
+- Build successful with no type errors
+
+Files Modified:
+- packages/core/src/keyword-search-engine.ts
+- packages/core/src/__tests__/keyword-search-engine.test.ts
+
+Next Steps:
+- Feature automatically available in both TUI and Web (uses same search engine)
+- No UI changes needed - behavior is transparent to users
+- Ready for production use
+

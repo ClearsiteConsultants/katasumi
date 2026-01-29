@@ -56,6 +56,36 @@ class MockDatabaseAdapter implements DatabaseAdapter {
       tags: ['split', 'pane', 'horizontal'],
       source: { type: SourceType.OFFICIAL, url: 'https://tmux.github.io', scrapedAt: new Date(), confidence: 1.0 }
     },
+    {
+      id: '6',
+      app: 'vscode',
+      action: 'Paste',
+      keys: { mac: 'Cmd+V', windows: 'Ctrl+V', linux: 'Ctrl+V' },
+      context: 'Editor',
+      category: 'Editing',
+      tags: ['paste', 'clipboard'],
+      source: { type: SourceType.OFFICIAL, url: 'https://code.visualstudio.com', scrapedAt: new Date(), confidence: 1.0 }
+    },
+    {
+      id: '7',
+      app: 'bash',
+      action: 'Copy line',
+      keys: { mac: 'Ctrl+U', linux: 'Ctrl+U' },
+      context: 'Command Line',
+      category: 'Editing',
+      tags: ['copy', 'line'],
+      source: { type: SourceType.OFFICIAL, url: 'https://gnu.org/bash', scrapedAt: new Date(), confidence: 1.0 }
+    },
+    {
+      id: '8',
+      app: 'git',
+      action: 'Show status',
+      keys: { mac: 'git status', linux: 'git status', windows: 'git status' },
+      context: 'Command Line',
+      category: 'Version Control',
+      tags: ['status', 'info'],
+      source: { type: SourceType.OFFICIAL, url: 'https://git-scm.com', scrapedAt: new Date(), confidence: 1.0 }
+    },
   ];
 
   async searchShortcuts(options: SearchOptions = {}): Promise<Shortcut[]> {
@@ -348,6 +378,109 @@ describe('KeywordSearchEngine', () => {
     it('should handle whitespace-only key string', async () => {
       const results = await engine.searchByKeys('   ');
       expect(results).toEqual([]);
+    });
+  });
+
+  describe('smart app name detection', () => {
+    it('should filter to vscode when "vscode copy" is searched', async () => {
+      const results = await engine.fuzzySearch('vscode copy');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'vscode')).toBe(true);
+    });
+
+    it('should filter to vscode when "vsc paste" is searched (abbreviation)', async () => {
+      const results = await engine.fuzzySearch('vsc paste');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'vscode')).toBe(true);
+    });
+
+    it('should filter to vscode when "vs code copy" is searched', async () => {
+      const results = await engine.fuzzySearch('vs code copy');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'vscode')).toBe(true);
+    });
+
+    it('should show cross-app results when "copy line" is searched (no app match)', async () => {
+      const results = await engine.fuzzySearch('copy line');
+      expect(results.length).toBeGreaterThan(0);
+      const apps = new Set(results.map(r => r.app));
+      expect(apps.size).toBeGreaterThan(1); // Multiple apps
+    });
+
+    it('should filter to vim when "vim paste" is searched', async () => {
+      const results = await engine.fuzzySearch('vim paste');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'vim')).toBe(true);
+    });
+
+    it('should filter to bash when "bash copy" is searched', async () => {
+      const results = await engine.fuzzySearch('bash copy');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'bash')).toBe(true);
+    });
+
+    it('should filter to git when "git" is in query', async () => {
+      const results = await engine.fuzzySearch('git status');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'git')).toBe(true);
+    });
+
+    it('should be case-insensitive for app names', async () => {
+      const lowerResults = await engine.fuzzySearch('vscode copy');
+      const upperResults = await engine.fuzzySearch('VSCODE COPY');
+      const mixedResults = await engine.fuzzySearch('VsCode Copy');
+      expect(lowerResults.length).toBe(upperResults.length);
+      expect(lowerResults.length).toBe(mixedResults.length);
+      expect(lowerResults.every(r => r.app === 'vscode')).toBe(true);
+    });
+
+    it('should handle app name with space like "visual studio code"', async () => {
+      const results = await engine.fuzzySearch('visual studio code paste');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'vscode')).toBe(true);
+    });
+
+    it('should handle "code" as vscode abbreviation', async () => {
+      const results = await engine.fuzzySearch('code copy');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'vscode')).toBe(true);
+    });
+
+    it('should not filter when query has no app name', async () => {
+      const results = await engine.fuzzySearch('paste');
+      expect(results.length).toBeGreaterThan(0);
+      const apps = new Set(results.map(r => r.app));
+      expect(apps.size).toBeGreaterThan(1); // Multiple apps
+    });
+
+    it('should prioritize app match over action when both present', async () => {
+      const results = await engine.fuzzySearch('vscode paste');
+      expect(results.length).toBeGreaterThan(0);
+      // Should only show vscode results
+      expect(results.every(r => r.app === 'vscode')).toBe(true);
+      // Should have the paste action
+      const hasPaste = results.some(r => r.action.toLowerCase().includes('paste'));
+      expect(hasPaste).toBe(true);
+    });
+
+    it('should handle queries with only app name', async () => {
+      const results = await engine.fuzzySearch('vscode');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'vscode')).toBe(true);
+    });
+
+    it('should work with tmux abbreviation', async () => {
+      const results = await engine.fuzzySearch('tm split');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every(r => r.app === 'tmux')).toBe(true);
+    });
+
+    it('should complete search in reasonable time', async () => {
+      const startTime = Date.now();
+      await engine.fuzzySearch('vscode copy line');
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      expect(duration).toBeLessThan(500); // Should be under 500ms
     });
   });
 });

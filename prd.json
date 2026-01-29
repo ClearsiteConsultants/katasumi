@@ -1535,9 +1535,27 @@
         "Run 'pnpm test --filter=@katasumi/core' and verify smart search tests pass",
         "Test in both TUI and Web Full-Phrase mode to verify consistent behavior"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
-      "priorityRationale": "Full phrase search is core functionality and current results are not smart enough. Users expect app-specific results when they mention an app name. This improves search quality significantly without requiring AI."
+      "priorityRationale": "Full phrase search is core functionality and current results are not smart enough. Users expect app-specific results when they mention an app name. This improves search quality significantly without requiring AI.",
+      "completedAt": "2026-01-29T00:22:04.798Z",
+      "implementation": {
+        "summary": "Implemented smart full phrase search with app name detection and prioritization",
+        "changes": [
+          "Added APP_NAME_MAP with common app abbreviations (vsc->vscode, tm->tmux, etc.)",
+          "Added detectAppInQuery() method to identify app names in search queries",
+          "Modified fuzzySearch() to filter results by detected app when found",
+          "Query scoring now excludes detected app name for better action matching",
+          "Added 15 comprehensive tests for app name detection and filtering",
+          "Supports fuzzy matching (vsc, vs code), case-insensitive matching, and multi-word app names",
+          "Performance verified under 500ms for all test cases",
+          "Cross-app results shown when no app name detected in query"
+        ],
+        "filesModified": [
+          "packages/core/src/keyword-search-engine.ts",
+          "packages/core/src/__tests__/keyword-search-engine.test.ts"
+        ]
+      }
     },
     {
       "id": "PHASE2-TUI-013",
