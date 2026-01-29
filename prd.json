@@ -1,7 +1,7 @@
 {
   "project": "Katasumi",
   "version": "1.0.0",
-  "lastUpdated": "2026-01-29T16:40:14.896Z",
+  "lastUpdated": "2026-01-29T16:45:46.303Z",
   "requirements": [
     {
       "id": "PHASE1-DB-003",
@@ -1713,9 +1713,28 @@
         "Run 'pnpm test --filter=@katasumi/tui' and verify layout tests pass",
         "Manual test: search for 'copy' and verify input stays visible"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
-      "priorityRationale": "Search input disappearing is a critical UX bug that makes the app unusable. Users cannot see what they're searching for or modify their query."
+      "priorityRationale": "Search input disappearing is a critical UX bug that makes the app unusable. Users cannot see what they're searching for or modify their query.",
+      "completedAt": "2026-01-29T16:45:46.303Z",
+      "implementation": {
+        "changes": [
+          "Updated App.tsx to use height=100% and flexGrow layout with overflow=hidden on content area",
+          "Modified FullPhraseMode.tsx to keep search input fixed at top with flexShrink={0}",
+          "Modified AppFirstMode.tsx to keep app info and filters fixed with proper flex properties",
+          "Ensured header and footer remain visible at all times outside scrollable area",
+          "Created comprehensive test suite (search-input-visibility.test.ts) with 12 tests verifying layout structure"
+        ],
+        "filesModified": [
+          "packages/tui/src/App.tsx",
+          "packages/tui/src/components/FullPhraseMode.tsx",
+          "packages/tui/src/components/AppFirstMode.tsx"
+        ],
+        "filesCreated": [
+          "packages/tui/src/__tests__/search-input-visibility.test.ts"
+        ],
+        "testResults": "158/159 tests passing (1 pre-existing failure unrelated to changes)"
+      }
     },
     {
       "id": "PHASE3-WEB-015",

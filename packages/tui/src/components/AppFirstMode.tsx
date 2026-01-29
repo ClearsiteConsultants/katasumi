@@ -251,9 +251,9 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
   }
 
   if (!selectedApp) {
-    // Show app selector
+    // Show app selector - keep it fixed
     return (
-      <Box flexDirection="column" marginY={1}>
+      <Box flexDirection="column" height="100%">
         <AppSelector
           apps={availableApps}
           query={appQuery}
@@ -268,8 +268,9 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
 
   // Show filters and results
   return (
-    <Box flexDirection="column" marginY={1} gap={1}>
-      <Box flexDirection="column">
+    <Box flexDirection="column" height="100%">
+      {/* App info - always visible */}
+      <Box flexDirection="column" flexShrink={0}>
         <Text>
           App: <Text bold color="cyan">{selectedApp.displayName}</Text>
           {' '}
@@ -279,16 +280,22 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
         </Text>
       </Box>
 
-      <FiltersBar onQuickSearchChange={setQuickSearchQuery} />
+      {/* Filters bar - always visible */}
+      <Box marginTop={1} flexShrink={0}>
+        <FiltersBar onQuickSearchChange={setQuickSearchQuery} />
+      </Box>
       
-      <ResultsList
-        results={results}
-        platform={platform}
-        quickSearchQuery={quickSearchQuery}
-        onSelectShortcut={selectShortcut}
-        onFocusSearch={() => setFocusSection('filters')}
-        maxVisibleResults={terminalSize.availableRows}
-      />
+      {/* Results list - scrollable */}
+      <Box marginTop={1} flexGrow={1} overflow="hidden">
+        <ResultsList
+          results={results}
+          platform={platform}
+          quickSearchQuery={quickSearchQuery}
+          onSelectShortcut={selectShortcut}
+          onFocusSearch={() => setFocusSection('filters')}
+          maxVisibleResults={terminalSize.availableRows}
+        />
+      </Box>
     </Box>
   );
 }

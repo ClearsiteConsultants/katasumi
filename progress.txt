@@ -2074,3 +2074,40 @@ All 10 acceptance criteria from PRD met:
 ### Next Steps
 Task is complete and passes all requirements. Ready to move to next priority item.
 
+
+## 2026-01-29T16:45:00Z - PHASE2-TUI-016: Search Input Visibility Bug Fix
+
+**Task:** Fix responsive layout bug where search input disappears when many results are shown
+
+**Changes Made:**
+1. Updated App.tsx layout structure:
+   - Added height="100%" to root container for proper constraint
+   - Wrapped content area with flexGrow={1} and overflow="hidden"
+   - Ensures header and footer stay fixed outside scrollable area
+
+2. Modified FullPhraseMode.tsx:
+   - Set root container to height="100%" for proper layout
+   - Added flexShrink={0} to search input box to prevent compression
+   - Added flexShrink={0} to AI status indicator
+   - Made results area use flexGrow={1} and overflow="hidden" for scrolling
+
+3. Modified AppFirstMode.tsx:
+   - Set root container to height="100%" 
+   - Added flexShrink={0} to app info section
+   - Added flexShrink={0} to filters bar
+   - Made results list use flexGrow={1} and overflow="hidden"
+
+4. Created comprehensive test suite:
+   - 12 new tests in search-input-visibility.test.ts
+   - Verifies layout structure prevents search input from scrolling
+   - Tests both App-First and Full-Phrase modes
+   - All tests passing
+
+**Test Results:**
+- 158/159 tests passing (99.4% success rate)
+- 1 pre-existing failure unrelated to changes
+- New 12 tests for search input visibility: ALL PASSING
+
+**Key Achievement:**
+Search input now remains visible at top of screen regardless of result count, terminal size, or mode. The layout properly constrains scrollable content while keeping critical UI elements (header, search input, footer) fixed and always visible.
+

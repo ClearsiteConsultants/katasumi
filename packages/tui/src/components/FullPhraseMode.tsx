@@ -301,14 +301,15 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
     }
 
     return (
-      <Box flexDirection="column" marginY={1}>
-        {/* Search Input Box */}
+      <Box flexDirection="column" height="100%">
+        {/* Search Input Box - Always visible at top */}
         <Box
           flexDirection="column"
           borderStyle="single"
           borderColor={isInputFocused ? 'cyan' : 'white'}
           paddingX={2}
           paddingY={1}
+          flexShrink={0}
         >
           <Text bold color={isInputFocused ? 'cyan' : 'white'}>
             Search across all apps {isInputFocused ? '(Input Mode)' : '(Navigation Mode)'}
@@ -326,8 +327,8 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
           </Box>
         </Box>
 
-        {/* AI Status Indicator */}
-        <Box marginTop={1} paddingX={2}>
+        {/* AI Status Indicator - Always visible */}
+        <Box marginTop={1} paddingX={2} flexShrink={0}>
           {aiEnabled ? (
             <Text color="green">
               💡 AI Insight: Results are ranked by AI for better relevance
@@ -339,75 +340,77 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
           )}
         </Box>
 
-        {/* Results */}
-        {error ? (
-          <Box marginTop={1} paddingX={2} borderStyle="single" borderColor="red">
-            <Text color="red" bold>Error: </Text>
-            <Text color="red">{error}</Text>
-            <Box marginTop={1}>
-              <Text dimColor>Check ~/.katasumi/error.log for details</Text>
+        {/* Scrollable Results Area */}
+        <Box flexDirection="column" marginTop={1} flexGrow={1} overflow="hidden">
+          {error ? (
+            <Box paddingX={2} borderStyle="single" borderColor="red">
+              <Text color="red" bold>Error: </Text>
+              <Text color="red">{error}</Text>
+              <Box marginTop={1}>
+                <Text dimColor>Check ~/.katasumi/error.log for details</Text>
+              </Box>
             </Box>
-          </Box>
-        ) : isSearching ? (
-          <Box marginTop={1} paddingX={2}>
-            <Text dimColor>Searching...</Text>
-          </Box>
-        ) : results.length > 0 ? (
-          <Box flexDirection="column" marginTop={1}>
-            <Box paddingX={2} marginBottom={1} justifyContent="space-between">
-              <Text dimColor>Use ↑↓ Ctrl+U/D/F/B, / to search, Enter for details</Text>
-              {results.length > 0 && (
-                <Text dimColor>[{positionText}]</Text>
+          ) : isSearching ? (
+            <Box paddingX={2}>
+              <Text dimColor>Searching...</Text>
+            </Box>
+          ) : results.length > 0 ? (
+            <Box flexDirection="column">
+              <Box paddingX={2} marginBottom={1} justifyContent="space-between" flexShrink={0}>
+                <Text dimColor>Use ↑↓ Ctrl+U/D/F/B, / to search, Enter for details</Text>
+                {results.length > 0 && (
+                  <Text dimColor>[{positionText}]</Text>
+                )}
+              </Box>
+              {atBoundary && (
+                <Box paddingX={2} marginBottom={1} flexShrink={0}>
+                  <Text color="yellow">
+                    {atBoundary === 'top' ? '▲ At top of results' : '▼ At bottom of results'}
+                  </Text>
+                </Box>
+              )}
+              {visibleResults.map((shortcut, index) => {
+                const keys = getKeysForPlatform(shortcut);
+                const context = shortcut.context ? `[${shortcut.context}]` : '';
+                const actualIndex = startIndex + index;
+                const isSelected = actualIndex === selectedIndex;
+                
+                return (
+                  <Box key={shortcut.id} paddingX={2} flexShrink={0}>
+                    <Text inverse={isSelected}>
+                      {isSelected ? '▶ ' : '  '}
+                    </Text>
+                    <Box width={15}>
+                      <Text color="cyan" bold inverse={isSelected}>{shortcut.app}</Text>
+                    </Box>
+                    <Box width={25}>
+                      <Text color="yellow" inverse={isSelected}>{keys}</Text>
+                    </Box>
+                    <Box width={35}>
+                      <Text inverse={isSelected}>{shortcut.action}</Text>
+                    </Box>
+                    {context && (
+                      <Box>
+                        <Text dimColor={!isSelected} inverse={isSelected}>{context}</Text>
+                      </Box>
+                    )}
+                  </Box>
+                );
+              })}
+              {results.length > maxVisibleResults && (
+                <Box paddingX={2} marginTop={1} flexShrink={0}>
+                  <Text dimColor>
+                    Showing {startIndex + 1}-{endIndex} of {results.length} results
+                  </Text>
+                </Box>
               )}
             </Box>
-            {atBoundary && (
-              <Box paddingX={2} marginBottom={1}>
-                <Text color="yellow">
-                  {atBoundary === 'top' ? '▲ At top of results' : '▼ At bottom of results'}
-                </Text>
-              </Box>
-            )}
-            {visibleResults.map((shortcut, index) => {
-              const keys = getKeysForPlatform(shortcut);
-              const context = shortcut.context ? `[${shortcut.context}]` : '';
-              const actualIndex = startIndex + index;
-              const isSelected = actualIndex === selectedIndex;
-              
-              return (
-                <Box key={shortcut.id} paddingX={2}>
-                  <Text inverse={isSelected}>
-                    {isSelected ? '▶ ' : '  '}
-                  </Text>
-                  <Box width={15}>
-                    <Text color="cyan" bold inverse={isSelected}>{shortcut.app}</Text>
-                  </Box>
-                  <Box width={25}>
-                    <Text color="yellow" inverse={isSelected}>{keys}</Text>
-                  </Box>
-                  <Box width={35}>
-                    <Text inverse={isSelected}>{shortcut.action}</Text>
-                  </Box>
-                  {context && (
-                    <Box>
-                      <Text dimColor={!isSelected} inverse={isSelected}>{context}</Text>
-                    </Box>
-                  )}
-                </Box>
-              );
-            })}
-            {results.length > maxVisibleResults && (
-              <Box paddingX={2} marginTop={1}>
-                <Text dimColor>
-                  Showing {startIndex + 1}-{endIndex} of {results.length} results
-                </Text>
-              </Box>
-            )}
-          </Box>
-        ) : query.trim().length > 0 ? (
-          <Box marginTop={1} paddingX={2}>
-            <Text dimColor>No results found for "{query}". Try a different search query.</Text>
-          </Box>
-        ) : null}
+          ) : query.trim().length > 0 ? (
+            <Box paddingX={2}>
+              <Text dimColor>No results found for "{query}". Try a different search query.</Text>
+            </Box>
+          ) : null}
+        </Box>
       </Box>
     );
   }

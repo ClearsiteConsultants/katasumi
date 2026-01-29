@@ -39,26 +39,28 @@ export default function App() {
   };
 
   return (
-    <Box flexDirection="column" padding={1}>
+    <Box flexDirection="column" height="100%" padding={1}>
       <Header mode={mode} platform={platform} aiEnabled={aiEnabled} />
 
-      {showHelp ? (
-        <HelpOverlay onClose={() => setShowHelp(false)} />
-      ) : showPlatformSelector ? (
-        <PlatformSelector
-          currentPlatform={platform}
-          onSelect={handlePlatformSelect}
-          onClose={() => setShowPlatformSelector(false)}
-        />
-      ) : (
-        <>
-          {mode === 'app-first' ? (
-            <AppFirstMode selectedApp={selectedApp} view={view} />
-          ) : (
-            <FullPhraseMode aiEnabled={aiEnabled} view={view} />
-          )}
-        </>
-      )}
+      <Box flexGrow={1} flexDirection="column" overflow="hidden">
+        {showHelp ? (
+          <HelpOverlay onClose={() => setShowHelp(false)} />
+        ) : showPlatformSelector ? (
+          <PlatformSelector
+            currentPlatform={platform}
+            onSelect={handlePlatformSelect}
+            onClose={() => setShowPlatformSelector(false)}
+          />
+        ) : (
+          <>
+            {mode === 'app-first' ? (
+              <AppFirstMode selectedApp={selectedApp} view={view} />
+            ) : (
+              <FullPhraseMode aiEnabled={aiEnabled} view={view} />
+            )}
+          </>
+        )}
+      </Box>
 
       <Footer mode={mode} />
 
