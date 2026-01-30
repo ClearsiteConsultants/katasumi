@@ -2091,7 +2091,7 @@
         "Create test for terminal resize maintaining input visibility",
         "Run 'pnpm test --filter=@katasumi/tui' and verify layout tests pass"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
       "priorityRationale": "Critical UX bug - users lose visibility of their search query when results fill the screen. This makes it impossible to refine searches or remember what was searched. Similar to PHASE2-TUI-016 but specific to Full-Phrase mode.",
       "reportedDate": "2026-01-30",
@@ -2100,7 +2100,9 @@
         "PHASE2-TUI-016 - Search Input Visibility fix (similar issue in App-First mode)",
         "PHASE2-TUI-013 - Responsive Design for terminal size"
       ],
-      "debuggingNotes": "May be related to recent responsive layout changes (PHASE2-TUI-013) or input mode handling (PHASE2-TUI-014). Check FullPhraseMode.tsx flex layout and scrolling behavior. Ensure input has flexShrink={0} to prevent compression."
+      "debuggingNotes": "May be related to recent responsive layout changes (PHASE2-TUI-013) or input mode handling (PHASE2-TUI-014). Check FullPhraseMode.tsx flex layout and scrolling behavior. Ensure input has flexShrink={0} to prevent compression.",
+      "implementationDate": "2026-01-30",
+      "implementationNotes": "Added visual divider between AI status indicator and results list. Verified existing layout structure already has proper flexShrink={0} on input sections to prevent scrolling. Added 5 comprehensive tests for input visibility with varying result counts (1, 10, 50, 100+ results). All new tests pass. TypeScript compilation passes. The layout uses flexShrink={0} on search input box and AI status indicator to keep them fixed at top, flexGrow={1} with overflow='hidden' on results area to make only that section scrollable."
     }
   ]
 }

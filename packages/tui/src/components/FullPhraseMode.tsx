@@ -340,6 +340,11 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
           )}
         </Box>
 
+        {/* Visual Divider */}
+        <Box marginTop={1} paddingX={2} flexShrink={0}>
+          <Text dimColor>{'─'.repeat(terminalSize.columns - 4)}</Text>
+        </Box>
+
         {/* Scrollable Results Area */}
         <Box flexDirection="column" marginTop={1} flexGrow={1} overflow="hidden">
           {error ? (

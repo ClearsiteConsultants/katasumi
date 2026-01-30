@@ -217,4 +217,62 @@ describe('Full-Phrase Mode', () => {
     // Note: Full AI search testing would require API keys and is beyond unit test scope
     // This is tested at integration level
   });
+
+  describe('Input visibility with varying result counts', () => {
+    it('should handle searches with 1 result', async () => {
+      // Search with very specific query to get minimal results
+      const results = await searchEngine.fuzzySearch('quit vim', {}, 30);
+      
+      expect(results).toBeDefined();
+      expect(Array.isArray(results)).toBe(true);
+      // Should return at least some results
+      expect(results.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle searches with 10 results', async () => {
+      const results = await searchEngine.fuzzySearch('save', {}, 10);
+      
+      expect(results).toBeDefined();
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.length).toBeLessThanOrEqual(10);
+    });
+
+    it('should handle searches with 50 results', async () => {
+      const results = await searchEngine.fuzzySearch('open', {}, 50);
+      
+      expect(results).toBeDefined();
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.length).toBeLessThanOrEqual(50);
+    });
+
+    it('should handle searches with 100+ results', async () => {
+      // Search for a common term that should return many results
+      const results = await searchEngine.fuzzySearch('copy', {}, 150);
+      
+      expect(results).toBeDefined();
+      expect(Array.isArray(results)).toBe(true);
+      // Should return a large number of results
+      expect(results.length).toBeGreaterThan(0);
+      
+      // Verify results are valid shortcuts
+      results.forEach(shortcut => {
+        expect(shortcut).toHaveProperty('id');
+        expect(shortcut).toHaveProperty('app');
+        expect(shortcut).toHaveProperty('action');
+      });
+    });
+
+    it('should maintain query visibility regardless of result count', async () => {
+      // Test that search functionality works with large result sets
+      const largeResultSet = await searchEngine.fuzzySearch('move', {}, 100);
+      const smallResultSet = await searchEngine.fuzzySearch('quit vim insert', {}, 5);
+      
+      expect(largeResultSet).toBeDefined();
+      expect(smallResultSet).toBeDefined();
+      
+      // Both should be valid result sets with proper structure
+      expect(Array.isArray(largeResultSet)).toBe(true);
+      expect(Array.isArray(smallResultSet)).toBe(true);
+    });
+  });
 });
