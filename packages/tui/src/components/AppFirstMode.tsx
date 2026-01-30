@@ -282,7 +282,7 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
 
       {/* Filters bar - always visible */}
       <Box marginTop={1} flexShrink={0}>
-        <FiltersBar onQuickSearchChange={setQuickSearchQuery} />
+        <FiltersBar onQuickSearchChange={setQuickSearchQuery} selectedApp={selectedApp} />
       </Box>
       
       {/* Results list - scrollable */}

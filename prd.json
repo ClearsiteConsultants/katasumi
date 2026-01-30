@@ -1,7 +1,7 @@
 {
   "project": "Katasumi",
   "version": "1.0.0",
-  "lastUpdated": "2026-01-30T19:27:00Z",
+  "lastUpdated": "2026-01-30T19:45:00Z",
   "requirements": [
     {
       "id": "PHASE1-DB-003",
@@ -2056,7 +2056,10 @@
         "PHASE2-TUI-002 - App-First Mode implementation",
         "PHASE2-TUI-014 - Input Mode Handling (may have introduced regression)"
       ],
-      "debuggingNotes": "Recent input mode handling changes (PHASE2-TUI-014) may have hidden the search input or broken focus management. Check AppFirstMode.tsx layout and input visibility. Verify isInputMode state is correctly managed."
+      "debuggingNotes": "Recent input mode handling changes (PHASE2-TUI-014) may have hidden the search input or broken focus management. Check AppFirstMode.tsx layout and input visibility. Verify isInputMode state is correctly managed.",
+      "implementationNotes": "Fixed search input visibility and mode transitions in App-First mode:\n\n1. FiltersBar.tsx:\n   - Added Escape key handler to exit input mode and switch to results navigation\n   - Added Enter key handler to execute search and exit input mode\n   - Added clear label showing \"Search shortcuts for [AppName]\"\n   - Added placeholder text when query is empty\n   - Added blue background color on query text when focused (input mode)\n   - Added \"(INPUT MODE)\" indicator in header when focused\n   - Added keyboard hints footer: \"Esc: navigate | Enter: apply | /: search\"\n\n2. AppFirstMode.tsx:\n   - Updated FiltersBar to receive selectedApp prop for dynamic labels\n\n3. ResultsList.tsx:\n   - Simplified navigation instructions for clarity\n   - Slash (/) key already focuses search from navigation mode\n\nAll existing tests pass including input-mode-handling.test.ts (26 tests) and search-input-visibility.test.ts (12 tests).",
+      "completedDate": "2026-01-30",
+      "lastUpdated": "2026-01-30T19:45:00Z"
     },
     {
       "id": "PHASE2-TUI-018",

@@ -2439,3 +2439,63 @@ The changes satisfy all acceptance criteria:
 - packages/web/e2e/console-errors.spec.ts - New E2E tests for console errors
 - packages/web/__tests__/hydration-safety.test.ts - New unit tests
 - DEVELOPMENT.md - Added hydration error documentation
+
+================================================================================
+Date: 2026-01-30
+Task: PHASE2-TUI-017 - Fix invisible keyword search input in App-First mode
+Status: COMPLETED
+================================================================================
+
+PROBLEM:
+- After selecting app in App-First mode, search input was not clearly visible
+- No way to escape from input mode to navigate results with arrow keys
+- No visual indicator showing input vs navigation mode
+- Missing keyboard hints for navigation
+
+SOLUTION IMPLEMENTED:
+1. FiltersBar.tsx:
+   - Added Escape key handler to exit input mode (setFocusSection('results'))
+   - Added Enter key handler to execute search and exit input mode
+   - Added dynamic label: "Search shortcuts for [AppName]" when app selected
+   - Added placeholder text showing app name when query is empty
+   - Added blue background color on query text when in input mode (focused)
+   - Added "(INPUT MODE)" indicator in header when focused
+   - Added keyboard hints: "Esc: navigate | Enter: apply | /: search"
+
+2. AppFirstMode.tsx:
+   - Pass selectedApp prop to FiltersBar for dynamic labels/placeholders
+
+3. ResultsList.tsx:
+   - Simplified navigation instructions for better clarity
+   - "/" key already focuses search from navigation mode (existing feature)
+
+FILES MODIFIED:
+- packages/tui/src/components/FiltersBar.tsx
+- packages/tui/src/components/AppFirstMode.tsx
+- packages/tui/src/components/ResultsList.tsx
+
+TESTING:
+- Build successful: TypeScript compilation passed
+- All relevant tests passed:
+  ✓ input-mode-handling.test.ts (26 tests)
+  ✓ search-input-visibility.test.ts (12 tests)
+  ✓ keyboard-navigation.test.ts (19 tests)
+  ✓ Total: 158/159 tests passed (1 unrelated failure in natural language query)
+
+ACCEPTANCE CRITERIA MET:
+ Search input clearly visible with label after selecting app
+ Placeholder text shows "Search shortcuts for [AppName]..."
+ Escape key exits input mode and enables arrow key navigation
+ Visual indicator shows "(INPUT MODE)" when focused
+ Background color changes (blue) when in input mode
+ Keyboard hints displayed: "Esc: navigate | Enter: apply | /: search"
+ "/" key refocuses search from navigation mode
+ Enter key executes search and exits input mode
+ Arrow keys work in navigation mode after Escape
+
+NOTES:
+- FiltersBar now properly manages input/navigation mode transitions
+- Users have clear visual feedback about current mode
+- Keyboard navigation is intuitive with clear instructions
+- All changes are minimal and surgical - only modified what was necessary
+

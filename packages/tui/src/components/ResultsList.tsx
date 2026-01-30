@@ -122,7 +122,7 @@ export function ResultsList({ results, platform, quickSearchQuery, onSelectShort
   return (
     <Box flexDirection="column" borderStyle="single" paddingX={1}>
       <Box justifyContent="space-between">
-        <Text bold>Results ({filteredResults.length}) - Use ↑↓ Ctrl+U/D/F/B, / to search, Enter for details</Text>
+        <Text bold>Results ({filteredResults.length}) - ↑↓: navigate | /: search | Enter: details</Text>
         {filteredResults.length > 0 && (
           <Text dimColor>[{positionText}]</Text>
         )}
