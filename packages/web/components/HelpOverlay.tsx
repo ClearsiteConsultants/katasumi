@@ -151,6 +151,57 @@ export function HelpOverlay() {
                 </div>
               </div>
             </div>
+            
+            <h4 className="text-md font-semibold text-gray-900 dark:text-white mt-4 mb-2">
+              App Selection Flow
+            </h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Select First Matching App</span>
+                <kbd className="kbd">Enter</kbd>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400 pl-4">While typing in app search input</span>
+                <span></span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Enter Navigation Mode</span>
+                <kbd className="kbd">Esc</kbd>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400 pl-4">Exit input, use arrows to navigate apps</span>
+                <span></span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Navigate App Pills</span>
+                <div className="flex gap-2">
+                  <kbd className="kbd">↑</kbd>
+                  <kbd className="kbd">↓</kbd>
+                  <kbd className="kbd">←</kbd>
+                  <kbd className="kbd">→</kbd>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400 pl-4">After pressing Esc in input</span>
+                <span></span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Select Focused App</span>
+                <kbd className="kbd">Enter</kbd>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400 pl-4">While in navigation mode</span>
+                <span></span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Return to Input Mode</span>
+                <kbd className="kbd">Esc</kbd>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400 pl-4">While in navigation mode</span>
+                <span></span>
+              </div>
+            </div>
           </section>
 
           <section>

@@ -2317,3 +2317,45 @@ result selection using multiple input methods (keyboard, mouse, or both).
 - Real-time connection testing
 - Privacy-first approach with local storage
 - Works seamlessly across web and TUI interfaces
+
+========================================
+Date: 2026-01-30
+Task: PHASE3-WEB-018 - App Selector Keyboard Navigation
+========================================
+
+IMPLEMENTED:
+ Added keyboard navigation to AppSelector component:
+   - Enter key selects first matching app while typing in input
+   - Escape key exits input mode and enters navigation mode
+   - Arrow keys (↑↓←→) navigate between app pills in navigation mode
+   - Enter key selects focused app in navigation mode
+   - Escape key returns to input mode from navigation mode
+   - Visual highlight (ring-2 ring-primary-500) shows focused app
+   - Real-time filtering as user types
+   - Wrapping navigation at list boundaries
+
+ Updated HelpOverlay with comprehensive keyboard shortcuts documentation:
+   - Added "App Selection Flow" section
+   - Documented all keyboard interactions for app selection
+   - Clear guidance on Enter, Escape, and arrow key usage
+
+ Created comprehensive test suite (app-selector-keyboard.test.tsx):
+   - 18 tests covering all navigation scenarios
+   - Input mode tests (Enter to select, Escape to navigate)
+   - Navigation mode tests (arrow keys, Enter, Escape)
+   - App filtering tests (real-time, case-insensitive)
+   - Mode transition tests
+   - All tests passing ✅
+
+ Fixed React Hook ESLint warning by including isInputMode in dependency array
+
+TESTS:
+- All 62 web tests passing ✅
+- Type checks passing ✅
+- Build successful ✅
+
+STATUS: COMPLETE ✅
+
+The app selector now supports full keyboard navigation, making App-First mode 
+fully usable for keyboard-first users. The fix addresses the critical UX bug 
+where users couldn't select apps using keyboard after filtering.
