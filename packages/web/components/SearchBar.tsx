@@ -20,8 +20,9 @@ export function SearchBar() {
     // In app-first mode, app must be selected
     if (mode === 'app-first' && !selectedApp) return
     
-    // In full-phrase mode, allow search without app selection (cross-app search)
-    if (!searchQuery.trim()) {
+    // In app-first mode with app selected, allow empty query to show all shortcuts
+    // In full-phrase mode, require query for search
+    if (mode === 'full-phrase' && !searchQuery.trim()) {
       setResults([])
       return
     }
@@ -70,10 +71,10 @@ export function SearchBar() {
     }
   }, [mode, selectedApp, platform, filters, setResults, setQuery, aiEnabled, decrementAIQueryCount])
 
-  // Debounced search effect
+  // Debounced search effect for query changes
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (mode === 'full-phrase' || selectedApp) {
+      if (mode === 'full-phrase' || (mode === 'app-first' && selectedApp)) {
         performSearch(localQuery)
       }
     }, 300) // 300ms debounce
@@ -83,6 +84,21 @@ export function SearchBar() {
     }
   }, [localQuery, mode, selectedApp, performSearch])
 
+  // Immediate search when app is selected in app-first mode (shows all shortcuts)
+  useEffect(() => {
+    if (mode === 'app-first' && selectedApp) {
+      setLocalQuery('') // Clear search input
+      performSearch('') // Show all shortcuts immediately
+    }
+  }, [selectedApp, mode, performSearch])
+
+  // Re-search when filters change in app-first mode
+  useEffect(() => {
+    if (mode === 'app-first' && selectedApp) {
+      performSearch(localQuery)
+    }
+  }, [filters, mode, selectedApp, performSearch, localQuery])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     performSearch(localQuery)
@@ -91,7 +107,9 @@ export function SearchBar() {
   const isFullPhrase = mode === 'full-phrase'
   const placeholder = isFullPhrase 
     ? 'Ask anything... (e.g., "how to split screen" or "undo last change")'
-    : 'Quick search shortcuts...'
+    : selectedApp
+      ? 'Filter shortcuts... (optional)'
+      : 'Quick search shortcuts...'
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
@@ -105,6 +123,7 @@ export function SearchBar() {
             onKeyDown={(e) => {
               // Prevent Tab from cycling through form elements
               // Tab should only toggle mode (handled by global keydown handler)
+              console.log('[SearchBar] Key down:', e)
               if (e.key === 'Tab') {
                 e.preventDefault()
                 // The global handler will toggle mode
@@ -113,7 +132,9 @@ export function SearchBar() {
               if (e.key === 'Enter') {
                 // After Enter, unfocus so user can use shortcuts on results
                 setTimeout(() => {
-                  e.currentTarget.blur()
+                  if (e.target instanceof HTMLInputElement) {
+                    e.target.blur()
+                  }
                 }, 0)
               }
             }}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import type { Shortcut } from '@katasumi/core'
 import { useStore } from '@/lib/store'
@@ -11,6 +11,24 @@ export function ShortcutDetail() {
   const platform = useStore((state) => state.platform)
   const results = useStore((state) => state.results)
   const [copied, setCopied] = useState(false)
+
+  // Handle Escape key to only close modal, not navigate back
+  useEffect(() => {
+    if (!shortcut) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        selectShortcut(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true })
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true })
+    }
+  }, [shortcut, selectShortcut])
 
   const getKeysForPlatform = () => {
     if (!shortcut) return ''

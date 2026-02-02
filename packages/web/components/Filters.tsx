@@ -32,6 +32,7 @@ function Dropdown({ label, options, value, onChange, placeholder, forwardRef, ho
       
       if (e.key === 'Escape') {
         e.preventDefault()
+        e.stopPropagation()
         setIsOpen(false)
         buttonRef.current?.blur()
         return
@@ -39,12 +40,15 @@ function Dropdown({ label, options, value, onChange, placeholder, forwardRef, ho
       
       if (e.key === 'ArrowDown') {
         e.preventDefault()
+        e.stopPropagation()
         setHighlightedIndex((prev) => Math.min(prev + 1, options.length - 1))
       } else if (e.key === 'ArrowUp') {
         e.preventDefault()
+        e.stopPropagation()
         setHighlightedIndex((prev) => Math.max(-1, prev - 1))
       } else if (e.key === 'Enter') {
         e.preventDefault()
+        e.stopPropagation()
         if (highlightedIndex === -1) {
           onChange(undefined)
         } else if (highlightedIndex >= 0 && highlightedIndex < options.length) {
@@ -56,10 +60,11 @@ function Dropdown({ label, options, value, onChange, placeholder, forwardRef, ho
     }
     
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleKeyDown)
+    // Use capture phase to intercept events before they reach the form
+    document.addEventListener('keydown', handleKeyDown, { capture: true })
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('keydown', handleKeyDown, { capture: true })
     }
   }, [isOpen, highlightedIndex, options, onChange])
   

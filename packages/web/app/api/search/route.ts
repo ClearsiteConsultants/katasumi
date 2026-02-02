@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
 
     // Log search parameters for debugging
-    console.log('[API /api/search] Request params:', { query, app, platform, context, category, tag, limit })
+    // console.log('[API /api/search] Request params:', { query, app, platform, context, category, tag, limit })
 
     // Initialize database adapter and search engine
     const dbUrl = process.env.DATABASE_URL || 'postgres://user:password@localhost:5432/katasumi'
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       limit
     )
 
-    console.log('[API /api/search] Search results count:', results.length)
+    // console.log('[API /api/search] Search results count:', results.length)
 
     // Filter by context and tag if specified (not directly supported in fuzzySearch filters)
     let filteredResults = results
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log('[API /api/search] Filtered results count:', filteredResults.length)
+    // console.log('[API /api/search] Filtered results count:', filteredResults.length)
 
     // Log helpful message if no results found
     if (filteredResults.length === 0 && app) {

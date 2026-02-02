@@ -85,9 +85,14 @@ export const useStore = create<AppState>((set) => ({
   selectedResultIndex: -1,
   
   // UI actions
-  setMode: (mode) => set({ mode }),
+  setMode: (mode) => set({ mode, query: '', selectedApp: null, results: [], selectedResultIndex: -1, filters: {} }),
   toggleMode: () => set((state) => ({
-    mode: state.mode === 'app-first' ? 'full-phrase' : 'app-first'
+    mode: state.mode === 'app-first' ? 'full-phrase' : 'app-first',
+    query: '',
+    selectedApp: null,
+    results: [],
+    selectedResultIndex: -1,
+    filters: {}
   })),
   setPlatform: (platform) => set({ platform }),
   toggleAI: () => set((state) => {
