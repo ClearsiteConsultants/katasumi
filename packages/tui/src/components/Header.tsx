@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import type { PlatformOption } from '../store.js';
 import { isAIConfigured } from '../utils/config.js';
+import { debugLog } from '../utils/debug-logger.js';
 
 interface HeaderProps {
   mode: 'app-first' | 'full-phrase';
@@ -30,8 +31,16 @@ export function Header({ mode, platform, aiEnabled }: HeaderProps) {
   const aiStatus = aiEnabled ? 'ON' : (aiConfigured ? 'OFF' : 'OFF - Not Configured');
   const platformDisplay = getPlatformDisplay(platform);
 
+  // Debug: Header should always be at the top
+  React.useEffect(() => {
+    debugLog('📦 Header render:');
+    debugLog(`  Mode: ${mode}`);
+    debugLog(`  Height: 3 rows (1 border + 1 status + 1 marginBottom)`);
+    debugLog(`  ⚠️ If you see terminal text ABOVE this, root Box position is wrong`);
+  }, [mode]);
+
   return (
-    <Box flexDirection="column" marginBottom={1}>
+    <Box flexDirection="column">
       <Box borderStyle="single" borderColor="cyan" paddingX={1}>
         <Text bold color="cyan">
           Katasumi v1.0

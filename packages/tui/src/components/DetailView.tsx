@@ -219,134 +219,76 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
   }
 
   return (
-    <Box flexDirection="column" marginY={1}>
-      {/* Header */}
-      <Box
-        flexDirection="column"
-        borderStyle="double"
-        borderColor="cyan"
-        paddingX={2}
-        paddingY={1}
-      >
-        <Box>
-          <Text bold color="cyan">{shortcut.app.toUpperCase()}</Text>
-          {shortcut.context && (
-            <>
-              <Text> › </Text>
-              <Text color="yellow">{shortcut.context}</Text>
-            </>
-          )}
-          {shortcut.category && (
-            <>
-              <Text> › </Text>
-              <Text dimColor>{shortcut.category}</Text>
-            </>
-          )}
+    <Box flexDirection="column" height="100%">
+      {/* Compact header with all main info */}
+      <Box borderStyle="single" borderColor="cyan" paddingX={1} flexShrink={0}>
+        <Text bold color="cyan">{shortcut.app}</Text>
+        {shortcut.context && (
+          <>
+            <Text dimColor> › </Text>
+            <Text>{shortcut.context}</Text>
+          </>
+        )}
+        {shortcut.category && (
+          <>
+            <Text dimColor> › </Text>
+            <Text dimColor>{shortcut.category}</Text>
+          </>
+        )}
+        <Text dimColor> | </Text>
+        <Text color="green" bold>{shortcut.action}</Text>
+      </Box>
+
+      {/* Compact keys - all platforms in one box */}
+      <Box borderStyle="single" paddingX={1} marginTop={1} flexShrink={0}>
+        <Box gap={1}>
+          <Text color={platform === 'mac' ? 'cyan' : 'gray'}>⌘</Text>
+          <Text color={platform === 'mac' ? 'yellow' : 'gray'}>{allKeys.mac}</Text>
+          <Text dimColor>|</Text>
+          <Text color={platform === 'windows' ? 'cyan' : 'gray'}>⊞</Text>
+          <Text color={platform === 'windows' ? 'yellow' : 'gray'}>{allKeys.windows}</Text>
+          <Text dimColor>|</Text>
+          <Text color={platform === 'linux' ? 'cyan' : 'gray'}>🐧</Text>
+          <Text color={platform === 'linux' ? 'yellow' : 'gray'}>{allKeys.linux}</Text>
         </Box>
       </Box>
 
-      {/* Action */}
-      <Box
-        flexDirection="column"
-        borderStyle="single"
-        paddingX={2}
-        paddingY={1}
-        marginTop={1}
-      >
-        <Text bold>Action:</Text>
-        <Text color="green" bold>  {shortcut.action}</Text>
+      {/* Compact metadata: tags + source in one line */}
+      <Box paddingX={1} flexShrink={0}>
+        {shortcut.tags.length > 0 && (
+          <>
+            <Text dimColor>Tags: </Text>
+            <Text>{shortcut.tags.join(', ')}</Text>
+            <Text dimColor> | </Text>
+          </>
+        )}
+        {shortcut.source && (
+          <>
+            <Text dimColor>Src: {shortcut.source.type}</Text>
+            {shortcut.source.url && (
+              <>
+                <Text dimColor> </Text>
+                <Text color="blue" dimColor>(url)</Text>
+              </>
+            )}
+          </>
+        )}
       </Box>
 
-      {/* Keys for all platforms */}
-      <Box
-        flexDirection="column"
-        borderStyle="single"
-        paddingX={2}
-        paddingY={1}
-        marginTop={1}
-      >
-        <Text bold>Keyboard Shortcuts:</Text>
-        <Box marginTop={1} flexDirection="column">
-          <Box>
-            <Box width={12}>
-              <Text color={platform === 'mac' ? 'cyan' : 'gray'}>macOS:</Text>
-            </Box>
-            <Text color={platform === 'mac' ? 'yellow' : 'gray'}>{allKeys.mac}</Text>
-          </Box>
-          <Box>
-            <Box width={12}>
-              <Text color={platform === 'windows' ? 'cyan' : 'gray'}>Windows:</Text>
-            </Box>
-            <Text color={platform === 'windows' ? 'yellow' : 'gray'}>{allKeys.windows}</Text>
-          </Box>
-          <Box>
-            <Box width={12}>
-              <Text color={platform === 'linux' ? 'cyan' : 'gray'}>Linux:</Text>
-            </Box>
-            <Text color={platform === 'linux' ? 'yellow' : 'gray'}>{allKeys.linux}</Text>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Tags */}
-      {shortcut.tags.length > 0 && (
-        <Box
-          flexDirection="column"
-          borderStyle="single"
-          paddingX={2}
-          paddingY={1}
-          marginTop={1}
-        >
-          <Text bold>Tags:</Text>
-          <Text>  {shortcut.tags.join(', ')}</Text>
-        </Box>
-      )}
-
-      {/* Source */}
-      {shortcut.source && (
-        <Box
-          flexDirection="column"
-          borderStyle="single"
-          paddingX={2}
-          paddingY={1}
-          marginTop={1}
-        >
-          <Text bold>Source:</Text>
-          <Box marginTop={1}>
-            <Text>  Type: {shortcut.source.type}</Text>
-          </Box>
-          {shortcut.source.url && (
-            <Box>
-              <Text>  URL: </Text>
-              <Text color="blue" dimColor>{shortcut.source.url}</Text>
-            </Box>
-          )}
-          {shortcut.source.confidence && (
-            <Box>
-              <Text>  Confidence: {Math.round(shortcut.source.confidence * 100)}%</Text>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* Related shortcuts */}
+      {/* Related shortcuts - scrollable area */}
       {relatedShortcuts.length > 0 && (
-        <Box
-          flexDirection="column"
-          borderStyle="single"
-          paddingX={2}
-          paddingY={1}
-          marginTop={1}
-        >
-          <Text bold>Related Shortcuts:</Text>
-          <Box flexDirection="column" marginTop={1}>
+        <Box flexDirection="column" borderStyle="single" paddingX={1} marginTop={1} flexGrow={1}>
+          <Box flexShrink={0}>
+            <Text bold>Related ({relatedShortcuts.length}):</Text>
+          </Box>
+          <Box flexDirection="column">
             {relatedShortcuts.map((related) => {
               const relatedKeys = platform === 'all' 
                 ? (related.keys.mac || related.keys.windows || related.keys.linux || 'N/A')
                 : (related.keys[platform as Platform] || related.keys.linux || related.keys.windows || 'N/A');
               return (
                 <Box key={related.id}>
-                  <Box width={20}>
+                  <Box width={18}>
                     <Text color="yellow">{relatedKeys}</Text>
                   </Box>
                   <Text>{related.action}</Text>
@@ -359,33 +301,23 @@ export function DetailView({ shortcut, platform, onBack, dbAdapter }: DetailView
 
       {/* Status messages */}
       {(copyStatus || urlOpenStatus) && (
-        <Box marginTop={1}>
+        <Box paddingX={1} flexShrink={0}>
           {copyStatus && <Text color="green">{copyStatus}</Text>}
           {urlOpenStatus && <Text color="green">{urlOpenStatus}</Text>}
         </Box>
       )}
 
-      {/* Footer */}
-      <Box marginTop={1} borderStyle="single" paddingX={2} justifyContent="space-between">
-        <Text>
-          <Text bold color="cyan">↑↓ Ctrl+U/D/F/B</Text>
-          <Text dimColor>:scroll </Text>
-          <Text bold color="cyan">c</Text>
-          <Text dimColor>:copy </Text>
-          <Text bold color="cyan">o</Text>
-          <Text dimColor>:open-url </Text>
-          <Text bold color="cyan">Esc</Text>
-          <Text dimColor>:back</Text>
+      {/* Compact footer */}
+      <Box borderStyle="single" paddingX={1} justifyContent="space-between" flexShrink={0}>
+        <Text dimColor>
+          <Text bold color="cyan">c</Text>:copy <Text bold color="cyan">o</Text>:url <Text bold color="cyan">Esc</Text>:back
         </Text>
-      </Box>
-      
-      {atBoundary && (
-        <Box marginTop={1} paddingX={2}>
+        {atBoundary && (
           <Text color="yellow">
-            {atBoundary === 'top' ? '▲ At top' : '▼ At bottom'}
+            {atBoundary === 'top' ? '▲' : '▼'}
           </Text>
-        </Box>
-      )}
+        )}
+      </Box>
     </Box>
   );
 }

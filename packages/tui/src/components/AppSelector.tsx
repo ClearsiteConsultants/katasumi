@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { AppInfo } from '@katasumi/core';
 import { useAppStore } from '../store.js';
+import { debugLog } from '../utils/debug-logger.js';
 
 interface AppSelectorProps {
   apps: AppInfo[];
@@ -10,6 +11,7 @@ interface AppSelectorProps {
   onSelectApp: (app: AppInfo) => void;
   onQueryChange: (query: string) => void;
   onIndexChange: (index: number) => void;
+  maxVisibleApps?: number;
 }
 
 // Simple fuzzy match function
@@ -33,6 +35,7 @@ export function AppSelector({
   onSelectApp,
   onQueryChange,
   onIndexChange,
+  maxVisibleApps = 10,
 }: AppSelectorProps) {
   const focusSection = useAppStore((state) => state.focusSection);
   const setInputMode = useAppStore((state) => state.setInputMode);
@@ -81,19 +84,40 @@ export function AppSelector({
     }
   }, [filteredApps.length, selectedIndex, onIndexChange]);
 
+  // Debug: Log on mount
+  useEffect(() => {
+    debugLog('📱 AppSelector MOUNTED');
+  }, []);
+
+  // Debug: Log app selector state on changes
+  useEffect(() => {
+    debugLog('📱 AppSelector render/update:');
+    debugLog(`  Total apps: ${apps.length}`);
+    debugLog(`  Filtered apps: ${filteredApps.length}`);
+    debugLog(`  Query: "${query}"`);
+    debugLog(`  Max visible: ${maxVisibleApps}`);
+    debugLog(`  Displaying: ${Math.min(maxVisibleApps, filteredApps.length)} apps`);
+    debugLog(`  Should fill vertical space with height="100%"`);
+  }, [apps.length, filteredApps.length, query, maxVisibleApps]);
+
+  // Additional debug at render time (not in useEffect)
+  debugLog(`📱 AppSelector RENDERING - filteredApps: ${filteredApps.length}, maxVisible: ${maxVisibleApps}`);
+
   return (
-    <Box flexDirection="column" borderStyle="single" borderColor={isFocused ? 'cyan' : 'white'} paddingX={1}>
-      <Text bold color={isFocused ? 'cyan' : 'white'}>
-        Select App {isFocused && '(F2)'}
-      </Text>
+    <Box flexDirection="column" borderStyle="single" borderColor={isFocused ? 'cyan' : 'white'} paddingX={1} height="100%">
+      <Box flexShrink={0}>
+        <Text bold color={isFocused ? 'cyan' : 'white'}>
+          Select App {isFocused && '(F2)'}
+        </Text>
+      </Box>
       
-      <Box marginTop={1}>
+      <Box flexShrink={0}>
         <Text>
           Search: <Text color="yellow">{query || '_'}</Text>
         </Text>
       </Box>
 
-      <Box flexDirection="column" marginTop={1}>
+      <Box flexDirection="column" flexGrow={1}>
         {filteredApps.length === 0 ? (
           <Text dimColor>
             {query 
@@ -101,7 +125,7 @@ export function AppSelector({
               : 'No apps found in database.'}
           </Text>
         ) : (
-          filteredApps.slice(0, 10).map((app, index) => {
+          filteredApps.slice(0, maxVisibleApps).map((app, index) => {
             const isSelected = index === selectedIndex;
             return (
               <Box key={app.id}>
@@ -114,8 +138,10 @@ export function AppSelector({
             );
           })
         )}
-        {filteredApps.length > 10 && (
-          <Text dimColor>... and {filteredApps.length - 10} more</Text>
+        {filteredApps.length > maxVisibleApps && (
+          <Box flexShrink={0}>
+            <Text dimColor>... and {filteredApps.length - maxVisibleApps} more</Text>
+          </Box>
         )}
       </Box>
     </Box>

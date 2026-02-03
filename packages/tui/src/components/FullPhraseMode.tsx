@@ -308,13 +308,12 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
           borderStyle="single"
           borderColor={isInputFocused ? 'cyan' : 'white'}
           paddingX={2}
-          paddingY={1}
           flexShrink={0}
         >
           <Text bold color={isInputFocused ? 'cyan' : 'white'}>
             Search across all apps {isInputFocused ? '(Input Mode)' : '(Navigation Mode)'}
           </Text>
-          <Box marginTop={1}>
+          <Box>
             <Text dimColor>
               {isInputFocused
                 ? 'Type to search, Esc to exit input mode'
@@ -328,7 +327,7 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
         </Box>
 
         {/* AI Status Indicator - Always visible */}
-        <Box marginTop={1} paddingX={2} flexShrink={0}>
+        <Box paddingX={2} flexShrink={0}>
           {aiEnabled ? (
             <Text color="green">
               💡 AI Insight: Results are ranked by AI for better relevance
@@ -341,12 +340,12 @@ export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
         </Box>
 
         {/* Visual Divider */}
-        <Box marginTop={1} paddingX={2} flexShrink={0}>
-          <Text dimColor>{'─'.repeat(terminalSize.columns - 4)}</Text>
+        <Box paddingX={2} flexShrink={0}>
+          <Text dimColor>{'─'.repeat(terminalSize.columns - 6)}</Text>
         </Box>
 
         {/* Scrollable Results Area */}
-        <Box flexDirection="column" marginTop={1} flexGrow={1} overflow="hidden">
+        <Box flexDirection="column" flexGrow={1} overflow="hidden">
           {error ? (
             <Box paddingX={2} borderStyle="single" borderColor="red">
               <Text color="red" bold>Error: </Text>

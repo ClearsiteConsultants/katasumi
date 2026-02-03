@@ -12,6 +12,8 @@
     "build": "tsc --build",
     "dev": "pnpm run build && node dist/cli.js",
     "start": "node dist/cli.js",
+    "debug:watch": "tail -f ~/.katasumi/tui-debug.log",
+    "debug:clear": "rm -f ~/.katasumi/tui-debug.log",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -31,6 +33,7 @@
   "dependencies": {
     "@katasumi/core": "file:../core",
     "clipboardy": "^5.1.0",
+    "dotenv": "^17.2.3",
     "ink": "^4.4.1",
     "open": "^11.0.0",
     "react": "^18.3.1",

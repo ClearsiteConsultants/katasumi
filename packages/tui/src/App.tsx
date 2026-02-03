@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box } from 'ink';
+import { debugLog } from './utils/debug-logger.js';
 import { useAppStore } from './store.js';
 import { Header } from './components/Header.js';
 import { Footer } from './components/Footer.js';
@@ -12,6 +13,7 @@ import { PlatformSelector } from './components/PlatformSelector.js';
 export default function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [showPlatformSelector, setShowPlatformSelector] = useState(false);
+  const [terminalRows, setTerminalRows] = useState(process.stdout.rows || 24);
   const mode = useAppStore((state) => state.mode);
   const view = useAppStore((state) => state.view);
   const platform = useAppStore((state) => state.platform);
@@ -38,11 +40,32 @@ export default function App() {
     setShowPlatformSelector(false);
   };
 
+  // Debug terminal dimensions
+  useEffect(() => {
+    debugLog('📱 App mounted:');
+    debugLog(`  process.stdout.rows: ${process.stdout.rows}`);
+    debugLog(`  process.stdout.columns: ${process.stdout.columns}`);
+    debugLog(`  Root Box should fill terminal: ${terminalRows} rows`);
+    debugLog(`  With padding=1: ${terminalRows - 2} rows available for content`);
+    
+    // Listen for terminal resize
+    const handleResize = () => {
+      const newRows = process.stdout.rows || 24;
+      debugLog(`📐 App: Terminal resized to ${newRows} rows`);
+      setTerminalRows(newRows);
+    };
+    
+    process.stdout.on('resize', handleResize);
+    return () => {
+      process.stdout.off('resize', handleResize);
+    };
+  }, [terminalRows]);
+
   return (
-    <Box flexDirection="column" height="100%" padding={1}>
+    <Box flexDirection="column" height={terminalRows} padding={1}>
       <Header mode={mode} platform={platform} aiEnabled={aiEnabled} />
 
-      <Box flexGrow={1} flexDirection="column" overflow="hidden">
+      <Box flexGrow={1} flexDirection="column" minHeight={0}>
         {showHelp ? (
           <HelpOverlay onClose={() => setShowHelp(false)} />
         ) : showPlatformSelector ? (

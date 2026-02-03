@@ -3,6 +3,10 @@ import React from 'react';
 import { render } from 'ink';
 import readline from 'readline';
 import App from './App.js';
+import { debugLog } from './utils/debug-logger.js';
+
+// Clear screen before starting TUI to ensure Header appears at top
+process.stdout.write('\x1b[2J\x1b[H'); // ANSI escape codes: clear screen + move cursor to home
 
 // Enable keypress events
 if (process.stdin.isTTY) {
@@ -12,10 +16,11 @@ if (process.stdin.isTTY) {
 
 const startTime = Date.now();
 
+debugLog('🚀 TUI Starting...');
+debugLog(`  Screen cleared to ensure Header at top`);
+
 render(<App />);
 
-// Log startup time for verification
+// Log startup time for verification (to debug log, not stderr)
 const elapsedTime = Date.now() - startTime;
-if (elapsedTime > 200) {
-  console.error(`Warning: Startup took ${elapsedTime}ms (target: <200ms)`);
-}
+debugLog(`✅ TUI rendered in ${elapsedTime}ms`);

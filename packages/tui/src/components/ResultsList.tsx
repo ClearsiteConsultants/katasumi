@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { Shortcut, Platform } from '@katasumi/core';
 import type { PlatformOption } from '../store.js';
 import { useAppStore } from '../store.js';
+import { debugLog } from '../utils/debug-logger.js';
 
 interface ResultsListProps {
   results: Shortcut[];
@@ -119,16 +120,31 @@ export function ResultsList({ results, platform, quickSearchQuery, onSelectShort
     ? `${selectedIndex + 1} of ${filteredResults.length}` 
     : '0 of 0';
 
+  // Debug layout
+  useEffect(() => {
+    debugLog('📊 ResultsList render:');
+    debugLog(`  Total results: ${results.length}`);
+    debugLog(`  Filtered results: ${filteredResults.length}`);
+    debugLog(`  Max visible: ${maxVisibleResults}`);
+    debugLog(`  Visible range: ${startIndex + 1}-${endIndex} (${visibleResults.length} items)`);
+  }, [results.length, filteredResults.length, maxVisibleResults, startIndex, endIndex, visibleResults.length]);
+
   return (
-    <Box flexDirection="column" borderStyle="single" paddingX={1}>
-      <Box justifyContent="space-between">
-        <Text bold>Results ({filteredResults.length}) - ↑↓: navigate | /: search | Enter: details</Text>
-        {filteredResults.length > 0 && (
-          <Text dimColor>[{positionText}]</Text>
-        )}
+    <Box flexDirection="column" borderStyle="single" paddingX={1} height="100%" width="100%">
+      <Box justifyContent="space-between" flexShrink={0}>
+        <Text bold>Results ({filteredResults.length})</Text>
+        <Box gap={1}>
+          <Text dimColor>↑↓:nav /:🔍 Enter:details</Text>
+          {filteredResults.length > 0 && (
+            <>
+              <Text dimColor>|</Text>
+              <Text>[{positionText}]</Text>
+            </>
+          )}
+        </Box>
       </Box>
       {atBoundary && (
-        <Box marginTop={1}>
+        <Box flexShrink={0}>
           <Text color="yellow">
             {atBoundary === 'top' ? '▲ At top of results' : '▼ At bottom of results'}
           </Text>
@@ -136,7 +152,7 @@ export function ResultsList({ results, platform, quickSearchQuery, onSelectShort
       )}
       
       {filteredResults.length === 0 ? (
-        <Box marginTop={1}>
+        <Box flexGrow={1}>
           <Text dimColor>
             {quickSearchQuery 
               ? `No shortcuts found for "${quickSearchQuery}". Try adjusting your search query.`
@@ -146,7 +162,7 @@ export function ResultsList({ results, platform, quickSearchQuery, onSelectShort
           </Text>
         </Box>
       ) : (
-        <Box flexDirection="column" marginTop={1}>
+        <Box flexDirection="column" flexGrow={1}>
           {visibleResults.map((shortcut, index) => {
             const keys = getKeysForPlatform(shortcut);
             const context = shortcut.context ? `[${shortcut.context}]` : '';
@@ -172,13 +188,6 @@ export function ResultsList({ results, platform, quickSearchQuery, onSelectShort
               </Box>
             );
           })}
-          {filteredResults.length > maxVisibleResults && (
-            <Box marginTop={1}>
-              <Text dimColor>
-                Showing {startIndex + 1}-{endIndex} of {filteredResults.length} results
-              </Text>
-            </Box>
-          )}
         </Box>
       )}
     </Box>

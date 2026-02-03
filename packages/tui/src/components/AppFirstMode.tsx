@@ -9,6 +9,7 @@ import { ResultsList } from './ResultsList.js';
 import { DetailView } from './DetailView.js';
 import { logError, getUserFriendlyMessage } from '../utils/error-logger.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+import { debugLog } from '../utils/debug-logger.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -90,6 +91,16 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
   const [error, setError] = useState<string | null>(null);
   
   const terminalSize = useTerminalSize();
+
+  // Debug terminal size in context of selected app
+  useEffect(() => {
+    if (selectedApp) {
+      debugLog('🎯 AppFirstMode with app selected:');
+      debugLog(`  Terminal: ${terminalSize.rows} rows`);
+      debugLog(`  Available for results: ${terminalSize.availableRows} rows`);
+      debugLog(`  Results count: ${results.length}`);
+    }
+  }, [selectedApp, terminalSize.rows, terminalSize.availableRows, results.length]);
 
   // Load available apps on mount
   useEffect(() => {
@@ -253,7 +264,7 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
   if (!selectedApp) {
     // Show app selector - keep it fixed
     return (
-      <Box flexDirection="column" height="100%">
+      <Box flexDirection="column" flexGrow={1} minHeight={0}>
         <AppSelector
           apps={availableApps}
           query={appQuery}
@@ -261,6 +272,7 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
           onSelectApp={selectApp}
           onQueryChange={setAppQuery}
           onIndexChange={setSelectedAppIndex}
+          maxVisibleApps={terminalSize.availableRowsForAppSelector}
         />
       </Box>
     );
@@ -268,9 +280,9 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
 
   // Show filters and results
   return (
-    <Box flexDirection="column" height="100%">
+    <Box flexDirection="column" flexGrow={1} minHeight={0}>
       {/* App info - always visible */}
-      <Box flexDirection="column" flexShrink={0}>
+      <Box flexDirection="column" flexShrink={0} paddingX={1}>
         <Text>
           App: <Text bold color="cyan">{selectedApp.displayName}</Text>
           {' '}
@@ -281,12 +293,12 @@ export function AppFirstMode({ selectedApp, view }: AppFirstModeProps) {
       </Box>
 
       {/* Filters bar - always visible */}
-      <Box marginTop={1} flexShrink={0}>
+      <Box flexShrink={0}>
         <FiltersBar onQuickSearchChange={setQuickSearchQuery} selectedApp={selectedApp} />
       </Box>
       
       {/* Results list - scrollable */}
-      <Box marginTop={1} flexGrow={1} overflow="hidden">
+      <Box flexGrow={1} minHeight={0}>
         <ResultsList
           results={results}
           platform={platform}

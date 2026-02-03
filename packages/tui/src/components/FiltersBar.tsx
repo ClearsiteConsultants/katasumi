@@ -1,6 +1,8 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
 import { useAppStore } from '../store.js';
+import { debugLog } from '../utils/debug-logger.js';
+import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import type { AppInfo } from '@katasumi/core';
 
 interface FiltersBarProps {
@@ -15,6 +17,7 @@ export function FiltersBar({ onQuickSearchChange, selectedApp }: FiltersBarProps
   const quickSearchQuery = useAppStore((state) => state.quickSearchQuery);
   const filters = useAppStore((state) => state.filters);
   const results = useAppStore((state) => state.results);
+  const terminalSize = useTerminalSize();
   
   const isFocused = focusSection === 'filters';
 
@@ -50,42 +53,41 @@ export function FiltersBar({ onQuickSearchChange, selectedApp }: FiltersBarProps
     ? `Search shortcuts for ${selectedApp.displayName}...`
     : 'Type to search...';
 
+  // Debug: Log filter bar state
+  React.useEffect(() => {
+    debugLog('🔧 FiltersBar render:');
+    debugLog(`  Focused: ${isFocused}`);
+    debugLog(`  Query: "${quickSearchQuery}"`);
+    debugLog(`  Results: ${results.length}`);
+    debugLog(`  Compact height: 2 rows (border + single inline row)`);
+  }, [isFocused, quickSearchQuery, results.length]);
+
   return (
-    <Box flexDirection="column" borderStyle="single" borderColor={isFocused ? 'cyan' : 'white'} paddingX={1}>
-      <Box>
-        <Text bold color={isFocused ? 'cyan' : 'white'}>
-          {searchLabel} {isFocused && '(INPUT MODE)'}
-        </Text>
-        <Text> - </Text>
-        <Text dimColor>Results: {results.length}</Text>
-      </Box>
-
-      <Box marginTop={1} gap={2}>
+    <Box flexDirection="column" borderStyle="single" borderColor={isFocused ? 'cyan' : 'white'} paddingX={1} width="100%">
+      <Box justifyContent="space-between" width="100%">
         <Box>
-          <Text dimColor>Context: </Text>
+          <Text bold color={isFocused ? 'cyan' : 'white'}>
+            {isFocused ? '🔍' : 'Search'}
+          </Text>
+          <Text dimColor>: </Text>
+          <Text color={isFocused ? 'yellow' : 'white'}>
+            {quickSearchQuery || (isFocused ? '...' : '_')}
+          </Text>
+        </Box>
+        <Box gap={1}>
+          <Text dimColor>{terminalSize.columns > 100 ? 'Context' : 'Ctx'}:</Text>
           <Text>{filters.context || 'All'}</Text>
-        </Box>
-        <Box>
-          <Text dimColor>Category: </Text>
+          <Text dimColor>|</Text>
+          <Text dimColor>{terminalSize.columns > 100 ? 'Category' : 'Cat'}:</Text>
           <Text>{filters.category || 'All'}</Text>
-        </Box>
-        <Box>
-          <Text dimColor>Tags: </Text>
-          <Text>{filters.tags.length > 0 ? filters.tags.join(', ') : 'None'}</Text>
+          <Text dimColor>|</Text>
+          <Text dimColor>{terminalSize.columns > 100 ? 'Tags' : 'T'}:</Text>
+          <Text>{filters.tags.length > 0 ? filters.tags.join(',') : 'None'}</Text>
+          <Text dimColor>|</Text>
+          <Text dimColor>R:</Text>
+          <Text>{results.length}</Text>
         </Box>
       </Box>
-
-      <Box marginTop={1}>
-        <Text bold={isFocused} backgroundColor={isFocused ? 'blue' : undefined}>
-          Query: <Text color={isFocused ? 'yellow' : 'white'}>{quickSearchQuery || (isFocused ? placeholderText : '_')}</Text>
-        </Text>
-      </Box>
-      
-      {isFocused && (
-        <Box marginTop={1}>
-          <Text dimColor>Esc: navigate | Enter: apply | /: search</Text>
-        </Box>
-      )}
     </Box>
   );
 }
