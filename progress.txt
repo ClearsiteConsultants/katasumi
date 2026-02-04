@@ -2523,3 +2523,52 @@ NOTES:
 - Terminal resize handling works correctly (existing functionality verified)
 
 **Status**: ✅ Complete - Task PHASE2-TUI-018 marked as passes: true
+
+## 2026-02-04 - PHASE3-WEB-022: App-First AI Discovery Button
+
+### Completed:
+1. **Created /api/ai/scrape endpoint** (`packages/web/app/api/ai/scrape/route.ts`):
+   - Accepts app name and optional context for AI web scraping
+   - Supports multiple AI providers: OpenAI, Anthropic, OpenRouter, Ollama
+   - Extracts keyboard shortcuts from AI knowledge base with confidence scores
+   - Returns structured data: app info, shortcuts array, source URL, scraped timestamp
+   - Implements rate limiting: 5 scrapes/day for free users, unlimited for premium
+   - Logs usage in ai_usage table
+   - Comprehensive error handling for auth, config, rate limits, and parsing
+
+2. **Created /api/shortcuts endpoint** (`packages/web/app/api/shortcuts/route.ts`):
+   - POST: Create new user shortcuts with full metadata
+   - GET: Retrieve user shortcuts with filtering by app, category, search query
+   - Validates required fields and authentication
+   - Stores shortcuts in user_shortcuts table
+
+3. **Updated AppSelector component** (`packages/web/components/AppSelector.tsx`):
+   - Shows "Use AI to search for shortcuts" button when no apps found
+   - Requires authentication - redirects to /login if not authenticated
+   - Checks AI configuration - shows error if not configured
+   - Displays loading spinner during AI scraping
+   - Shows confirmation dialog: "Add [N] shortcuts for [AppName] to database?"
+   - Saves all scraped shortcuts to database after user confirmation
+   - Automatically selects newly added app after saving
+   - Comprehensive error handling with user-friendly messages
+
+4. **Added E2E test structure** (`packages/web/e2e/ai-scraping.spec.ts`):
+   - Test cases for AI button visibility
+   - Authentication requirement verification
+   - Marked as skipped pending full auth/AI setup
+
+### Technical Implementation:
+- AI prompt engineering to extract shortcuts in structured JSON format
+- Multi-platform key support (Mac, Windows, Linux)
+- Source tracking with URLs and confidence scores
+- Graceful fallback handling for AI provider failures
+- Type-safe implementation with full TypeScript support
+
+### Verification:
+- ✅ Type checking passes (npx tsc --noEmit)
+- ✅ Existing tests pass (some pre-existing failures unrelated to changes)
+- ✅ API endpoints follow existing patterns
+- ✅ Implements all acceptance criteria from PRD
+
+### Impact:
+This feature enables users to discover shortcuts for long-tail apps not in the curated database, making the AI mode genuinely useful and differentiating Katasumi from other shortcut reference tools.

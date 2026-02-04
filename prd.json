@@ -2103,6 +2103,151 @@
       "debuggingNotes": "May be related to recent responsive layout changes (PHASE2-TUI-013) or input mode handling (PHASE2-TUI-014). Check FullPhraseMode.tsx flex layout and scrolling behavior. Ensure input has flexShrink={0} to prevent compression.",
       "implementationDate": "2026-01-30",
       "implementationNotes": "Added visual divider between AI status indicator and results list. Verified existing layout structure already has proper flexShrink={0} on input sections to prevent scrolling. Added 5 comprehensive tests for input visibility with varying result counts (1, 10, 50, 100+ results). All new tests pass. TypeScript compilation passes. The layout uses flexShrink={0} on search input box and AI status indicator to keep them fixed at top, flexGrow={1} with overflow='hidden' on results area to make only that section scrollable."
+    },
+    {
+      "id": "PHASE3-WEB-021",
+      "category": "Phase 3: Web - Add Login/Account Link to Header",
+      "description": "Add visible link or button to login page in web header so users can discover authentication",
+      "acceptanceCriteria": [
+        "Header shows 'Login' button when user is not authenticated",
+        "Header shows 'Account' or username when user is authenticated",
+        "Login button navigates to /login page",
+        "Account button opens dropdown with logout option",
+        "Button styled consistently with other header elements",
+        "Responsive: shows abbreviated text on mobile",
+        "Logout clears localStorage token and redirects to home"
+      ],
+      "stepsToVerify": [
+        "Visit homepage and verify 'Login' button visible in header",
+        "Click Login button and verify navigation to /login page",
+        "Complete login and verify header shows username or 'Account'",
+        "Click Account button and verify dropdown appears",
+        "Click Logout and verify redirect to home with cleared token",
+        "Test on mobile viewport and verify responsive behavior",
+        "Create test for login button visibility and navigation",
+        "Run 'pnpm test --filter=@katasumi/web' and verify tests pass"
+      ],
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "Authentication is implemented but not discoverable. Users don't know /login exists. This blocks premium features that require authentication like AI search.",
+      "reportedDate": "2026-02-03"
+    },
+    {
+      "id": "PHASE1-SYNC-003",
+      "category": "Phase 1: Sync - AI Configuration Sync",
+      "description": "Sync AI provider configuration between web and TUI via cloud account",
+      "acceptanceCriteria": [
+        "Web settings stores AI config to user_settings table in PostgreSQL",
+        "TUI 'katasumi sync' command pulls AI config from cloud",
+        "Sync preserves provider, apiKey (encrypted), model, and baseUrl",
+        "API endpoint /api/sync/config returns user's AI configuration",
+        "TUI saves synced config to ~/.katasumi/config.json",
+        "Sync only available to authenticated users",
+        "API keys encrypted in database (not plaintext)",
+        "User can choose to use local AI config instead of synced"
+      ],
+      "stepsToVerify": [
+        "Configure AI in web settings (OpenAI with API key)",
+        "Verify AI config saved to database user_settings table",
+        "Run 'katasumi login' in TUI",
+        "Run 'katasumi sync' in TUI",
+        "Verify ~/.katasumi/config.json has AI configuration from web",
+        "Toggle AI in TUI and verify it uses synced credentials",
+        "Test encryption: check database and verify API key not plaintext",
+        "Test sync conflict: local config vs cloud config"
+      ],
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Convenience feature for premium users. Not critical for MVP but improves UX by avoiding duplicate AI configuration. Requires PHASE2-TUI-008 (login command) to be completed first.",
+      "dependencies": [
+        "PHASE2-TUI-008"
+      ],
+      "reportedDate": "2026-02-03"
+    },
+    {
+      "id": "PHASE3-WEB-022",
+      "category": "Phase 3: Web - App-First AI Discovery Button",
+      "description": "Show 'Use AI to search for shortcuts' button when user types app name not in database, trigger AI web scraping",
+      "acceptanceCriteria": [
+        "When user types in app selector and no matches found, show 'No apps found' message",
+        "Below message, show button: 'Use AI to search for shortcuts'",
+        "Button requires authentication (redirects to /login if not authenticated)",
+        "Button disabled if AI is not configured (shows 'Configure AI in Settings')",
+        "Clicking button calls /api/ai/scrape endpoint with app name",
+        "Loading spinner shows during AI scraping process",
+        "Success: results appear with app info and discovered shortcuts",
+        "User can review shortcuts before adding to database",
+        "Confirmation dialog: 'Add [N] shortcuts for [AppName] to database?'",
+        "After confirmation, shortcuts saved to user_shortcuts table",
+        "Error handling: API failures, no shortcuts found, rate limits",
+        "AI scraping uses configured provider (OpenAI, Anthropic, etc.)",
+        "Results show source URL and confidence score"
+      ],
+      "stepsToVerify": [
+        "Type app name not in database (e.g., 'Sublime Merge')",
+        "Verify 'No apps found' message appears",
+        "Verify 'Use AI to search for shortcuts' button appears",
+        "Click button without authentication and verify redirect to /login",
+        "Login and click button without AI configured, verify message",
+        "Configure AI in settings, click button again",
+        "Verify loading spinner during scraping",
+        "Verify results show discovered shortcuts",
+        "Review and confirm adding shortcuts",
+        "Verify shortcuts appear in app-first mode for that app",
+        "Test with invalid app name (e.g., 'asdfghj') and verify graceful handling",
+        "Test rate limiting for free users (5 queries/day)",
+        "Create E2E test for AI scraping flow",
+        "Run 'pnpm test --filter=@katasumi/web' and verify tests pass"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Key AI feature that differentiates Katasumi. Enables discovery of shortcuts for long-tail apps not in curated database. This addresses the 'missing app' problem and makes AI mode actually useful.",
+      "reportedDate": "2026-02-03",
+      "technicalNotes": "Requires new /api/ai/scrape endpoint that:\n1. Accepts app name and optional context (e.g., 'text editor', 'terminal')\n2. Uses AI to search web for official documentation\n3. Extracts keyboard shortcuts from documentation\n4. Returns structured data: app info + shortcuts array\n5. Rate limited: 5 scrapes/day for free, unlimited for premium\n6. Stores scraping results in ai_scrape_cache table to avoid duplicates",
+      "implementationDetails": "Implemented AI scraping feature: Created /api/ai/scrape endpoint with AI provider support (OpenAI, Anthropic, OpenRouter, Ollama), rate limiting (5/day for free users), and error handling. Created /api/shortcuts endpoint for saving scraped shortcuts. Updated AppSelector component with AI search button, authentication checks, loading states, and confirmation dialog. Added E2E test structure. All type checks pass."
+    },
+    {
+      "id": "PHASE3-WEB-023",
+      "category": "Phase 3: Web - Full-Phrase AI Search Button",
+      "description": "Replace redundant 'Search' button with 'Search with AI' button that triggers semantic AI search",
+      "acceptanceCriteria": [
+        "In Full-Phrase mode, button labeled 'Search with AI' instead of 'Search'",
+        "Button requires authentication (redirects to /login if not authenticated)",
+        "Button disabled if AI is not configured (shows tooltip 'Configure AI in Settings')",
+        "Clicking button calls /api/ai endpoint with query and filters",
+        "Loading spinner shows during AI processing",
+        "Results ranked by AI semantic relevance instead of keyword matching",
+        "AI toggle (F4/a key) switches between automatic keyword search and explicit AI button",
+        "When AI toggle ON: button shows, automatic search is keyword-based, button triggers AI",
+        "When AI toggle OFF: button hidden, automatic search is keyword-based only",
+        "Error handling: API failures, rate limits, invalid API key",
+        "Success message shows 'AI-ranked results' or similar indicator",
+        "Free users: decrements AI query count, premium users: unlimited"
+      ],
+      "stepsToVerify": [
+        "Switch to Full-Phrase mode",
+        "Toggle AI ON (F4 or 'a' key)",
+        "Verify button label changes to 'Search with AI'",
+        "Type query 'split screen vertically' without clicking button",
+        "Verify automatic keyword search results appear",
+        "Click 'Search with AI' button without authentication",
+        "Verify redirect to /login page",
+        "Login and click 'Search with AI' without AI configured",
+        "Verify disabled state and tooltip",
+        "Configure AI in settings, click 'Search with AI'",
+        "Verify loading spinner and AI-ranked results",
+        "Compare results with automatic keyword search (should be different/better)",
+        "Toggle AI OFF and verify button disappears",
+        "Test rate limiting for free users",
+        "Test with complex natural language query",
+        "Create test for AI search button behavior",
+        "Run 'pnpm test --filter=@katasumi/web' and verify tests pass"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Current search button is redundant since fuzzy search is automatic. Making it an explicit AI trigger gives users control over when to use AI (which costs API credits) vs fast local keyword search. This makes AI usage intentional and transparent.",
+      "reportedDate": "2026-02-03",
+      "technicalNotes": "SearchBar component needs refactoring:\n1. Automatic debounced search always uses /api/search (KeywordSearchEngine)\n2. Button click uses /api/ai (AISearchEngine with semantic ranking)\n3. Two separate code paths for clarity\n4. Button appearance toggled by aiEnabled state\n5. Authentication check before AI search\n6. Better error messaging for AI failures"
     }
   ]
 }
