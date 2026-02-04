@@ -61,15 +61,27 @@ echo ""
 
 # Setup PostgreSQL if Docker is running
 if docker-compose ps | grep -q "katasumi-postgres"; then
-    echo "🗄️  Setting up PostgreSQL (Web)..."
+    echo "🗄️  Setting up PostgreSQL..."
+    
+    # Run web migrations first (for User tables)
+    echo "   📝 Running web migrations..."
+    cd packages/web
+    DATABASE_URL="postgres://katasumi:dev_password@localhost:5432/katasumi_dev" pnpm prisma migrate dev --name init
+    cd ../..
+    
+    # Run core migrations (for Shortcuts tables)
+    echo "   📝 Running core migrations..."
     cd packages/core
     DATABASE_URL="postgres://katasumi:dev_password@localhost:5432/katasumi_dev" DB_TYPE="postgres" pnpm run migrate
     DATABASE_URL="postgres://katasumi:dev_password@localhost:5432/katasumi_dev" DB_TYPE="postgres" pnpm run seed
     cd ../..
+    
     echo "✅ PostgreSQL setup complete"
 else
     echo "⏭️  PostgreSQL not running via Docker. Skipping web database setup."
-    echo "   Run manually: cd packages/core && DATABASE_URL=postgres://<user>:<pass>@localhost:5432/<db> DB_TYPE=postgres pnpm run migrate && pnpm run seed"
+    echo "   Run manually:"
+    echo "     cd packages/web && DATABASE_URL=postgres://<user>:<pass>@<host>:<port>/<db> pnpm prisma migrate dev"
+    echo "     cd packages/core && DATABASE_URL=postgres://<user>:<pass>@<host>:<port>/<db> DB_TYPE=postgres pnpm run migrate && pnpm run seed"
 fi
 
 echo ""

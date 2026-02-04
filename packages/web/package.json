@@ -4,7 +4,7 @@
   "description": "Web interface for Katasumi keyboard shortcut search",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -13,7 +13,13 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "verify": "node verify-phase3-web-001.mjs"
+    "verify": "node verify-phase3-web-001.mjs",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:prod": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "db:push": "prisma db push",
+    "db:seed": "node -r dotenv/config prisma/seed.js"
   },
   "keywords": [
     "shortcuts",
@@ -32,7 +38,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/pg": "^8.16.0",
     "bcryptjs": "^3.0.3",
-    "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.3",
     "next": "^14.2.3",
     "next-themes": "^0.3.0",
@@ -49,9 +54,11 @@
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.5",
     "autoprefixer": "^10.4.16",
+    "dotenv": "^17.2.3",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.3",
     "postcss": "^8.4.33",
+    "prisma": "^7.3.0",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
     "vitest": "^1.0.4"

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@katasumi/core/dist/generated/prisma-postgres';
+import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -9,7 +9,7 @@ declare global {
 }
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL || 'postgres://user:password@localhost:5432/katasumi';
+  const connectionString = process.env.DATABASE_URL || 'postgres://katasumi:dev_password@localhost:5432/katasumi_dev';
   const pool = new Pool({ connectionString });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
@@ -22,7 +22,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 /**
- * User with password field (not in Prisma schema, stored in auth table)
+ * User with password field
  */
 export interface UserWithPassword {
   id: string;
@@ -32,9 +32,6 @@ export interface UserWithPassword {
   createdAt: Date;
   updatedAt: Date;
 }
-
-// In-memory user store for demo (in production, add password field to User model)
-const userPasswordStore = new Map<string, string>();
 
 export async function createUser(email: string, password: string): Promise<UserWithPassword> {
   const { hashPassword } = await import('./auth');
@@ -49,17 +46,15 @@ export async function createUser(email: string, password: string): Promise<UserW
   const user = await prisma.user.create({
     data: {
       email,
+      passwordHash,
       tier: 'free',
     },
   });
   
-  // Store password hash (in production, add this to User model)
-  userPasswordStore.set(user.id, passwordHash);
-  
   return {
     id: user.id,
     email: user.email,
-    passwordHash,
+    passwordHash: user.passwordHash,
     tier: user.tier,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -70,13 +65,10 @@ export async function findUserByEmail(email: string): Promise<UserWithPassword |
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return null;
   
-  const passwordHash = userPasswordStore.get(user.id);
-  if (!passwordHash) return null;
-  
   return {
     id: user.id,
     email: user.email,
-    passwordHash,
+    passwordHash: user.passwordHash,
     tier: user.tier,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -87,13 +79,10 @@ export async function findUserById(id: string): Promise<UserWithPassword | null>
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) return null;
   
-  const passwordHash = userPasswordStore.get(user.id);
-  if (!passwordHash) return null;
-  
   return {
     id: user.id,
     email: user.email,
-    passwordHash,
+    passwordHash: user.passwordHash,
     tier: user.tier,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,

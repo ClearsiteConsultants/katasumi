@@ -2,8 +2,11 @@
 
 import { useStore } from '@/lib/store'
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { isAIConfigured } from '@/lib/config'
 
 export function SearchBar() {
+  const router = useRouter()
   const query = useStore((state) => state.query)
   const setQuery = useStore((state) => state.setQuery)
   const selectedApp = useStore((state) => state.selectedApp)
@@ -15,7 +18,10 @@ export function SearchBar() {
   const decrementAIQueryCount = useStore((state) => state.decrementAIQueryCount)
   const [localQuery, setLocalQuery] = useState(query)
   const [isSearching, setIsSearching] = useState(false)
+  const [isAISearching, setIsAISearching] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
 
+  // Automatic keyword search (debounced)
   const performSearch = useCallback(async (searchQuery: string) => {
     // In app-first mode, app must be selected
     if (mode === 'app-first' && !selectedApp) return
@@ -28,6 +34,7 @@ export function SearchBar() {
     }
 
     setIsSearching(true)
+    setAiError(null)
     try {
       const params = new URLSearchParams({
         query: searchQuery,
@@ -38,7 +45,7 @@ export function SearchBar() {
         ...(filters.tag && { tag: filters.tag }),
       })
 
-      console.log('[SearchBar] Performing search with params:', Object.fromEntries(params))
+      console.log('[SearchBar] Performing keyword search with params:', Object.fromEntries(params))
 
       const response = await fetch(`/api/search?${params}`)
       const data = await response.json()
@@ -58,18 +65,89 @@ export function SearchBar() {
       
       setResults(data.results || [])
       setQuery(searchQuery)
-      
-      // Decrement AI query count if AI is enabled and user performed a search
-      if (aiEnabled && mode === 'full-phrase') {
-        decrementAIQueryCount()
-      }
     } catch (error) {
       console.error('Search failed:', error)
       setResults([])
     } finally {
       setIsSearching(false)
     }
-  }, [mode, selectedApp, platform, filters, setResults, setQuery, aiEnabled, decrementAIQueryCount])
+  }, [mode, selectedApp, platform, filters, setResults, setQuery])
+
+  // AI-powered semantic search (explicit button click)
+  const performAISearch = useCallback(async (searchQuery: string) => {
+    // Check authentication
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    if (!token) {
+      setAiError('Please login to use AI search')
+      router.push('/login')
+      return
+    }
+
+    // Check AI configuration
+    if (!isAIConfigured()) {
+      setAiError('Please configure AI in Settings')
+      return
+    }
+
+    // Require query for AI search
+    if (!searchQuery.trim()) {
+      setAiError('Please enter a search query')
+      return
+    }
+
+    setIsAISearching(true)
+    setAiError(null)
+    try {
+      const requestBody = {
+        query: searchQuery,
+        platform: platform === 'all' ? undefined : platform,
+        ...(mode === 'app-first' && selectedApp && { app: selectedApp }),
+        ...(filters.category && { category: filters.category }),
+      }
+
+      console.log('[SearchBar] Performing AI search with body:', requestBody)
+
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestBody)
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        console.error('[SearchBar] AI search error:', data.error)
+        setAiError(data.error || 'AI search failed')
+        
+        // If auth error, redirect to login
+        if (response.status === 401) {
+          router.push('/login')
+        }
+        return
+      }
+      
+      console.log('[SearchBar] AI search response:', { 
+        resultsCount: data.results?.length || 0,
+        enhanced: data.enhanced,
+        provider: data.provider
+      })
+      
+      setResults(data.results || [])
+      setQuery(searchQuery)
+      
+      // Decrement AI query count
+      decrementAIQueryCount()
+    } catch (error) {
+      console.error('AI search failed:', error)
+      setAiError('AI search failed. Please try again.')
+      setResults([])
+    } finally {
+      setIsAISearching(false)
+    }
+  }, [mode, selectedApp, platform, filters, setResults, setQuery, decrementAIQueryCount, router])
 
   // Debounced search effect for query changes
   useEffect(() => {
@@ -101,7 +179,14 @@ export function SearchBar() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    performSearch(localQuery)
+    
+    // In Full-Phrase mode with AI enabled, button triggers AI search
+    if (mode === 'full-phrase' && aiEnabled) {
+      performAISearch(localQuery)
+    } else {
+      // Otherwise, perform keyword search
+      performSearch(localQuery)
+    }
   }
 
   const isFullPhrase = mode === 'full-phrase'
@@ -111,51 +196,78 @@ export function SearchBar() {
       ? 'Filter shortcuts... (optional)'
       : 'Quick search shortcuts...'
 
+  // Determine button label and behavior
+  const showAIButton = isFullPhrase && aiEnabled
+  const buttonLabel = showAIButton ? 'Search with AI' : 'Search'
+  const buttonDisabled = isSearching || isAISearching || (showAIButton && !isAIConfigured())
+  const buttonTooltip = showAIButton && !isAIConfigured() ? 'Configure AI in Settings' : undefined
+
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-      <div className="flex gap-2">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder={placeholder}
-            value={localQuery}
-            onChange={(e) => setLocalQuery(e.target.value)}
-            onKeyDown={(e) => {
-              // Prevent Tab from cycling through form elements
-              // Tab should only toggle mode (handled by global keydown handler)
-              console.log('[SearchBar] Key down:', e)
-              if (e.key === 'Tab') {
-                e.preventDefault()
-                // The global handler will toggle mode
-                return
-              }
-              if (e.key === 'Enter') {
-                // After Enter, unfocus so user can use shortcuts on results
-                setTimeout(() => {
-                  if (e.target instanceof HTMLInputElement) {
-                    e.target.blur()
-                  }
-                }, 0)
-              }
-            }}
-            className={`w-full px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-              isFullPhrase ? 'py-4 text-lg' : 'py-3'
-            }`}
-            autoFocus
-          />
-          {isSearching && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-solid border-primary-600 border-r-transparent"></div>
-            </div>
-          )}
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder={placeholder}
+              value={localQuery}
+              onChange={(e) => setLocalQuery(e.target.value)}
+              onKeyDown={(e) => {
+                // Prevent Tab from cycling through form elements
+                // Tab should only toggle mode (handled by global keydown handler)
+                console.log('[SearchBar] Key down:', e)
+                if (e.key === 'Tab') {
+                  e.preventDefault()
+                  // The global handler will toggle mode
+                  return
+                }
+                if (e.key === 'Enter') {
+                  // After Enter, unfocus so user can use shortcuts on results
+                  setTimeout(() => {
+                    if (e.target instanceof HTMLInputElement) {
+                      e.target.blur()
+                    }
+                  }, 0)
+                }
+              }}
+              className={`w-full px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                isFullPhrase ? 'py-4 text-lg' : 'py-3'
+              }`}
+              autoFocus
+            />
+            {(isSearching || isAISearching) && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-solid border-primary-600 border-r-transparent"></div>
+              </div>
+            )}
+          </div>
+          <button
+            type="submit"
+            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+              showAIButton 
+                ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                : 'bg-primary-600 hover:bg-primary-700 text-white'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            disabled={buttonDisabled}
+            title={buttonTooltip}
+          >
+            {isAISearching ? 'Searching...' : buttonLabel}
+          </button>
         </div>
-        <button
-          type="submit"
-          className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors"
-          disabled={isSearching}
-        >
-          Search
-        </button>
+        
+        {/* AI Error Message */}
+        {aiError && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-2 rounded-lg text-sm">
+            {aiError}
+          </div>
+        )}
+        
+        {/* AI Search Indicator */}
+        {showAIButton && !aiError && (
+          <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
+            AI search uses semantic understanding to find relevant shortcuts
+          </div>
+        )}
       </div>
     </form>
   )

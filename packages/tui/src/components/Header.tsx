@@ -28,7 +28,7 @@ function getPlatformDisplay(platform: PlatformOption): string {
 export function Header({ mode, platform, aiEnabled }: HeaderProps) {
   const modeDisplay = mode === 'app-first' ? 'App-First' : 'Full-Phrase';
   const aiConfigured = isAIConfigured();
-  const aiStatus = aiEnabled ? 'ON' : (aiConfigured ? 'OFF' : 'OFF - Not Configured');
+  const aiStatus = aiEnabled ? 'ON' : (aiConfigured ? 'OFF' : 'OFF - Not Configured / Login Required');
   const platformDisplay = getPlatformDisplay(platform);
 
   // Debug: Header should always be at the top
