@@ -2127,7 +2127,7 @@
         "Create test for login button visibility and navigation",
         "Run 'pnpm test --filter=@katasumi/web' and verify tests pass"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 2,
       "priorityRationale": "Authentication is implemented but not discoverable. Users don't know /login exists. This blocks premium features that require authentication like AI search.",
       "reportedDate": "2026-02-03"
