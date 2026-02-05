@@ -47,7 +47,15 @@ export function SearchBar() {
 
       console.log('[SearchBar] Performing keyword search with params:', Object.fromEntries(params))
 
-      const response = await fetch(`/api/search?${params}`)
+      // Include authentication token if available to search user shortcuts
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const headers: HeadersInit = {}
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+        console.log('[SearchBar] Including auth token in search request')
+      }
+
+      const response = await fetch(`/api/search?${params}`, { headers })
       const data = await response.json()
       
       console.log('[SearchBar] Search response:', { 

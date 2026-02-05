@@ -23,6 +23,8 @@ interface AppState {
   // User state
   userTier: 'free' | 'premium'
   aiQueryCount: number
+  user: { email: string; userId: string } | null
+  isAuthenticated: boolean
   
   // Search state
   selectedApp: string | null
@@ -42,6 +44,9 @@ interface AppState {
   setShowSettings: (show: boolean) => void
   setUserTier: (tier: 'free' | 'premium') => void
   decrementAIQueryCount: () => void
+  setUser: (user: { email: string; userId: string } | null) => void
+  setIsAuthenticated: (isAuthenticated: boolean) => void
+  logout: () => void
   
   selectApp: (app: string | null) => void
   setQuery: (query: string) => void
@@ -75,6 +80,8 @@ export const useStore = create<AppState>((set) => ({
   // Initial user state
   userTier: 'free',
   aiQueryCount: 10, // Free users get 10 AI queries
+  user: null,
+  isAuthenticated: false,
   
   // Initial search state
   selectedApp: null,
@@ -110,6 +117,15 @@ export const useStore = create<AppState>((set) => ({
   decrementAIQueryCount: () => set((state) => ({
     aiQueryCount: Math.max(0, state.aiQueryCount - 1)
   })),
+  setUser: (user) => set({ user, isAuthenticated: !!user }),
+  setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
+  logout: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+    set({ user: null, isAuthenticated: false, userTier: 'free', aiQueryCount: 10 });
+  },
   
   // Search actions
   selectApp: (selectedApp) => set({ selectedApp }),

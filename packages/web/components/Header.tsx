@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import { isAIConfigured } from '@/lib/config'
 
 export function Header() {
+  const router = useRouter()
   const mode = useStore((state) => state.mode)
   const platform = useStore((state) => state.platform)
   const aiEnabled = useStore((state) => state.aiEnabled)
@@ -14,6 +16,11 @@ export function Header() {
   const aiQueryCount = useStore((state) => state.aiQueryCount)
   const setShowSettings = useStore((state) => state.setShowSettings)
   const setPlatform = useStore((state) => state.setPlatform)
+  const isAuthenticated = useStore((state) => state.isAuthenticated)
+  const user = useStore((state) => state.user)
+  const setUser = useStore((state) => state.setUser)
+  const logout = useStore((state) => state.logout)
+  const [showAccountMenu, setShowAccountMenu] = useState(false)
 
   // Detect platform on client-side after hydration to avoid mismatch
   useEffect(() => {
@@ -22,6 +29,24 @@ export function Header() {
       if (userAgent.includes('mac')) setPlatform('mac')
       else if (userAgent.includes('win')) setPlatform('windows')
       else if (userAgent.includes('linux')) setPlatform('linux')
+    }
+  }, [])
+
+  // Check authentication status on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token')
+      const userStr = localStorage.getItem('user')
+      if (token && userStr) {
+        try {
+          const userData = JSON.parse(userStr)
+          setUser(userData)
+        } catch (error) {
+          // Invalid user data, clear storage
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+        }
+      }
     }
   }, [])
 
@@ -41,6 +66,19 @@ export function Header() {
       return 'Unlimited'
     }
     return `${aiQueryCount} remaining`
+  }
+
+  const handleLogout = () => {
+    logout()
+    setShowAccountMenu(false)
+    router.push('/')
+  }
+
+  const getDisplayName = () => {
+    if (!user?.email) return 'Account'
+    // Show first part of email or just "Account" on mobile
+    const emailName = user.email.split('@')[0]
+    return emailName.length > 10 ? emailName.substring(0, 10) + '...' : emailName
   }
 
   return (
@@ -99,6 +137,59 @@ export function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </button>
+
+            {/* Login/Account Button */}
+            {!isAuthenticated ? (
+              <button
+                onClick={() => router.push('/login')}
+                className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+                title="Login to your account"
+              >
+                <span className="hidden sm:inline">Login</span>
+                <span className="sm:hidden">Log in</span>
+              </button>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setShowAccountMenu(!showAccountMenu)}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors flex items-center gap-1"
+                  title="Account menu"
+                >
+                  <span className="hidden sm:inline">{getDisplayName()}</span>
+                  <span className="sm:hidden">Account</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {showAccountMenu && (
+                  <>
+                    {/* Backdrop for mobile */}
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setShowAccountMenu(false)}
+                    />
+                    {/* Dropdown menu */}
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-20">
+                      <div className="py-1">
+                        <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
+                          <div className="font-medium truncate">{user?.email}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {userTier === 'premium' ? 'Premium' : 'Free'} Plan
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

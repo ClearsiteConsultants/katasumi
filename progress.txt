@@ -2572,3 +2572,61 @@ NOTES:
 
 ### Impact:
 This feature enables users to discover shortcuts for long-tail apps not in the curated database, making the AI mode genuinely useful and differentiating Katasumi from other shortcut reference tools.
+
+## 2026-02-05 - PHASE3-WEB-021: Add Login/Account Link to Header
+
+### Implementation Summary
+Added visible authentication UI to the web header to make login functionality discoverable to users.
+
+### Changes Made
+
+1. **Enhanced Store with Authentication State** (`packages/web/lib/store.ts`)
+   - Added `user` state: stores email and userId of logged-in user
+   - Added `isAuthenticated` boolean flag for auth status
+   - Added `setUser()` action to update user state
+   - Added `setIsAuthenticated()` action
+   - Added `logout()` action that clears localStorage and resets auth state
+
+2. **Updated Header Component** (`packages/web/components/Header.tsx`)
+   - Added authentication state hooks from store
+   - Added `useEffect` to check localStorage for token and user on mount
+   - Implemented conditional rendering:
+     - Shows "Login" button when not authenticated (navigates to /login)
+     - Shows username/Account button when authenticated
+   - Added account dropdown menu with:
+     - User email display
+     - User tier display (Free/Premium)
+     - Logout button
+   - Implemented responsive design:
+     - Desktop: shows "Login" or username
+     - Mobile: shows "Log in" or "Account" (abbreviated)
+   - Added dropdown backdrop for better UX on mobile
+   - Logout handler clears localStorage and redirects to homepage
+
+3. **Key Features**
+   - Authentication persistence via localStorage
+   - Automatic detection of existing tokens on page load
+   - Graceful handling of invalid/corrupted user data
+   - Clean logout flow with state reset
+   - Consistent styling with existing header elements
+   - Dropdown menu with z-index layering for proper display
+
+### Testing Status
+- TypeScript type checks: ✅ PASS
+- Existing unit tests: 68/72 pass (4 pre-existing failures unrelated to this change)
+- Manual verification needed for UI/UX testing
+
+### Acceptance Criteria Status
+ Header shows 'Login' button when user is not authenticated
+ Header shows 'Account' or username when user is authenticated  
+ Login button navigates to /login page
+ Account button opens dropdown with logout option
+ Button styled consistently with other header elements
+ Responsive: shows abbreviated text on mobile
+ Logout clears localStorage token and redirects to home
+
+### Notes
+- Test environment configuration for React components requires jsdom setup which had permissions issues
+- Pre-existing test failures in tab-toggle-mode.test.tsx are unrelated to this implementation
+- Implementation follows existing patterns in the codebase (zustand store, Next.js routing)
+- Authentication flow integrates with existing /login page and API routes

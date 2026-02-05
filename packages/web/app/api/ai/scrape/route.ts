@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     
     // Parse request body
     const body = await request.json();
-    const { appName, context } = body;
+    const { appName, context, provider, apiKey, model, baseUrl } = body;
     
     if (!appName || typeof appName !== 'string') {
       return NextResponse.json(
@@ -117,24 +117,29 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check AI configuration
-    const aiProvider = process.env.AI_PROVIDER;
-    const aiApiKey = process.env.AI_API_KEY;
-    
-    if (!aiProvider || !aiApiKey) {
+    // Check AI configuration from request
+    if (!provider) {
       return NextResponse.json(
-        { error: 'AI service is not configured. Please contact support.' },
-        { status: 503 }
+        { error: 'AI provider is required in request body' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate API key for non-Ollama providers
+    if (provider !== 'ollama' && !apiKey) {
+      return NextResponse.json(
+        { error: 'AI API key is required for this provider' },
+        { status: 400 }
       );
     }
     
     // Call AI to scrape web for shortcuts
     const scrapeResult = await scrapeShortcutsWithAI(cleanAppName, context, {
-      provider: aiProvider as any,
-      apiKey: aiApiKey,
-      model: process.env.AI_MODEL,
-      baseUrl: process.env.AI_BASE_URL,
-      timeout: parseInt(process.env.AI_TIMEOUT || '30000'),
+      provider: provider as any,
+      apiKey: apiKey || '',
+      model: model,
+      baseUrl: baseUrl,
+      timeout: 60000,
     });
     
     // Log AI usage for rate limiting
@@ -197,8 +202,47 @@ async function scrapeShortcutsWithAI(
   const timeoutId = setTimeout(() => controller.abort(), config.timeout);
   
   try {
-    const prompt = buildScrapePrompt(appName, context);
+    const startTime = Date.now();
+    
+    // Step 1: Search the web for documentation
+    console.log(`[AI Scrape] Searching web for "${appName}" keyboard shortcuts...`);
+    const searchStartTime = Date.now();
+    const searchResults = await searchWeb(appName, controller.signal);
+    console.log(`[AI Scrape] Search completed in ${Date.now() - searchStartTime}ms`);
+    
+    // Step 2: Fetch and scrape top results
+    console.log(`[AI Scrape] Found ${searchResults.length} results, fetching content...`);
+    const fetchStartTime = Date.now();
+    const scrapedContent = await Promise.all(
+      searchResults.slice(0, 3).map(result => 
+        fetchPageContent(result.url, controller.signal).catch(err => {
+          console.warn(`[AI Scrape] Failed to fetch ${result.url}:`, err.message);
+          return { url: result.url, title: result.title, content: '' };
+        })
+      )
+    );
+    console.log(`[AI Scrape] Content fetching completed in ${Date.now() - fetchStartTime}ms`);
+    
+    // Filter out failed fetches
+    const validContent = scrapedContent.filter(c => c.content.length > 0);
+    
+    if (validContent.length === 0) {
+      throw new Error(`Could not fetch any documentation for "${appName}". Please try a different app name.`);
+    }
+    
+    console.log(`[AI Scrape] Successfully fetched ${validContent.length} pages, calling AI...`);
+    
+    // Step 3: Build prompt with scraped content
+    const promptStartTime = Date.now();
+    const prompt = buildScrapePrompt(appName, context, validContent);
+    console.log(`[AI Scrape] Prompt built in ${Date.now() - promptStartTime}ms, length: ${prompt.length} chars`);
+    console.log(`[AI Scrape] Total content size: ${validContent.reduce((sum, c) => sum + c.content.length, 0)} chars`);
+    
+    const aiStartTime = Date.now();
+    console.log(`[AI Scrape] Starting AI call at ${new Date().toISOString()}...`);
     const response = await callAIProvider(prompt, config, controller.signal);
+    console.log(`[AI Scrape] AI call completed in ${Date.now() - aiStartTime}ms`);
+    console.log(`[AI Scrape] Response length: ${response.length} chars`);
     
     // Parse and validate response
     const result = parseAIResponse(response);
@@ -214,7 +258,7 @@ async function scrapeShortcutsWithAI(
         category: result.category,
       },
       shortcuts: result.shortcuts,
-      sourceUrl: result.sourceUrl || `https://www.google.com/search?q=${encodeURIComponent(appName + ' keyboard shortcuts')}`,
+      sourceUrl: validContent[0]?.url || searchResults[0]?.url || `https://www.google.com/search?q=${encodeURIComponent(appName + ' keyboard shortcuts')}`,
       scrapedAt: new Date().toISOString(),
     };
   } finally {
@@ -223,12 +267,146 @@ async function scrapeShortcutsWithAI(
 }
 
 /**
- * Build prompt for AI to scrape shortcuts
+ * Search the web for keyboard shortcut documentation
  */
-function buildScrapePrompt(appName: string, context?: string): string {
-  return `You are a keyboard shortcut expert. Search your knowledge for official keyboard shortcuts for the application "${appName}"${context ? ` (context: ${context})` : ''}.
+async function searchWeb(appName: string, signal: AbortSignal): Promise<Array<{ title: string; url: string }>> {
+  const query = `${appName} keyboard shortcuts documentation`;
+  const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+  
+  try {
+    console.log(`[Search] Query: "${query}"`);
+    console.log(`[Search] URL: ${searchUrl}`);
+    
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Katasumi/1.0; +https://katasumi.dev)',
+      },
+      signal,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Search failed: ${response.status}`);
+    }
+    
+    const html = await response.text();
+    console.log(`[Search] Response size: ${html.length} bytes`);
+    console.log(`[Search] First 500 chars:`, html.substring(0, 500));
+    
+    // Parse DuckDuckGo HTML results (simple regex extraction)
+    const results: Array<{ title: string; url: string }> = [];
+    const resultPattern = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([^<]+)</g;
+    
+    let match;
+    let matchCount = 0;
+    while ((match = resultPattern.exec(html)) !== null && results.length < 5) {
+      matchCount++;
+      let url = match[1];
+      const title = match[2].trim();
+      
+      console.log(`[Search] Match ${matchCount}: ${title} -> ${url}`);
+      
+      // DuckDuckGo uses redirect URLs like: https://duckduckgo.com/l/?uddg=https://actualurl.com
+      // Extract the actual URL from the redirect parameter
+      if (url.includes('duckduckgo.com/l/')) {
+        const uddgMatch = url.match(/[?&]uddg=([^&]+)/);
+        if (uddgMatch) {
+          url = decodeURIComponent(uddgMatch[1]);
+          console.log(`[Search] Extracted redirect target: ${url}`);
+        }
+      }
+      
+      // Filter out DuckDuckGo's own pages and Google
+      const isDuckDuckGoPage = url.includes('duckduckgo.com') && !url.includes('duckduckgo.com/l/');
+      const isGooglePage = url.includes('google.com');
+      
+      if (!isDuckDuckGoPage && !isGooglePage) {
+        results.push({ url, title });
+        console.log(`[Search] ✓ Added result ${results.length}: ${url}`);
+      } else {
+        console.log(`[Search] ✗ Filtered out: ${url}`);
+      }
+    }
+    
+    console.log(`[Search] Total matches found: ${matchCount}`);
+    console.log(`[Search] Valid results: ${results.length}`);
+    console.log(`[Search] Final results:`, results.map(r => r.url));
+    
+    return results;
+  } catch (error) {
+    console.error('[Search] Error:', error);
+    // Fallback to common documentation patterns
+    const cleanName = appName.toLowerCase().replace(/\s+/g, '-');
+    return [
+      { title: `${appName} Official Docs`, url: `https://www.google.com/search?q=${encodeURIComponent(query)}` }
+    ];
+  }
+}
 
-Extract keyboard shortcuts from official documentation or reliable sources. For each shortcut, provide:
+/**
+ * Fetch and extract text content from a web page
+ */
+async function fetchPageContent(
+  url: string, 
+  signal: AbortSignal
+): Promise<{ url: string; title: string; content: string }> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Katasumi/1.0; +https://katasumi.dev)',
+      },
+      signal,
+      // Timeout for individual page fetches
+      ...({ signal: AbortSignal.timeout(5000) } as any),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const html = await response.text();
+    
+    // Basic HTML text extraction (remove scripts, styles, tags)
+    let text = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // Extract title
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : url;
+    
+    // Limit content length
+    if (text.length > 8000) {
+      text = text.substring(0, 8000) + '...';
+    }
+    
+    console.log(`[Fetch] ${url} - ${text.length} chars`);
+    
+    return { url, title, content: text };
+  } catch (error) {
+    throw new Error(`Failed to fetch ${url}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Build prompt for AI to scrape shortcuts with web content
+ */
+function buildScrapePrompt(
+  appName: string, 
+  context: string | undefined,
+  scrapedContent: Array<{ url: string; title: string; content: string }>
+): string {
+  const contentSection = scrapedContent.map((page, i) => 
+    `## Source ${i + 1}: ${page.title}\nURL: ${page.url}\n\n${page.content}\n\n---\n`
+  ).join('\n');
+  
+  return `You are a keyboard shortcut expert. I have searched the web for keyboard shortcuts for "${appName}"${context ? ` (context: ${context})` : ''} and found the following documentation:
+
+${contentSection}
+
+Extract keyboard shortcuts from the documentation above. For each shortcut, provide:
 1. action: What the shortcut does (e.g., "Copy", "Paste", "Save file")
 2. keys: Keyboard combination for different platforms (mac, windows, linux)
 3. context: Where the shortcut applies (e.g., "Normal Mode", "Editor", optional)
@@ -376,34 +554,79 @@ async function callOpenRouter(
 ): Promise<string> {
   const baseUrl = config.baseUrl || 'https://openrouter.ai/api/v1';
   const model = config.model || 'openai/gpt-4-turbo';
+  const requestStartTime = Date.now();
   
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-      'HTTP-Referer': 'https://katasumi.dev',
-      'X-Title': 'Katasumi',
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: 'You are a helpful assistant that knows about keyboard shortcuts for various applications. Always respond with valid JSON only.' },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.3,
-      max_tokens: 4000,
-    }),
-    signal,
-  });
+  console.log(`[OpenRouter] Starting API call at ${new Date().toISOString()}`);
+  console.log(`[OpenRouter] Model: ${model}`);
+  console.log(`[OpenRouter] Base URL: ${baseUrl}`);
+  console.log(`[OpenRouter] Prompt length: ${prompt.length} chars`);
+  console.log(`[OpenRouter] API key prefix: ${config.apiKey.substring(0, 10)}...`);
   
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`OpenRouter API error: ${response.status} ${errorData.error?.message || response.statusText}`);
+  const requestBody = {
+    model,
+    messages: [
+      { role: 'system', content: 'You are a helpful assistant that knows about keyboard shortcuts for various applications. Always respond with valid JSON only.' },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.3,
+    max_tokens: 4000,
+  };
+  
+  console.log(`[OpenRouter] Request body: ${JSON.stringify(requestBody).substring(0, 200)}...`);
+  console.log(`[OpenRouter] Sending request...`);
+  
+  try {
+    const fetchStartTime = Date.now();
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+        'HTTP-Referer': 'https://katasumi.dev',
+        'X-Title': 'Katasumi',
+      },
+      body: JSON.stringify(requestBody),
+      signal,
+    });
+    
+    console.log(`[OpenRouter] Received response in ${Date.now() - fetchStartTime}ms`);
+    console.log(`[OpenRouter] Response status: ${response.status} ${response.statusText}`);
+    console.log(`[OpenRouter] Response headers:`, Object.fromEntries(response.headers.entries()));
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[OpenRouter] Error response body:`, errorText);
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+      throw new Error(`OpenRouter API error: ${response.status} ${errorData.error?.message || errorData.message || response.statusText}`);
+    }
+    
+    const parseStartTime = Date.now();
+    const data = await response.json();
+    console.log(`[OpenRouter] JSON parsed in ${Date.now() - parseStartTime}ms`);
+    console.log(`[OpenRouter] Response data keys:`, Object.keys(data));
+    console.log(`[OpenRouter] Choices count:`, data.choices?.length);
+    
+    const content = data.choices[0]?.message?.content || '';
+    console.log(`[OpenRouter] Content length: ${content.length} chars`);
+    console.log(`[OpenRouter] Total request time: ${Date.now() - requestStartTime}ms`);
+    
+    if (data.usage) {
+      console.log(`[OpenRouter] Token usage:`, data.usage);
+    }
+    
+    return content;
+  } catch (error) {
+    console.error(`[OpenRouter] Request failed after ${Date.now() - requestStartTime}ms:`, error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error(`[OpenRouter] Request was aborted (timeout)`);
+    }
+    throw error;
   }
-  
-  const data = await response.json();
-  return data.choices[0]?.message?.content || '';
 }
 
 async function callOllama(

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PostgresAdapter } from '@katasumi/core/dist/postgres-adapter'
 import { KeywordSearchEngine } from '@katasumi/core/dist/keyword-search-engine'
 import type { Platform } from '@katasumi/core/dist/types'
+import { extractToken, verifyToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,9 +18,24 @@ export async function GET(request: NextRequest) {
     // Log search parameters for debugging
     // console.log('[API /api/search] Request params:', { query, app, platform, context, category, tag, limit })
 
+    // Check for authentication (optional - search works for both logged in and anonymous users)
+    let userId: string | undefined = undefined
+    const authHeader = request.headers.get('Authorization')
+    if (authHeader) {
+      const token = extractToken(authHeader)
+      if (token) {
+        const payload = verifyToken(token)
+        if (payload) {
+          userId = payload.userId
+          console.log('[API /api/search] Authenticated user:', userId)
+        }
+      }
+    }
+
     // Initialize database adapter and search engine
+    // If userId is provided, adapter will also search user_shortcuts table
     const dbUrl = process.env.DATABASE_URL || 'postgres://user:password@localhost:5432/katasumi'
-    const adapter = new PostgresAdapter(dbUrl)
+    const adapter = new PostgresAdapter(dbUrl, undefined, userId)
     const searchEngine = new KeywordSearchEngine(adapter)
 
     // Perform search

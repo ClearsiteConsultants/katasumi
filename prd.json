@@ -2248,6 +2248,52 @@
       "priorityRationale": "Current search button is redundant since fuzzy search is automatic. Making it an explicit AI trigger gives users control over when to use AI (which costs API credits) vs fast local keyword search. This makes AI usage intentional and transparent.",
       "reportedDate": "2026-02-03",
       "technicalNotes": "SearchBar component needs refactoring:\n1. Automatic debounced search always uses /api/search (KeywordSearchEngine)\n2. Button click uses /api/ai (AISearchEngine with semantic ranking)\n3. Two separate code paths for clarity\n4. Button appearance toggled by aiEnabled state\n5. Authentication check before AI search\n6. Better error messaging for AI failures"
+    },
+    {
+      "id": "PHASE3-AI-001",
+      "category": "Phase 3: AI - Advanced Tool-Calling Web Search",
+      "description": "Upgrade AI scraping from pre-search strategy to full function/tool calling with iterative web search and content fetching",
+      "acceptanceCriteria": [
+        "Define search_web(query) tool: searches DuckDuckGo/Brave and returns titles/URLs",
+        "Define fetch_url(url) tool: fetches and extracts text content from URL",
+        "AI providers (OpenAI, Anthropic, OpenRouter) receive tool definitions in API calls",
+        "Implement tool execution loop: AI → requests tool → execute → return results → AI continues",
+        "AI can make multiple tool calls iteratively (e.g., search → fetch top 3 → search refined query)",
+        "Tool results included in conversation history for multi-turn reasoning",
+        "AI decides which tools to use and in what order (no hardcoded search strategy)",
+        "Timeout protection: max 5 tool calls or 45 seconds total",
+        "Error handling: tool execution failures don't crash, returned to AI as error messages",
+        "Ollama support: fallback to pre-search if tool calling not supported by model",
+        "Logs show tool call sequence for debugging (which tools called, when, with what args)",
+        "Results include metadata: source URLs, confidence scores, tool call count",
+        "Cache tool results (e.g., fetched URLs) to avoid duplicate fetches within same session"
+      ],
+      "stepsToVerify": [
+        "Configure AI with OpenAI GPT-4 or Anthropic Claude",
+        "Search for app with sparse documentation (e.g., 'Obsidian')",
+        "Monitor console logs to see tool call sequence",
+        "Verify AI searches web first, then fetches relevant URLs",
+        "Verify AI can refine search based on initial results",
+        "Test with app requiring multiple searches (e.g., 'Blender' - many contexts)",
+        "Verify timeout prevents infinite loops",
+        "Test with Ollama and verify graceful fallback to pre-search",
+        "Test tool execution failure (e.g., URL fetch timeout) and verify error handling",
+        "Compare results quality with current pre-search implementation",
+        "Verify source URLs in results match actually fetched pages",
+        "Check database for tool result caching",
+        "Create tests for tool calling loop and error handling",
+        "Run'pnpm test --filter=@katasumi/web' and verify tests pass"
+      ],
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "Enhancement over current pre-search strategy. Current implementation (PHASE3-WEB-022) works by searching first, then feeding all content to AI. This P2 upgrade gives AI control over search strategy, enabling intelligent iterative refinement. More robust but significantly more complex. Defer until pre-search proves insufficient.",
+      "reportedDate": "2026-02-05",
+      "technicalNotes": "Tool calling implementation requirements:\n1. OpenAI: uses 'tools' parameter with function definitions, 'tool_calls' in response\n2. Anthropic: uses 'tools' parameter, 'tool_use' content blocks in response\n3. OpenRouter: proxies to underlying model, support varies by model\n4. Tool definitions in OpenAI function schema format (name, description, parameters)\n5. Execution loop needs conversation history + tool results in 'tool' role messages\n6. DuckDuckGo HTML API: free, no API key, simple parsing\n7. Brave Search API: alternative, requires API key but returns JSON\n8. Content extraction: consider readability libraries (mozilla/readability) for better text extraction than current regex\n9. Consider adding pdf_to_text tool for PDF documentation (many official docs are PDFs)",
+      "implementationStrategy": "Phased approach:\n1. Phase 1 (current): Pre-search strategy - search before AI call, include all content in prompt\n2. Phase 2 (this requirement): Tool calling - AI controls search, iterative refinement\n3. Phase 3 (future): Multi-source - add PDF extraction, video transcripts, GitHub README parsing\n4. Phase 4 (future): Learning - cache successful search patterns, recommend sources",
+      "relatedRequirements": [
+        "PHASE3-WEB-022 - AI Scraping (current pre-search implementation)",
+        "PHASE1-SEARCH-002 - AI Search Engine (semantic search foundation)"
+      ]
     }
   ]
 }

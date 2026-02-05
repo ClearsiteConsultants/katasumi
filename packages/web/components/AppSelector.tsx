@@ -5,10 +5,19 @@ import { useStore } from '@/lib/store'
 import { useRouter } from 'next/navigation'
 import { isAIConfigured } from '@/lib/config'
 
+interface AppInfo {
+  id: string
+  name: string
+  displayName: string
+  category: string
+  platforms: string[]
+  shortcutCount: number
+}
+
 export function AppSelector() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
-  const [apps, setApps] = useState<string[]>([])
+  const [apps, setApps] = useState<AppInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [focusedIndex, setFocusedIndex] = useState<number>(-1)
   const [isInputMode, setIsInputMode] = useState(true)
@@ -20,13 +29,21 @@ export function AppSelector() {
   useEffect(() => {
     async function fetchApps() {
       try {
-        const response = await fetch('/api/apps')
+        // Include authentication token if available to get user apps
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+        const headers: HeadersInit = {}
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
+          console.log('[AppSelector] Including auth token in apps request')
+        }
+
+        const response = await fetch('/api/apps', { headers })
         const data = await response.json()
         setApps(data.apps || [])
       } catch (error) {
         console.error('Failed to fetch apps:', error)
-        // Fallback to popular apps
-        setApps(['vim', 'tmux', 'vscode', 'git', 'bash', 'macos', 'windows', 'gnome', 'chrome', 'firefox'])
+        // Fallback to empty array - API should be available
+        setApps([])
       } finally {
         setLoading(false)
       }
@@ -34,12 +51,14 @@ export function AppSelector() {
     fetchApps()
   }, [])
 
+  console.log('[AppSelector] Rendering with apps:', apps)
   const filteredApps = apps.filter((app) =>
-    app.toLowerCase().includes(searchQuery.toLowerCase())
+    app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    app.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleSelectApp = (app: string) => {
-    useStore.setState({ selectedApp: app })
+  const handleSelectApp = (appName: string) => {
+    useStore.setState({ selectedApp: appName })
   }
 
   const handleAISearch = async () => {
@@ -57,6 +76,25 @@ export function AppSelector() {
       return
     }
 
+    // Load AI config from localStorage
+    const configStr = typeof window !== 'undefined' ? localStorage.getItem('katasumi-config') : null
+    let aiConfig = null
+    if (configStr) {
+      try {
+        const config = JSON.parse(configStr)
+        aiConfig = config.ai
+      } catch (e) {
+        console.error('Failed to parse AI config:', e)
+        setAiError('Invalid AI configuration. Please reconfigure in Settings.')
+        return
+      }
+    }
+
+    if (!aiConfig) {
+      setAiError('AI configuration not found. Please configure in Settings.')
+      return
+    }
+
     setIsAIScraping(true)
     setAiError(null)
 
@@ -69,7 +107,13 @@ export function AppSelector() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ appName: searchQuery })
+        body: JSON.stringify({ 
+          appName: searchQuery,
+          provider: aiConfig.provider,
+          apiKey: aiConfig.apiKey,
+          model: aiConfig.model,
+          baseUrl: aiConfig.baseUrl
+        })
       })
       
       if (!response.ok) {
@@ -143,7 +187,7 @@ export function AppSelector() {
         if (e.key === 'Enter' && filteredApps.length > 0) {
           e.preventDefault()
           // Select first matching app
-          handleSelectApp(filteredApps[0])
+          handleSelectApp(filteredApps[0].name)
         } else if (e.key === 'Escape') {
           e.preventDefault()
           // Exit input mode, enter navigation mode
@@ -168,7 +212,7 @@ export function AppSelector() {
           setFocusedIndex((prev) => (prev - 1 + filteredApps.length) % filteredApps.length)
         } else if (e.key === 'Enter' && focusedIndex >= 0 && focusedIndex < filteredApps.length) {
           e.preventDefault()
-          handleSelectApp(filteredApps[focusedIndex])
+          handleSelectApp(filteredApps[focusedIndex].name)
         } else if (e.key === 'Escape') {
           e.preventDefault()
           // Return to input mode
@@ -214,15 +258,15 @@ export function AppSelector() {
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {filteredApps.map((app, index) => (
           <button
-            key={app}
-            onClick={() => handleSelectApp(app)}
+            key={app.id}
+            onClick={() => handleSelectApp(app.name)}
             className={`px-6 py-4 rounded-lg border-2 transition-colors font-medium ${
               !isInputMode && focusedIndex === index
                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/40 text-gray-900 dark:text-white ring-2 ring-primary-500'
                 : 'border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-900 dark:text-white'
             }`}
           >
-            {app}
+            {app.displayName}
           </button>
         ))}
       </div>
