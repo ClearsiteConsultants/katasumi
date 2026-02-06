@@ -237,22 +237,82 @@ export class PostgresAdapter implements DatabaseAdapter {
   }
 
   /**
-   * Get all available apps
+   * Get all available apps (from core and user shortcuts)
    */
   async getApps(): Promise<AppInfo[]> {
     try {
-      const apps = await this.coreClient.appInfo.findMany({
+      // Get core apps
+      const coreApps = await this.coreClient.appInfo.findMany({
         orderBy: { displayName: 'asc' },
       });
 
-      return apps.map(app => ({
-        id: app.id,
-        name: app.name,
-        displayName: app.displayName,
-        category: app.category,
-        platforms: app.platforms.split(',') as ('mac' | 'windows' | 'linux')[],
-        shortcutCount: app.shortcutCount,
-      }));
+      const appMap = new Map<string, AppInfo>();
+      
+      // Add core apps to map
+      coreApps.forEach(app => {
+        appMap.set(app.name, {
+          id: app.id,
+          name: app.name,
+          displayName: app.displayName,
+          category: app.category,
+          platforms: app.platforms.split(',') as ('mac' | 'windows' | 'linux')[],
+          shortcutCount: app.shortcutCount,
+        });
+      });
+
+      // If userId is set, get user-specific apps from user_shortcuts
+      if (this.userId) {
+        const userShortcuts = await this.userClient.userShortcut.findMany({
+          where: { userId: this.userId },
+          select: {
+            app: true,
+            keysMac: true,
+            keysWindows: true,
+            keysLinux: true,
+            category: true,
+          },
+        });
+
+        // Group by app name and count shortcuts
+        const userAppGroups = new Map<string, any[]>();
+        userShortcuts.forEach(shortcut => {
+          if (!userAppGroups.has(shortcut.app)) {
+            userAppGroups.set(shortcut.app, []);
+          }
+          userAppGroups.get(shortcut.app)!.push(shortcut);
+        });
+
+        // Process user apps
+        userAppGroups.forEach((shortcuts, appName) => {
+          if (!appMap.has(appName)) {
+            // New app not in core - create AppInfo entry
+            const platforms: ('mac' | 'windows' | 'linux')[] = [];
+            if (shortcuts.some(s => s.keysMac)) platforms.push('mac');
+            if (shortcuts.some(s => s.keysWindows)) platforms.push('windows');
+            if (shortcuts.some(s => s.keysLinux)) platforms.push('linux');
+
+            const category = shortcuts.find(s => s.category)?.category || 'Custom';
+
+            appMap.set(appName, {
+              id: `user-${appName}`,
+              name: appName,
+              displayName: appName,
+              category,
+              platforms: platforms.length > 0 ? platforms : ['mac', 'windows', 'linux'],
+              shortcutCount: shortcuts.length,
+            });
+          } else {
+            // App exists in core - add user shortcut count
+            const app = appMap.get(appName)!;
+            app.shortcutCount += shortcuts.length;
+          }
+        });
+      }
+
+      // Convert map to sorted array
+      return Array.from(appMap.values()).sort((a, b) => 
+        a.displayName.localeCompare(b.displayName)
+      );
     } catch (error) {
       throw new Error(`Failed to retrieve apps from PostgreSQL: ${error instanceof Error ? error.message : String(error)}`);
     }
