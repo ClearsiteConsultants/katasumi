@@ -420,8 +420,9 @@
       ],
       "passes": true,
       "priority": 3,
-      "priorityRationale": "Sync API needed for premium features, but not for basic TUI/Web",
-      "completedAt": "2026-01-27"
+      "priorityRationale": "Sync API needed for PREMIUM FEATURES (requires subscription). Free tier users do not have access to sync endpoints.",
+      "completedAt": "2026-01-27",
+      "technicalNotes": "PREMIUM FEATURE: All sync endpoints require subscription_status='premium' or 'enterprise'. Middleware checks JWT token AND subscription status. Free users get 401 Unauthorized with message 'Premium subscription required for sync features.'"
     },
     {
       "id": "PHASE2-TUI-002",
@@ -952,7 +953,8 @@
       ],
       "passes": false,
       "priority": 4,
-      "priorityRationale": "Conflict resolution is enhancement of basic sync"
+      "priorityRationale": "PREMIUM FEATURE: Conflict resolution is enhancement of basic sync. Only premium/enterprise users can sync, so conflicts only affect paying customers.",
+      "technicalNotes": "PREMIUM FEATURE: Requires premium subscription. Only users with subscription_status='premium' or 'enterprise' can sync, so conflict resolution only applies to them."
     },
     {
       "id": "PHASE2-TUI-006",
@@ -2163,11 +2165,255 @@
       ],
       "passes": false,
       "priority": 3,
-      "priorityRationale": "Convenience feature for premium users. Not critical for MVP but improves UX by avoiding duplicate AI configuration. Requires PHASE2-TUI-008 (login command) to be completed first.",
+      "priorityRationale": "PREMIUM FEATURE for premium/enterprise users only. Allows syncing AI config between web and TUI. Free users configure AI locally via ~/.katasumi/config.json.",
       "dependencies": [
-        "PHASE2-TUI-008"
+        "PHASE2-TUI-008",
+        "PHASE1-PREMIUM-001"
       ],
-      "reportedDate": "2026-02-03"
+      "reportedDate": "2026-02-03",
+      "technicalNotes": "PREMIUM FEATURE: Only users with subscription_status='premium' or 'enterprise' can sync AI config. Free users must configure AI manually using personal API key."
+    },
+    {
+      "id": "PHASE1-SYNC-004",
+      "category": "Phase 1: Sync - User Shortcuts Sync TUI←Web",
+      "description": "Sync user_shortcuts from PostgreSQL (web) into TUI local SQLite database with sync status display and key command",
+      "acceptanceCriteria": [
+        "TUI provides 's' key command to trigger shortcuts sync",
+        "Sync pulls user_shortcuts from web PostgreSQL via /api/sync/pull endpoint",
+        "Downloaded shortcuts merged into local ~/.katasumi/user-data.db SQLite",
+        "Sync status displayed: 'Syncing...', 'Up to date', 'X shortcuts synced', error messages",
+        "Sync requires authentication (prompts to run 'katasumi login' if not authenticated)",
+        "Conflict resolution: web shortcuts take precedence (newest wins)",
+        "Sync preserves local-only shortcuts not present in web database",
+        "Status indicator shows last sync time (e.g., 'Last synced: 2 hours ago')",
+        "Initial sync downloads all user shortcuts from web",
+        "Incremental sync only downloads changes since last sync (using updated_at timestamp)",
+        "Error handling: network failures, auth errors, database conflicts",
+        "Success notification: 'Synced X shortcuts from web' with sound/visual feedback",
+        "F5 key also triggers sync (alternative to 's' key)",
+        "Sync progress bar for large sync operations (>100 shortcuts)"
+      ],
+      "stepsToVerify": [
+        "Create some user shortcuts in web interface (authenticated user)",
+        "Verify shortcuts saved to PostgreSQL user_shortcuts table",
+        "Open TUI and verify local SQLite does not have web shortcuts",
+        "Press 's' key in TUI to trigger sync",
+        "If not authenticated, verify prompt to run 'katasumi login'",
+        "After login, press 's' key again",
+        "Verify 'Syncing...' status appears",
+        "Verify sync downloads shortcuts from web",
+        "Verify shortcuts appear in TUI search results",
+        "Check ~/.katasumi/user-data.db and verify web shortcuts present",
+        "Create a shortcut in TUI (local-only)",
+        "Press 's' key to sync again",
+        "Verify local shortcut preserved and not deleted",
+        "Modify a shortcut in web (same id as one in TUI)",
+        "Sync and verify web version takes precedence",
+        "Verify last sync timestamp shows in status display",
+        "Test network failure: disconnect and press 's', verify error message",
+        "Test with 100+ shortcuts and verify progress bar appears",
+        "Press F5 key and verify sync also triggered"
+      ],
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "PREMIUM FEATURE for paid subscribers. Enables seamless workflow between web and TUI by syncing custom shortcuts. Higher priority than AI config sync since shortcuts are core value proposition.",
+      "dependencies": [
+        "PHASE1-SYNC-001",
+        "PHASE2-TUI-008",
+        "PHASE1-PREMIUM-001"
+      ],
+      "reportedDate": "2026-02-03",
+      "technicalNotes": "Implementation details:\n1. New key binding in TUI: 's' and 'F5' keys trigger syncUserShortcuts() function\n2. Function calls /api/sync/pull endpoint with auth token\n3. Response includes array of user_shortcuts with id, app_id, keys, description, platform, created_at, updated_at\n4. SQLite merge logic: INSERT OR REPLACE INTO user_shortcuts, compare updated_at for conflicts\n5. Store last sync timestamp in ~/.katasumi/sync-state.json\n6. Status display component shows sync state in footer/header\n7. Progress tracking for large syncs using streaming response or pagination\n8. Local-only shortcuts identified by absence in cloud response (don't delete them)\n\nNOTE: This is a PREMIUM feature requiring user account and subscription."
+    },
+    {
+      "id": "PHASE1-PREMIUM-001",
+      "category": "Phase 1: Premium - Account Model Definition",
+      "description": "Define premium vs free tier model: premium requires account+subscription for sync/built-in AI, free tier uses personal AI API keys",
+      "acceptanceCriteria": [
+        "PREMIUM FEATURES (require account + subscription): All sync features (PHASE1-SYNC-001/002/003/004), Built-in AI with internal protected API key, Cloud storage for user shortcuts, Multi-device sync, AI configuration sync",
+        "FREE FEATURES (no account needed): Local-only usage, User provides own AI API key, README instructions for AI setup, All search functionality (keyword and AI with personal key), Local shortcut creation and editing",
+        "Premium users authenticated via JWT token in Authorization header",
+        "Free users use TUI without authentication, configure AI key in ~/.katasumi/config.json",
+        "Built-in AI option only available to premium users (uses internal API key stored in postgres)",
+        "Sync endpoints return 401 Unauthorized for non-premium users",
+        "Web UI shows upgrade prompts for sync features when not logged in",
+        "TUI shows 'Login required for sync' message when pressing 's' key without auth",
+        "Database schema includes users.subscription_status field (free, premium, enterprise)",
+        "API middleware checks subscription status before allowing premium features",
+        "Premium features clearly labeled in UI with 'Premium' badge",
+        "Sign-up flow eventually includes payment/subscription step (manual for now)"
+      ],
+      "stepsToVerify": [
+        "Verify users table has subscription_status column (free/premium/enterprise)",
+        "Create free user (subscription_status='free') and verify sync endpoints return 401",
+        "Create premium user (subscription_status='premium') and verify sync works",
+        "Test TUI without login and verify AI works with personal API key in config",
+        "Test TUI with premium login and verify built-in AI available",
+        "Verify web UI shows upgrade prompts for sync when not logged in",
+        "Check API middleware validates subscription_status for premium endpoints",
+        "Verify README includes instructions for free users to set up AI key",
+        "Test /api/sync/* endpoints reject requests from free tier users",
+        "Verify built-in AI option only appears for authenticated premium users"
+      ],
+      "passes": false,
+      "priority": 1,
+      "priorityRationale": "Core business model definition. Essential for monetization strategy and feature access control. Must be implemented before payment integration and marketing launch.",
+      "reportedDate": "2026-02-07",
+      "technicalNotes": "Database schema changes:\n1. Add subscription_status ENUM('free', 'premium', 'enterprise') to users table\n2. Add subscription_expires_at TIMESTAMP to users table\n3. Create middleware function requirePremium() that checks JWT + subscription status\n4. Apply middleware to all sync endpoints and built-in AI endpoints\n5. Free tier users can still use /api/ai/search if they provide their own API key\n6. Premium users can toggle between built-in AI and personal API key"
+    },
+    {
+      "id": "PHASE1-PREMIUM-002",
+      "category": "Phase 1: Premium - Built-in AI for Premium Users",
+      "description": "Premium users can use built-in AI powered by internal protected API key stored in PostgreSQL",
+      "acceptanceCriteria": [
+        "Environment variable INTERNAL_AI_API_KEY stored securely in .env (not committed)",
+        "PostgreSQL stores encrypted internal API key in app_config table",
+        "Premium users see 'Use Built-in AI' option in settings (web and TUI)",
+        "Built-in AI option only available to authenticated premium users",
+        "When selected, AI requests use internal API key instead of user's key",
+        "AI provider selection still available (OpenAI, Anthropic, OpenRouter, Ollama)",
+        "Rate limiting for built-in AI: 100 queries/day for premium, unlimited for enterprise",
+        "Usage tracking: count AI queries per user per day in ai_usage_log table",
+        "Free users cannot access built-in AI (option hidden/disabled)",
+        "API endpoint /api/ai/search checks subscription status before using internal key",
+        "TUI shows 'Built-in AI (Premium)' badge when using internal key",
+        "Web settings shows AI usage: 'Used 23/100 AI queries today' for premium users",
+        "Internal API key rotation supported (admin can update without user impact)"
+      ],
+      "stepsToVerify": [
+        "Set INTERNAL_AI_API_KEY in .env file",
+        "Verify .env in .gitignore (never committed)",
+        "Create app_config table with encrypted_api_key column",
+        "Store internal API key encrypted in database",
+        "Login as premium user and navigate to settings",
+        "Verify 'Use Built-in AI' option appears",
+        "Toggle 'Use Built-in AI' and verify AI queries work without personal API key",
+        "Test AI search and verify it uses internal key (check API logs)",
+        "Make 100 AI queries and verify rate limit enforced (101st fails)",
+        "Check ai_usage_log table and verify queries counted",
+        "Login as free user and verify 'Use Built-in AI' option hidden",
+        "Test /api/ai/search with free user and verify 401 or requires personal key",
+        "Verify web settings shows usage counter for premium users",
+        "Test TUI with premium login and verify built-in AI works"
+      ],
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "Key premium feature that differentiates paid tier. Removes friction of API key setup for paying customers. Important for conversion and retention.",
+      "dependencies": [
+        "PHASE1-PREMIUM-001"
+      ],
+      "reportedDate": "2026-02-07",
+      "technicalNotes": "Implementation:\n1. Create app_config table: id, key (e.g., 'internal_ai_key'), encrypted_value, created_at, updated_at\n2. Use crypto.encrypt() to store internal API key\n3. Settings UI shows radio toggle: 'Personal API Key' vs 'Built-in AI (Premium)'\n4. New field in users: ai_key_mode ENUM('personal', 'builtin')\n5. /api/ai/search logic: if (user.ai_key_mode === 'builtin' && user.subscription_status === 'premium') use internal key\n6. Create ai_usage_log table: user_id, query_type, timestamp, tokens_used\n7. Rate limiter checks daily count before allowing query"
+    },
+    {
+      "id": "PHASE1-PREMIUM-003",
+      "category": "Phase 1: Premium - Manual User Provisioning Process",
+      "description": "Document manual process for creating premium users until payment integration implemented",
+      "acceptanceCriteria": [
+        "README or ADMIN.md documents manual user creation process",
+        "SQL script for creating premium user: INSERT INTO users with subscription_status='premium'",
+        "Script includes setting subscription_expires_at to 1 year from now",
+        "Command-line tool or SQL query for upgrading free user to premium",
+        "Process for setting trial period: subscription_status='premium' + expires_at=30 days",
+        "Admin can manually set subscription status via psql or database GUI",
+        "Users table supports manual subscription management fields",
+        "Email notification template for manual user provisioning (optional for now)",
+        "Process documented for team members who need to create test accounts",
+        "Security: only admins with database access can provision premium accounts"
+      ],
+      "stepsToVerify": [
+        "Read ADMIN.md or README section on user provisioning",
+        "Run SQL script to create test premium user",
+        "Verify user created with subscription_status='premium'",
+        "Login as manually created user and verify premium features work",
+        "Test sync endpoints and verify they accept requests",
+        "Verify built-in AI option appears for manually created user",
+        "Run upgrade script to convert free user to premium",
+        "Verify upgraded user gains access to premium features",
+        "Test trial user (expires_at=30 days) and verify access until expiration",
+        "Document process in team wiki or notion"
+      ],
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Temporary solution until payment integration. Low priority since it's manual admin work, but needed for testing and early adopters.",
+      "dependencies": [
+        "PHASE1-PREMIUM-001"
+      ],
+      "reportedDate": "2026-02-07",
+      "technicalNotes": "SQL Scripts:\n\n-- Create premium user\nINSERT INTO users (email, password_hash, subscription_status, subscription_expires_at, created_at)\nVALUES ('user@example.com', '$2b$...', 'premium', NOW() + INTERVAL '1 year', NOW());\n\n-- Upgrade existing user to premium\nUPDATE users SET subscription_status = 'premium', subscription_expires_at = NOW() + INTERVAL '1 year' WHERE email = 'user@example.com';\n\n-- Create trial user (30 days)\nINSERT INTO users (...) VALUES (..., 'premium', NOW() + INTERVAL '30 days', NOW());\n\n-- Cron job to check expired subscriptions\nUPDATE users SET subscription_status = 'free' WHERE subscription_expires_at < NOW() AND subscription_status = 'premium';"
+    },
+    {
+      "id": "PHASE1-PREMIUM-004",
+      "category": "Phase 1: Premium - Free User AI Setup Instructions",
+      "description": "Add README section with instructions for free users to configure personal AI API key for TUI",
+      "acceptanceCriteria": [
+        "README.md has 'AI Setup for Free Users' section",
+        "Instructions explain how to get API key from OpenAI, Anthropic, OpenRouter",
+        "Step-by-step guide for creating ~/.katasumi/config.json",
+        "Example config.json with all supported providers",
+        "Environment variable option documented: KATASUMI_AI_PROVIDER, KATASUMI_AI_KEY",
+        "TUI command documented: 'katasumi config set ai.provider openai'",
+        "Security note: never commit config.json or share API keys",
+        "Cost estimate: 'Typical usage costs $0.50-$2/month with personal API key'",
+        "Links to provider pricing pages (OpenAI, Anthropic, etc.)",
+        "Troubleshooting section for common API key errors"
+      ],
+      "stepsToVerify": [
+        "Read README.md 'AI Setup for Free Users' section",
+        "Follow instructions to create ~/.katasumi/config.json",
+        "Add OpenAI API key to config.json",
+        "Run TUI and toggle AI (F4 or 'a' key)",
+        "Verify AI search works with personal API key",
+        "Test with invalid API key and verify error message",
+        "Test with Anthropic API key and verify it works",
+        "Test environment variable approach: KATASUMI_AI_KEY=sk-...",
+        "Verify no account/login required for free AI usage",
+        "Verify README clearly states premium option uses built-in AI"
+      ],
+      "passes": false,
+      "priority": 2,
+      "priorityRationale": "Essential for free tier users to access AI features. Good documentation reduces support burden and improves free user experience.",
+      "dependencies": [],
+      "reportedDate": "2026-02-07",
+      "technicalNotes": "Example config.json:\n\n{\n  \"ai\": {\n    \"provider\": \"openai\",\n    \"apiKey\": \"sk-...\",\n    \"model\": \"gpt-4\",\n    \"baseUrl\": \"https://api.openai.com/v1\"\n  }\n}\n\nSupported providers: openai, anthropic, openrouter, ollama\n\nEnvironment variables:\nKATASUMI_AI_PROVIDER=openai\nKATASUMI_AI_KEY=sk-...\nKATASUMI_AI_MODEL=gpt-4\nKATASUMI_AI_BASE_URL=https://api.openai.com/v1"
+    },
+    {
+      "id": "PHASE3-WEB-024",
+      "category": "Phase 3: Web - Sign-up Payment Integration Placeholder",
+      "description": "Update sign-up page to indicate premium features and add placeholder for future payment integration",
+      "acceptanceCriteria": [
+        "Sign-up page shows two options: 'Free' and 'Premium' (Premium disabled/coming soon)",
+        "Free tier clearly lists: 'Local usage only', 'Bring your own AI API key', 'No sync features'",
+        "Premium tier lists: 'Cloud sync', 'Built-in AI', 'Multi-device support', '100 AI queries/day'",
+        "Premium sign-up button shows 'Coming Soon' or disabled state",
+        "Free sign-up works immediately (creates account with subscription_status='free')",
+        "Placeholder for Stripe integration: commented code or TODO markers",
+        "Settings page shows current tier: 'Free' with 'Upgrade to Premium' button (disabled)",
+        "API route structure ready: /api/stripe/checkout, /api/stripe/webhook (stubbed)",
+        "Database ready: subscriptions table with stripe_customer_id, stripe_subscription_id",
+        "Admin note in code: 'For now, premium users created manually via database'"
+      ],
+      "stepsToVerify": [
+        "Navigate to /signup page",
+        "Verify two-tier comparison shown: Free vs Premium",
+        "Click 'Sign up for Free' and verify account created",
+        "Verify free account has subscription_status='free'",
+        "Verify 'Premium' sign-up button disabled or shows 'Coming Soon'",
+        "Navigate to /settings after login",
+        "Verify current tier displayed: 'Free'",
+        "Verify 'Upgrade to Premium' button present but disabled",
+        "Check code for Stripe placeholder comments",
+        "Verify database has subscriptions table structure"
+      ],
+      "passes": false,
+      "priority": 3,
+      "priorityRationale": "Prepares for future payment integration but not critical for MVP. Can launch with manual provisioning first.",
+      "dependencies": [
+        "PHASE1-PREMIUM-001",
+        "PHASE3-WEB-002"
+      ],
+      "reportedDate": "2026-02-07",
+      "technicalNotes": "Stripe Integration Prep:\n1. Install stripe package: pnpm add stripe @stripe/stripe-js\n2. Add STRIPE_SECRET_KEY to .env (empty for now)\n3. Create /api/stripe/checkout route (returns 501 Not Implemented)\n4. Create /api/stripe/webhook route (stubbed)\n5. Create subscriptions table:\n   - id, user_id, stripe_customer_id, stripe_subscription_id, status, created_at, updated_at\n6. Sign-up page uses Radix UI Tabs or comparison component\n7. Pricing: TBD (likely $5-10/month for premium)"
     },
     {
       "id": "PHASE3-WEB-022",
@@ -2290,7 +2536,7 @@
         "Run'pnpm test --filter=@katasumi/web' and verify tests pass"
       ],
       "passes": false,
-      "priority": 2,
+      "priority": 4,
       "priorityRationale": "Enhancement over current pre-search strategy. Current implementation (PHASE3-WEB-022) works by searching first, then feeding all content to AI. This P2 upgrade gives AI control over search strategy, enabling intelligent iterative refinement. More robust but significantly more complex. Defer until pre-search proves insufficient.",
       "reportedDate": "2026-02-05",
       "technicalNotes": "Tool calling implementation requirements:\n1. OpenAI: uses 'tools' parameter with function definitions, 'tool_calls' in response\n2. Anthropic: uses 'tools' parameter, 'tool_use' content blocks in response\n3. OpenRouter: proxies to underlying model, support varies by model\n4. Tool definitions in OpenAI function schema format (name, description, parameters)\n5. Execution loop needs conversation history + tool results in 'tool' role messages\n6. DuckDuckGo HTML API: free, no API key, simple parsing\n7. Brave Search API: alternative, requires API key but returns JSON\n8. Content extraction: consider readability libraries (mozilla/readability) for better text extraction than current regex\n9. Consider adding pdf_to_text tool for PDF documentation (many official docs are PDFs)",
