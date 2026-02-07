@@ -152,8 +152,13 @@ export class KeywordSearchEngine {
           }
           
           // Fuzzy match for abbreviations (e.g., "vsc" matches "vscode")
+          // Only match if the word is significantly shorter (abbreviation-like)
+          // This prevents "window" from matching "windows"
           if (word.length >= 2 && alias.length >= 3) {
-            if (alias.toLowerCase().startsWith(word)) {
+            const lengthDiff = alias.length - word.length;
+            // Only match if word is at least 2 chars shorter (e.g., "vsc" -> "vscode")
+            // This prevents "window" (6 chars) from matching "windows" (7 chars, diff=1)
+            if (lengthDiff >= 2 && alias.toLowerCase().startsWith(word)) {
               return appName;
             }
           }
@@ -173,10 +178,15 @@ export class KeywordSearchEngine {
         return appName;
       }
       
-      // Check for common abbreviations by checking if app name starts with query word
+      // Check for common abbreviations - only if word is significantly shorter
+      // This prevents "window" from matching "windows"
       for (const word of queryWords) {
-        if (word.length >= 2 && appName.startsWith(word) && word.length >= appName.length * 0.4) {
-          return appName;
+        if (word.length >= 2 && appName.startsWith(word)) {
+          const lengthDiff = appName.length - word.length;
+          // Only match if word is at least 2 chars shorter (abbreviation-like)
+          if (lengthDiff >= 2 && word.length >= appName.length * 0.4) {
+            return appName;
+          }
         }
       }
     }

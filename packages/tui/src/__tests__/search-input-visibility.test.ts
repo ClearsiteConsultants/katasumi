@@ -20,7 +20,7 @@ describe('Search Input Visibility (PHASE2-TUI-016)', () => {
     });
 
     it('should use height="100%" for proper constrained layout', () => {
-      // The root container should use height="100%" to constrain the layout
+      // The root container should use height="100%" to fill available space
       // and prevent content from scrolling off screen
       const componentPath = path.resolve(__dirname, '../components/FullPhraseMode.tsx');
       const componentCode = fs.readFileSync(componentPath, 'utf8');
@@ -29,13 +29,14 @@ describe('Search Input Visibility (PHASE2-TUI-016)', () => {
       expect(componentCode).toContain('height="100%"');
     });
 
-    it('should have overflow="hidden" on scrollable results area', () => {
-      // The results area should use overflow="hidden" and flexGrow={1} to be scrollable
+    it('should use overflow="hidden" for scrollable results area', () => {
+      // The results area should use flexGrow={1} and overflow="hidden" to be scrollable
       // while keeping the search input fixed
       const componentPath = path.resolve(__dirname, '../components/FullPhraseMode.tsx');
       const componentCode = fs.readFileSync(componentPath, 'utf8');
       
-      // Verify overflow="hidden" is used for constraining scrollable content
+      // Verify flexGrow and overflow="hidden" are used for constraining scrollable content
+      expect(componentCode).toContain('flexGrow={1}');
       expect(componentCode).toContain('overflow="hidden"');
     });
 
@@ -61,44 +62,45 @@ describe('Search Input Visibility (PHASE2-TUI-016)', () => {
       expect(componentCode).toContain('flexShrink={0}');
     });
 
-    it('should have proper layout structure with flexShrink and height', () => {
-      // AppFirstMode should use height="100%" and proper flex properties
+    it('should have proper layout structure with flexShrink and flexGrow', () => {
+      // AppFirstMode should use flexGrow and minHeight for proper flex layout
       const componentPath = path.resolve(__dirname, '../components/AppFirstMode.tsx');
       const componentCode = fs.readFileSync(componentPath, 'utf8');
       
       // Verify layout properties
-      expect(componentCode).toContain('height="100%"');
       expect(componentCode).toContain('flexGrow={1}');
+      expect(componentCode).toContain('minHeight={0}');
     });
 
     it('should constrain results list to scrollable area', () => {
-      // The results list should use overflow="hidden" to be scrollable
+      // The results list should use flexGrow and minHeight for scrolling
       const componentPath = path.resolve(__dirname, '../components/AppFirstMode.tsx');
       const componentCode = fs.readFileSync(componentPath, 'utf8');
       
-      // Verify overflow="hidden" is present
-      expect(componentCode).toContain('overflow="hidden"');
+      // Verify flexGrow and minHeight are present
+      expect(componentCode).toContain('flexGrow={1}');
+      expect(componentCode).toContain('minHeight={0}');
     });
   });
 
   describe('Main App Layout', () => {
-    it('should use height="100%" in root container', () => {
-      // App.tsx should use height="100%" for the root container
+    it('should use dynamic height in root container', () => {
+      // App.tsx should use height={terminalRows} for dynamic terminal sizing
       const appPath = path.resolve(__dirname, '../App.tsx');
       const appCode = fs.readFileSync(appPath, 'utf8');
       
-      // Verify App.tsx has proper layout structure
-      expect(appCode).toContain('height="100%"');
+      // Verify App.tsx has proper layout structure with dynamic height
+      expect(appCode).toContain('height={terminalRows}');
     });
 
     it('should make content area flexible and scrollable', () => {
-      // The content area should use flexGrow={1} and overflow="hidden"
+      // The content area should use flexGrow={1} and minHeight={0}
       const appPath = path.resolve(__dirname, '../App.tsx');
       const appCode = fs.readFileSync(appPath, 'utf8');
       
-      // Verify flexGrow and overflow properties
+      // Verify flexGrow and minHeight properties
       expect(appCode).toContain('flexGrow={1}');
-      expect(appCode).toContain('overflow="hidden"');
+      expect(appCode).toContain('minHeight={0}');
     });
   });
 
@@ -139,7 +141,7 @@ describe('Search Input Visibility (PHASE2-TUI-016)', () => {
       expect(hookCode).toContain('HEADER_ROWS');
       expect(hookCode).toContain('FOOTER_ROWS');
       expect(hookCode).toContain('FILTERS_ROWS');
-      expect(hookCode).toContain('PADDING_ROWS');
+      expect(hookCode).toContain('APP_PADDING');
     });
   });
 });

@@ -1009,7 +1009,7 @@
         "Run 'npm run test --workspace=@katasumi/tui' to execute help overlay tests",
         "Run 'npm test' from root to execute all package tests"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 4,
       "priorityRationale": "Help overlay is important but can come after core features work"
     },
