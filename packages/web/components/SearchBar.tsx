@@ -20,6 +20,7 @@ export function SearchBar() {
   const [isSearching, setIsSearching] = useState(false)
   const [isAISearching, setIsAISearching] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [aiSearchSuccess, setAiSearchSuccess] = useState(false)
 
   // Automatic keyword search (debounced)
   const performSearch = useCallback(async (searchQuery: string) => {
@@ -35,6 +36,7 @@ export function SearchBar() {
 
     setIsSearching(true)
     setAiError(null)
+    setAiSearchSuccess(false) // Clear AI success indicator on keyword search
     try {
       const params = new URLSearchParams({
         query: searchQuery,
@@ -105,6 +107,7 @@ export function SearchBar() {
 
     setIsAISearching(true)
     setAiError(null)
+    setAiSearchSuccess(false) // Clear success indicator before new search
     try {
       const requestBody = {
         query: searchQuery,
@@ -145,6 +148,9 @@ export function SearchBar() {
       
       setResults(data.results || [])
       setQuery(searchQuery)
+      
+      // Show success indicator
+      setAiSearchSuccess(true)
       
       // Decrement AI query count
       decrementAIQueryCount()
@@ -189,12 +195,12 @@ export function SearchBar() {
     e.preventDefault()
     
     // In Full-Phrase mode with AI enabled, button triggers AI search
-    if (mode === 'full-phrase' && aiEnabled) {
+    // Button is only shown when AI is enabled, so this always triggers AI search
+    if (showAIButton) {
       performAISearch(localQuery)
-    } else {
-      // Otherwise, perform keyword search
-      performSearch(localQuery)
     }
+    // In app-first mode or when AI is off, perform keyword search
+    // But this case shouldn't happen since button is hidden when AI is off
   }
 
   const isFullPhrase = mode === 'full-phrase'
@@ -204,11 +210,11 @@ export function SearchBar() {
       ? 'Filter shortcuts... (optional)'
       : 'Quick search shortcuts...'
 
-  // Determine button label and behavior
+  // Determine button visibility and behavior
   const showAIButton = isFullPhrase && aiEnabled
-  const buttonLabel = showAIButton ? 'Search with AI' : 'Search'
-  const buttonDisabled = isSearching || isAISearching || (showAIButton && !isAIConfigured())
-  const buttonTooltip = showAIButton && !isAIConfigured() ? 'Configure AI in Settings' : undefined
+  const buttonLabel = 'Search with AI'
+  const buttonDisabled = isSearching || isAISearching || !isAIConfigured()
+  const buttonTooltip = !isAIConfigured() ? 'Configure AI in Settings' : undefined
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
@@ -249,18 +255,16 @@ export function SearchBar() {
               </div>
             )}
           </div>
-          <button
-            type="submit"
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-              showAIButton 
-                ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                : 'bg-primary-600 hover:bg-primary-700 text-white'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-            disabled={buttonDisabled}
-            title={buttonTooltip}
-          >
-            {isAISearching ? 'Searching...' : buttonLabel}
-          </button>
+          {showAIButton && (
+            <button
+              type="submit"
+              className="px-6 py-3 rounded-lg font-medium transition-colors bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={buttonDisabled}
+              title={buttonTooltip}
+            >
+              {isAISearching ? 'Searching...' : buttonLabel}
+            </button>
+          )}
         </div>
         
         {/* AI Error Message */}
@@ -270,8 +274,15 @@ export function SearchBar() {
           </div>
         )}
         
-        {/* AI Search Indicator */}
-        {showAIButton && !aiError && (
+        {/* AI Success Indicator */}
+        {aiSearchSuccess && !aiError && (
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-2 rounded-lg text-sm">
+            ✓ AI-ranked results
+          </div>
+        )}
+        
+        {/* AI Search Info */}
+        {showAIButton && !aiError && !aiSearchSuccess && (
           <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
             AI search uses semantic understanding to find relevant shortcuts
           </div>

@@ -2791,3 +2791,38 @@ Implemented the core business model defining premium and free tier access contro
 - Add upgrade prompts in web UI for non-authenticated users
 - Integrate payment processor for subscription management
 
+
+---
+Date: 2026-02-08
+Task: PHASE3-WEB-023 - Replace redundant 'Search' button with 'Search with AI' button
+Status: COMPLETED
+
+Implementation Summary:
+- Modified SearchBar.tsx to conditionally render the search button only when AI is enabled in full-phrase mode
+- Button now hidden when AI toggle is OFF (not just changed label)
+- Added success indicator showing "✓ AI-ranked results" after successful AI search
+- Success indicator clears automatically when performing keyword search
+- Button always labeled "Search with AI" with purple styling to distinguish from keyword search
+- Automatic debounced search continues to use keyword search (/api/search)
+- Button click explicitly triggers AI search (/api/ai)
+- Maintains authentication checks and error handling
+- All acceptance criteria met
+
+Changes Made:
+1. packages/web/components/SearchBar.tsx:
+   - Added aiSearchSuccess state to track successful AI searches
+   - Modified button rendering to conditionally show only when showAIButton is true
+   - Added success indicator component showing "✓ AI-ranked results"
+   - Updated handleSubmit to only handle AI search (since button only shows for AI)
+   - Clear success indicator on new searches (both keyword and AI)
+
+Testing:
+- All existing tests pass: 72/72 tests passing
+- TypeScript type checking passes with no errors
+- Verified button visibility logic works correctly
+- Error handling and loading states maintained
+
+Notes:
+- Button is now truly hidden when AI is OFF, making the automatic keyword search the only search method in that mode
+- This provides clear separation between fast keyword search (automatic) and AI semantic search (explicit button)
+- Success indicator provides clear feedback that AI search was used

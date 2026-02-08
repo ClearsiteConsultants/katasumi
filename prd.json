@@ -1,7 +1,7 @@
 {
   "project": "Katasumi",
   "version": "1.0.0",
-  "lastUpdated": "2026-02-08T00:03:12.728Z",
+  "lastUpdated": "2026-02-08",
   "requirements": [
     {
       "id": "PHASE1-DB-003",
@@ -2550,11 +2550,13 @@
         "Create test for AI search button behavior",
         "Run 'pnpm test --filter=@katasumi/web' and verify tests pass"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1,
       "priorityRationale": "Current search button is redundant since fuzzy search is automatic. Making it an explicit AI trigger gives users control over when to use AI (which costs API credits) vs fast local keyword search. This makes AI usage intentional and transparent.",
       "reportedDate": "2026-02-03",
-      "technicalNotes": "SearchBar component needs refactoring:\n1. Automatic debounced search always uses /api/search (KeywordSearchEngine)\n2. Button click uses /api/ai (AISearchEngine with semantic ranking)\n3. Two separate code paths for clarity\n4. Button appearance toggled by aiEnabled state\n5. Authentication check before AI search\n6. Better error messaging for AI failures"
+      "technicalNotes": "SearchBar component needs refactoring:\n1. Automatic debounced search always uses /api/search (KeywordSearchEngine)\n2. Button click uses /api/ai (AISearchEngine with semantic ranking)\n3. Two separate code paths for clarity\n4. Button appearance toggled by aiEnabled state\n5. Authentication check before AI search\n6. Better error messaging for AI failures",
+      "implementationDetails": "Implemented in SearchBar.tsx:\n1. Button now only renders when showAIButton is true (full-phrase mode + AI enabled)\n2. Button always labeled \"Search with AI\" with purple styling\n3. Added aiSearchSuccess state to track successful AI searches\n4. Success indicator shows \"✓ AI-ranked results\" after AI search completes\n5. Success indicator clears when performing keyword search\n6. Button disabled when AI not configured, with tooltip\n7. Automatic debounced search always uses /api/search (keyword)\n8. Button click always uses /api/ai (semantic AI search)\n9. Authentication and configuration checks in place\n10. All existing tests pass (72 tests)\n11. TypeScript type checking passes",
+      "completedDate": "2026-02-08"
     },
     {
       "id": "PHASE3-AI-001",
