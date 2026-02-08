@@ -1,7 +1,7 @@
 {
   "project": "Katasumi",
   "version": "1.0.0",
-  "lastUpdated": "2026-02-08T01:38:00Z",
+  "lastUpdated": "2026-02-08T16:49:00Z",
   "requirements": [
     {
       "id": "PHASE1-DB-003",
@@ -2427,7 +2427,7 @@
         "Check code for Stripe placeholder comments",
         "Verify database has subscriptions table structure"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 3,
       "priorityRationale": "Prepares for future payment integration but not critical for MVP. Can launch with manual provisioning first.",
       "dependencies": [
@@ -2435,7 +2435,8 @@
         "PHASE3-WEB-002"
       ],
       "reportedDate": "2026-02-07",
-      "technicalNotes": "Stripe Integration Prep:\n1. Install stripe package: pnpm add stripe @stripe/stripe-js\n2. Add STRIPE_SECRET_KEY to .env (empty for now)\n3. Create /api/stripe/checkout route (returns 501 Not Implemented)\n4. Create /api/stripe/webhook route (stubbed)\n5. Create subscriptions table:\n   - id, user_id, stripe_customer_id, stripe_subscription_id, status, created_at, updated_at\n6. Sign-up page uses Radix UI Tabs or comparison component\n7. Pricing: TBD (likely $5-10/month for premium)"
+      "technicalNotes": "Stripe Integration Prep:\n1. Install stripe package: pnpm add stripe @stripe/stripe-js\n2. Add STRIPE_SECRET_KEY to .env (empty for now)\n3. Create /api/stripe/checkout route (returns 501 Not Implemented)\n4. Create /api/stripe/webhook route (stubbed)\n5. Create subscriptions table:\n   - id, user_id, stripe_customer_id, stripe_subscription_id, status, created_at, updated_at\n6. Sign-up page uses Radix UI Tabs or comparison component\n7. Pricing: TBD (likely $5-10/month for premium)",
+      "completionNotes": "Implemented sign-up payment integration placeholder. Added Subscriptions table to Prisma schema, created Stripe API route stubs (/api/stripe/checkout, /api/stripe/webhook), redesigned sign-up page with Free vs Premium comparison, created settings page with tier display. Premium tier shows Coming Soon with disabled button. Stripe packages installed. All routes return 501 Not Implemented with comprehensive TODO comments for future implementation. Manual premium provisioning supported during beta. All 72 tests passing, type check passing. Completed 2026-02-08."
     },
     {
       "id": "PHASE3-WEB-025",
