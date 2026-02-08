@@ -3010,3 +3010,37 @@ Implemented built-in AI functionality for premium users, allowing them to use AI
 
 **Status**: ✅ Complete - Ready for verification
 
+
+## 2026-02-08 - PHASE3-WEB-025: Landing Page Implementation
+
+**Task**: Create landing page (/) with app overview, feature comparison, and clear paths for free vs premium users
+
+**Changes Made**:
+1. Moved existing search interface from `app/page.tsx` to `app/search/page.tsx`
+2. Created new landing page at `app/page.tsx` with:
+   - Hero section with headline "Katasumi - Master Keyboard Shortcuts Across All Your Apps"
+   - Clear description of TUI and web interface availability
+   - Two CTA buttons: "Get Started (Free)" linking to GitHub README and "Sign Up for Premium" linking to /signup
+   - "View on GitHub" link prominently displayed
+   - Features section highlighting: Multi-app search, AI-powered discovery, Cloud sync (Premium), Cross-platform
+   - Two-tier comparison table showing Free vs Premium features
+   - Free tier includes: Local usage, Use your own AI API key, Full search functionality, Open source
+   - Premium tier includes: Cloud sync, Built-in AI (100 queries/day), Multi-device sync, No API key setup required
+   - Demo section showing Terminal (TUI) and Web Interface
+   - Footer with links to GitHub, Documentation, and Contact
+   - Responsive design with mobile/tablet/desktop support
+   - SEO meta tags with proper title, description, and OpenGraph tags
+3. Created signup page at `app/signup/page.tsx` with:
+   - "Coming soon" message for premium sign-up
+   - List of premium features
+   - Link back to home and free version
+4. Used inline SVG icons instead of external icon library for better compatibility
+5. Fixed ESLint errors (apostrophe escaping)
+
+**Testing**:
+- TypeScript type check: ✅ Passed
+- Unit tests: ✅ All 72 tests passed (9 test suites)
+- Build: ✅ Production build successful
+- Routes created: / (landing), /search (existing search interface), /signup (new)
+
+**Status**: ✅ Complete - All acceptance criteria met

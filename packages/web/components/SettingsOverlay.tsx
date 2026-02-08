@@ -213,7 +213,7 @@ export function SettingsOverlay() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                      Use Katasumi's built-in AI without providing your own API key. 
+                      Use Katasumi&apos;s built-in AI without providing your own API key. 
                       {userSettings.isEnterprise 
                         ? ' Enterprise users have unlimited queries.' 
                         : ' Premium users get 100 AI queries per day.'}
