@@ -3125,3 +3125,59 @@ Implemented built-in AI functionality for premium users, allowing them to use AI
 - Test premium access control
 - Test local config override
 
+
+---
+## 2026-02-08 - PHASE1-PREMIUM-003: Document manual process for creating premium users
+
+### Task Completed
+Created comprehensive ADMIN.md documentation for manual premium user provisioning until payment integration is implemented.
+
+### What Was Done
+1. **Created ADMIN.md** - Comprehensive administrator guide with:
+   - Complete user provisioning procedures
+   - SQL scripts for creating premium users (1-year subscription)
+   - SQL scripts for creating trial users (30-day, custom durations)
+   - User upgrade/downgrade procedures
+   - Subscription expiration management (manual and automated via cron)
+   - Password hash generation examples (Node.js, Python, bcrypt)
+   - Verification steps and testing procedures
+   - Security considerations and access control guidelines
+   - Troubleshooting section for common issues
+   - Quick reference for common SQL queries
+   - Future enhancement roadmap
+
+2. **Updated README.md** - Added reference to ADMIN.md in Documentation section
+
+3. **Verified Implementation**:
+   - All type checks pass (core, tui, web packages)
+   - All tests pass (110 tests in core package)
+   - Documentation is clear and actionable
+
+### Key Features of ADMIN.md
+- SQL scripts for creating premium users with bcrypt password hashes
+- Scripts for 30-day trials and custom trial periods
+- Upgrade/downgrade procedures for existing users
+- Subscription extension and expiration management
+- Cron job configuration for automated expiration processing
+- Security best practices for admin access
+- Comprehensive troubleshooting guide
+- Ready for team members to create test accounts
+
+### Status
+- Implementation: ✅ Complete
+- Type Checks: ✅ Pass
+- Tests: ✅ Pass (110 tests)
+- Documentation: ✅ Complete
+- Verification: 🔄 Ready for manual testing
+  - Need to verify: SQL scripts work with actual database
+  - Need to test: Login flow with manually created premium user
+  - Need to test: Premium features (sync, built-in AI) work correctly
+
+### Next Steps for Verification
+1. Connect to staging/dev database
+2. Run SQL script to create test premium user
+3. Login with created credentials
+4. Verify premium features: sync endpoints, built-in AI
+5. Test trial user creation and expiration
+6. Update PRD with passes:true once verified
+

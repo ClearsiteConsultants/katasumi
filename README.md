@@ -330,6 +330,7 @@ For detailed documentation, see:
 
 - **[API Documentation](docs/api/index.html)** - Complete TypeDoc-generated API reference for the core package
 - **[KEYBOARD_SHORTCUTS.md](KEYBOARD_SHORTCUTS.md)** - Comprehensive keyboard navigation guide and implementation details
+- **[ADMIN.md](ADMIN.md)** - Administrator guide for user provisioning and premium account management
 - [DEVELOPMENT_PRIORITIES.md](DEVELOPMENT_PRIORITIES.md) - Development roadmap and priorities
 - [katasumi-plan.md](katasumi-plan.md) - Detailed project planning
 
