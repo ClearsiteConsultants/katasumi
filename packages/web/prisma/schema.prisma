@@ -20,6 +20,12 @@ model User {
   apiTokenHash          String?   @map("api_token_hash")
   aiKeyMode             String    @default("personal") @map("ai_key_mode") // 'personal' | 'builtin'
   
+  // AI Configuration (for syncing to TUI)
+  aiProvider            String?   @map("ai_provider") // 'openai' | 'anthropic' | 'openrouter' | etc.
+  aiApiKeyEncrypted     String?   @map("ai_api_key_encrypted") // Encrypted API key
+  aiModel               String?   @map("ai_model") // e.g., 'gpt-4', 'claude-3-opus'
+  aiBaseUrl             String?   @map("ai_base_url") // Custom API endpoint
+  
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   

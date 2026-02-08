@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractToken, verifyToken, isTokenInvalidated } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { encrypt, decrypt, maskApiKey } from '@/lib/encryption';
 
 /**
  * GET /api/user/settings
@@ -29,6 +30,10 @@ export async function GET(request: NextRequest) {
         subscriptionExpiresAt: true,
         aiKeyMode: true,
         tier: true,
+        aiProvider: true,
+        aiApiKeyEncrypted: true,
+        aiModel: true,
+        aiBaseUrl: true,
       },
     });
     
@@ -53,6 +58,11 @@ export async function GET(request: NextRequest) {
     
     const isEnterprise = user.subscriptionStatus === 'enterprise';
     
+    // Mask API key for security
+    const maskedApiKey = user.aiApiKeyEncrypted 
+      ? maskApiKey(decrypt(user.aiApiKeyEncrypted))
+      : undefined;
+    
     return NextResponse.json({
       email: user.email,
       subscriptionStatus: user.subscriptionStatus,
@@ -61,6 +71,12 @@ export async function GET(request: NextRequest) {
       tier: user.tier,
       isPremium,
       isEnterprise,
+      aiConfig: {
+        provider: user.aiProvider,
+        apiKey: maskedApiKey,
+        model: user.aiModel,
+        baseUrl: user.aiBaseUrl,
+      },
       aiUsage: {
         usedToday: usageCount,
         dailyLimit: isEnterprise ? null : 100,
@@ -95,11 +111,20 @@ export async function PATCH(request: NextRequest) {
     }
     
     const body = await request.json();
-    const { aiKeyMode } = body;
+    const { aiKeyMode, aiProvider, aiApiKey, aiModel, aiBaseUrl } = body;
     
     if (aiKeyMode && !['personal', 'builtin'].includes(aiKeyMode)) {
       return NextResponse.json(
         { error: 'Invalid aiKeyMode. Must be "personal" or "builtin"' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate AI provider if provided
+    const validProviders = ['openai', 'anthropic', 'openrouter', 'gemini', 'custom'];
+    if (aiProvider && !validProviders.includes(aiProvider)) {
+      return NextResponse.json(
+        { error: `Invalid aiProvider. Must be one of: ${validProviders.join(', ')}` },
         { status: 400 }
       );
     }
@@ -133,20 +158,38 @@ export async function PATCH(request: NextRequest) {
       }
     }
     
+    // Prepare update data
+    const updateData: any = {};
+    if (aiKeyMode !== undefined) updateData.aiKeyMode = aiKeyMode;
+    if (aiProvider !== undefined) updateData.aiProvider = aiProvider;
+    if (aiModel !== undefined) updateData.aiModel = aiModel;
+    if (aiBaseUrl !== undefined) updateData.aiBaseUrl = aiBaseUrl;
+    
+    // Encrypt API key if provided
+    if (aiApiKey !== undefined) {
+      updateData.aiApiKeyEncrypted = aiApiKey ? encrypt(aiApiKey) : null;
+    }
+    
     const updatedUser = await prisma.user.update({
       where: { id: payload.userId },
-      data: { aiKeyMode },
+      data: updateData,
       select: {
         id: true,
         email: true,
         subscriptionStatus: true,
         aiKeyMode: true,
+        aiProvider: true,
+        aiModel: true,
+        aiBaseUrl: true,
       },
     });
     
     return NextResponse.json({
       message: 'Settings updated successfully',
       aiKeyMode: updatedUser.aiKeyMode,
+      aiProvider: updatedUser.aiProvider,
+      aiModel: updatedUser.aiModel,
+      aiBaseUrl: updatedUser.aiBaseUrl,
     });
   } catch (error) {
     console.error('Update settings error:', error);

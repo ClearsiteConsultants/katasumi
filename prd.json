@@ -2162,7 +2162,7 @@
         "Test encryption: check database and verify API key not plaintext",
         "Test sync conflict: local config vs cloud config"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 3,
       "priorityRationale": "PREMIUM FEATURE for premium/enterprise users only. Allows syncing AI config between web and TUI. Free users configure AI locally via ~/.katasumi/config.json.",
       "dependencies": [

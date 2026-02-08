@@ -285,3 +285,99 @@ export async function syncUserShortcuts(
     };
   }
 }
+
+/**
+ * Sync AI configuration from web to TUI (premium feature)
+ * Pulls AI config from /api/sync/config and saves to local config
+ */
+export async function syncAIConfig(): Promise<SyncResult> {
+  try {
+    // Read config
+    const configData = fs.readFileSync(CONFIG_PATH, 'utf-8');
+    const config: Config = JSON.parse(configData);
+    
+    if (!config.token) {
+      return {
+        success: false,
+        message: 'Not logged in. Run "katasumi login" first.',
+        requiresLogin: true,
+      };
+    }
+    
+    // Call sync endpoint
+    const response = await fetch(`${API_BASE_URL}/api/sync/config`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${config.token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (response.status === 401) {
+      return {
+        success: false,
+        message: 'Authentication expired. Please log in again.',
+        requiresLogin: true,
+      };
+    }
+    
+    if (response.status === 403) {
+      const data = await response.json() as { error?: string };
+      return {
+        success: false,
+        message: data.error || 'AI config sync requires premium subscription',
+        error: 'premium_required',
+      };
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json() as { error?: string };
+      return {
+        success: false,
+        message: errorData.error || 'Failed to sync AI configuration',
+        error: 'sync_failed',
+      };
+    }
+    
+    const data = await response.json() as {
+      aiKeyMode: string;
+      aiConfig?: {
+        provider: string;
+        apiKey?: string;
+        model?: string;
+        baseUrl?: string;
+      };
+    };
+    
+    // Update local config with synced AI settings
+    const updatedConfig = {
+      ...config,
+      aiKeyMode: data.aiKeyMode,
+      ai: data.aiConfig || undefined,
+    };
+    
+    // Save updated config
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(updatedConfig, null, 2), 'utf-8');
+    
+    return {
+      success: true,
+      message: data.aiConfig 
+        ? `AI config synced successfully (${data.aiConfig.provider})` 
+        : 'AI config synced (using built-in)',
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      return {
+        success: false,
+        message: `Failed to sync AI config: ${error.message}`,
+        error: 'network_error',
+      };
+    }
+    return {
+      success: false,
+      message: 'Failed to sync AI config',
+      error: 'unknown_error',
+    };
+  }
+}
+
