@@ -63,21 +63,10 @@ export class KeywordSearchEngine {
     let shortcuts = await this.adapter.searchShortcuts(searchOptions);
 
     // Apply platform filter if specified
-    // Prefer shortcuts with keys for the selected platform, but don't exclude shortcuts entirely
-    // if they have keys for other platforms (fallback behavior)
+    // Only include shortcuts that have keys for the selected platform
     if (filters?.platform) {
       const platform = filters.platform;
-      
-      // Sort shortcuts: those with platform-specific keys first, then others
-      shortcuts = shortcuts.filter(s => {
-        // Keep shortcut if it has keys for ANY platform
-        return s.keys.mac || s.keys.windows || s.keys.linux;
-      }).sort((a, b) => {
-        // Prioritize shortcuts with the requested platform's keys
-        const aHasPlatform = a.keys[platform] ? 1 : 0;
-        const bHasPlatform = b.keys[platform] ? 1 : 0;
-        return bHasPlatform - aHasPlatform;
-      });
+      shortcuts = shortcuts.filter(s => s.keys[platform] !== undefined);
     }
 
     // Apply context filter if specified
