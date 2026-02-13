@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import { isAIConfigured } from '@/lib/config'
 
 export function Header() {
   const router = useRouter()
+  const pathname = usePathname()
   const mode = useStore((state) => state.mode)
   const platform = useStore((state) => state.platform)
   const aiEnabled = useStore((state) => state.aiEnabled)
@@ -81,6 +82,9 @@ export function Header() {
     return emailName.length > 10 ? emailName.substring(0, 10) + '...' : emailName
   }
 
+  // Check if we're on a page where we should hide buttons (except login)
+  const isHiddenButtonsPage = pathname === '/' || pathname === '/signup' || pathname === '/login'
+
   return (
     <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
       <div className="container mx-auto px-4 py-4">
@@ -90,6 +94,7 @@ export function Header() {
           </h1>
           <div className="flex items-center gap-4">
             {/* Mode Toggle Button */}
+            {!isHiddenButtonsPage && (
             <button
               onClick={toggleMode}
               className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
@@ -97,13 +102,17 @@ export function Header() {
             >
               Mode: {formatMode(mode)}
             </button>
+            )}
 
             {/* Platform Display */}
+            {!isHiddenButtonsPage && (
             <span className="text-sm text-gray-600 dark:text-gray-400">
               <span className="font-semibold">Platform:</span> {formatPlatform(platform)}
             </span>
+            )}
 
             {/* AI Toggle Button with Status */}
+            {!isHiddenButtonsPage && (
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleAI}
@@ -125,18 +134,21 @@ export function Header() {
                 </span>
               )}
             </div>
+            )}
 
             {/* Settings Button */}
+            {!isHiddenButtonsPage && (
             <button
               onClick={() => setShowSettings(true)}
               className="p-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
               title="Open Settings"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </button>
+            )}
 
             {/* Login/Account Button */}
             {!isAuthenticated ? (

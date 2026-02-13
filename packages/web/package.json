@@ -4,7 +4,7 @@
   "description": "Web interface for Katasumi keyboard shortcut search",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -14,12 +14,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "verify": "node verify-phase3-web-001.mjs",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:migrate:prod": "prisma migrate deploy",
-    "prisma:studio": "prisma studio",
-    "db:push": "prisma db push",
-    "db:seed": "node -r dotenv/config prisma/seed.js"
+    "db:migrate": "DB_TYPE=postgres pnpm --filter=@katasumi/core run migrate",
+    "db:seed": "DB_TYPE=postgres pnpm --filter=@katasumi/core run seed"
   },
   "keywords": [
     "shortcuts",
@@ -32,7 +28,6 @@
   "dependencies": {
     "@katasumi/core": "file:../core",
     "@prisma/adapter-pg": "^7.3.0",
-    "@prisma/client": "^7.3.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@stripe/stripe-js": "^8.7.0",
     "@types/bcryptjs": "^2.4.6",
@@ -60,7 +55,6 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.3",
     "postcss": "^8.4.33",
-    "prisma": "^7.3.0",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
     "vitest": "^1.0.4"

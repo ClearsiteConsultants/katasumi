@@ -1,18 +1,18 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClientPostgres } from '@katasumi/core';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 // Create a singleton instance of Prisma Client
 declare global {
   // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined;
+  var prisma: PrismaClientPostgres | undefined;
 }
 
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL || 'postgres://katasumi:dev_password@localhost:5432/katasumi_dev';
   const pool = new Pool({ connectionString });
   const adapter = new PrismaPg(pool);
-  return new PrismaClient({ adapter });
+  return new PrismaClientPostgres({ adapter });
 }
 
 export const prisma = global.prisma || createPrismaClient();

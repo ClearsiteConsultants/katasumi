@@ -24,6 +24,8 @@ Katasumi uses **two different database systems** optimized for each application:
   - Shared database for all users
   - Supports user accounts and custom shortcuts
 
+PostgreSQL schema and migrations live in [packages/core/prisma/schema.postgres.prisma](packages/core/prisma/schema.postgres.prisma) and [packages/core/migrations](packages/core/migrations).
+
 ## Prerequisites
 
 - **Node.js 18+** and **pnpm** (package manager)

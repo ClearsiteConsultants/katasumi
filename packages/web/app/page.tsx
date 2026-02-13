@@ -25,9 +25,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
-              href="https://github.com/joshpitkin/katasumi#readme"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/search"
               className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl"
             >
               🚀 Get Started (Free)
@@ -100,9 +98,7 @@ export default function LandingPage() {
                 <FeatureItem text="Open source" />
               </ul>
               <Link
-                href="https://github.com/joshpitkin/katasumi#readme"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/search"
                 className="block w-full text-center px-6 py-3 font-semibold text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
               >
                 Get Started
@@ -159,7 +155,7 @@ export default function LandingPage() {
                 <div className="mt-1 text-gray-500"># Fast, keyboard-driven interface</div>
               </div>
               <p className="mt-4 text-gray-600 dark:text-gray-300">
-                Lightning-fast terminal interface for power users. Navigate entirely with your keyboard.
+                Lightning-fast terminal interface for power users. Navigate entirely with your keyboard. For installation and setup instructions, visit the <Link href="https://github.com/joshpitkin/katasumi#readme" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline dark:text-blue-400">GitHub repository</Link>.
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg">

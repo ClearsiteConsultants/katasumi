@@ -451,7 +451,7 @@ This manual provisioning process is temporary. Future improvements will include:
 For questions or issues with user provisioning:
 
 1. Check the troubleshooting section above
-2. Review Prisma schema in `packages/web/prisma/schema.prisma`
+2. Review Postgres schema in [packages/core/prisma/schema.postgres.prisma](packages/core/prisma/schema.postgres.prisma)
 3. Check application logs for sync/auth errors
 4. Contact the development team
 

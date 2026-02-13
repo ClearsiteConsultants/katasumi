@@ -53,41 +53,32 @@ pnpm install
 
 echo ""
 
-# Build packages (generates Prisma clients)
-echo "🔨 Building packages..."
-pnpm run build
-
-echo ""
-
 # Setup PostgreSQL if Docker is running
 if docker-compose ps | grep -q "katasumi-postgres"; then
     echo "🗄️  Setting up PostgreSQL..."
     
-    # Run web migrations first (for User tables)
-    echo "   📝 Running web migrations..."
-    cd packages/web
-    DATABASE_URL="postgres://katasumi:dev_password@localhost:5432/katasumi_dev" pnpm prisma migrate dev --name init
-    cd ../..
+    # Create database if it doesn't exist
+    echo "   📝 Creating database..."
+    PGPASSWORD="dev_password" psql -U katasumi -h localhost -d postgres -c "CREATE DATABASE katasumi_dev;" 2>/dev/null || echo "   ℹ️  Database already exists"
     
-    # Run core migrations (for Shortcuts tables)
-    echo "   📝 Running core migrations..."
+    # Run core migrations (includes web-only tables for PostgreSQL)
+    echo "   📝 Running core migrations (PostgreSQL schema)..."
     cd packages/core
     DATABASE_URL="postgres://katasumi:dev_password@localhost:5432/katasumi_dev" DB_TYPE="postgres" pnpm run migrate
     DATABASE_URL="postgres://katasumi:dev_password@localhost:5432/katasumi_dev" DB_TYPE="postgres" pnpm run seed
     cd ../..
     
     echo "✅ PostgreSQL setup complete"
+    echo ""
 else
-    echo "⏭️  PostgreSQL not running via Docker. Skipping web database setup."
-    echo "   Run manually:"
-    echo "     cd packages/web && DATABASE_URL=postgres://<user>:<pass>@<host>:<port>/<db> pnpm prisma migrate dev"
-    echo "     cd packages/core && DATABASE_URL=postgres://<user>:<pass>@<host>:<port>/<db> DB_TYPE=postgres pnpm run migrate && pnpm run seed"
+    echo "⏭️  PostgreSQL not running via Docker. Skipping database setup."
+    echo "   You'll need to run migrations manually before building."
 fi
 
 echo ""
 
-# Setup SQLite for TUI
-echo "🔨 Setting up SQLite (TUI)..."
+# Setup SQLite for TUI (includes building packages)
+echo "🔨 Setting up SQLite database for TUI..."
 pnpm run setup:tui
 
 echo ""

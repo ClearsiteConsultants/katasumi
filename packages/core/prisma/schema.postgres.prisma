@@ -61,10 +61,16 @@ model AppInfo {
 model User {
   id                    String    @id @default(uuid())
   email                 String    @unique
+  passwordHash          String    @map("password_hash")
   tier                  String    @default("free") // 'free' | 'pro' | 'enterprise'
   subscriptionStatus    String    @default("free") @map("subscription_status") // 'free' | 'premium' | 'enterprise'
   subscriptionExpiresAt DateTime? @map("subscription_expires_at")
   apiTokenHash          String?   @map("api_token_hash")
+  aiKeyMode             String    @default("personal") @map("ai_key_mode")
+  aiProvider            String?   @map("ai_provider")
+  aiApiKeyEncrypted     String?   @map("ai_api_key_encrypted")
+  aiModel               String?   @map("ai_model")
+  aiBaseUrl             String?   @map("ai_base_url")
   
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -73,6 +79,7 @@ model User {
   collections    Collection[]
   syncLogs       SyncLog[]
   aiUsage        AiUsage[]
+  subscriptions  Subscription[]
   
   @@index([email])
   @@index([tier])
@@ -95,6 +102,7 @@ model UserShortcut {
   context   String?  // Context where shortcut applies (e.g., "Normal Mode", "Insert Mode")
   category  String?  // Category grouping (e.g., "Editing", "Navigation")
   tags      String   // Comma-separated tags for searching
+  notes     String?  // Optional user notes
   
   // Source metadata
   sourceType       String   @map("source_type") // 'official' | 'community' | 'ai-scraped' | 'user-added'
@@ -131,6 +139,7 @@ model Collection {
   
   @@index([userId])
   @@index([isPublic])
+  @@unique([userId, name])
   @@map("collections")
 }
 
@@ -175,10 +184,42 @@ model AiUsage {
   userId    String   @map("user_id")
   query     String   // The search query that was made
   timestamp DateTime @default(now())
+  tokensUsed Int?     @map("tokens_used")
+  queryType  String?  @map("query_type")
   
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([userId])
   @@index([timestamp])
   @@map("ai_usage")
+}
+
+// Subscriptions table - stores subscription data
+model Subscription {
+  id                    String   @id @default(uuid())
+  userId                String   @map("user_id")
+  stripeSubscriptionId  String?  @map("stripe_subscription_id")
+  plan                  String
+  status                String
+  currentPeriodStart    DateTime? @map("current_period_start")
+  currentPeriodEnd      DateTime? @map("current_period_end")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripeSubscriptionId])
+  @@map("subscriptions")
+}
+
+// AppConfig table - stores encrypted config for built-in AI
+model AppConfig {
+  id             String   @id @default(uuid())
+  key            String   @unique
+  encryptedValue String   @map("encrypted_value")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("app_config")
 }

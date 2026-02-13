@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Initialize database adapter and search engine
     // If userId is provided, adapter will also search user_shortcuts table
-    const dbUrl = process.env.DATABASE_URL || 'postgres://user:password@localhost:5432/katasumi'
+    const dbUrl = process.env.DATABASE_URL || 'postgres://katasumi:dev_password@localhost:5432/katasumi_dev'
     const adapter = new PostgresAdapter(dbUrl, undefined, userId)
     const searchEngine = new KeywordSearchEngine(adapter)
 

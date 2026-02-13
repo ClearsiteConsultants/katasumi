@@ -275,7 +275,7 @@ katasumi/
 
 **Core (Shared)**
 - TypeScript
-- Prisma ORM (unified schema for SQLite + PostgreSQL)
+- Prisma ORM (SQLite + PostgreSQL schemas live in core)
 - Keyword search + Optional AI (OpenAI/Claude/Ollama)
 
 **TUI**
@@ -444,6 +444,8 @@ pnpm run migrate:rollback    # Rollback last migration
 pnpm run seed                # Re-seed database
 pnpm run build-db            # Rebuild TUI database
 ```
+
+PostgreSQL schema and migrations live in [packages/core/prisma/schema.postgres.prisma](packages/core/prisma/schema.postgres.prisma) and [packages/core/migrations](packages/core/migrations).
 
 ### Testing & Running
 

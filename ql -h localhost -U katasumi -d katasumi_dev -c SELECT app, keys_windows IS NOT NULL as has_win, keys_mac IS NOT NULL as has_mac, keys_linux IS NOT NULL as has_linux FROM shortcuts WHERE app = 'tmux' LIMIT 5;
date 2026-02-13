@@ -1,0 +1,7 @@
+ app  |         action         |      keys_mac       | keys_windows |     keys_linux      
+------+------------------------+---------------------+--------------+---------------------
+ tmux | Attach to session      | tmux attach -t name |              | tmux attach -t name
+ tmux | Last active window     | Ctrl+b l            |              | Ctrl+b l
+ tmux | Convert pane to window | Ctrl+b !            |              | Ctrl+b !
+(3 rows)
+

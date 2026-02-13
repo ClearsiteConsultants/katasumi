@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClientPostgres } from '@katasumi/core';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'your-secret-key-here';
 const JWT_EXPIRES_IN = '7d';
@@ -80,7 +80,7 @@ export function isTokenInvalidated(token: string): boolean {
  * Returns user object if premium, null otherwise
  */
 export async function verifyPremiumAccess(
-  prisma: PrismaClient,
+  prisma: PrismaClientPostgres,
   userId: string
 ): Promise<{ user: any; isPremium: boolean }> {
   const user = await prisma.user.findUnique({
@@ -110,7 +110,7 @@ export async function verifyPremiumAccess(
  */
 export async function requirePremium(
   request: NextRequest,
-  prisma: PrismaClient
+  prisma: PrismaClientPostgres
 ): Promise<{ user: any } | NextResponse> {
   // Verify authentication
   const authHeader = request.headers.get('Authorization');

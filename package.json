@@ -12,7 +12,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "setup:tui": "pnpm run build && pnpm run migrate && pnpm run seed && pnpm run build-db",
+    "setup:tui": "pnpm run build && pnpm run build-db",
     "start:tui": "pnpm --filter=@katasumi/tui run start",
     "start:web": "pnpm --filter=@katasumi/web run start",
     "migrate": "pnpm --filter=@katasumi/core run migrate",

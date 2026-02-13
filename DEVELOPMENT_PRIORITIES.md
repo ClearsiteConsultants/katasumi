@@ -4,17 +4,17 @@
 
 ### 1. **Prisma Added to Tech Stack**
 
-Prisma has been added as the ORM for managing both SQLite (TUI) and PostgreSQL (Web) databases with a unified schema. This solves the challenge of keeping schemas in sync between the two database systems.
+Prisma has been added as the ORM for managing both SQLite (TUI) and PostgreSQL (Web) databases with schemas defined in the core package. This solves the challenge of keeping schemas in sync between the two database systems.
 
 **Key Benefits:**
-- ✅ Single `schema.prisma` file defines structure for both databases
+- ✅ Core owns both schemas: `schema.prisma` (SQLite) and `schema.postgres.prisma` (PostgreSQL)
 - ✅ Type-safe database queries with autocomplete
-- ✅ Automatic migrations with `prisma migrate`
+- ✅ Migrations managed in `packages/core/migrations`
 - ✅ Works seamlessly with TypeScript types
 - ✅ Built-in introspection and seeding capabilities
 
 **Schema Applicability:**
-- The **Prisma schema applies to BOTH SQLite and PostgreSQL**
+- Prisma schemas live in core: `schema.prisma` (SQLite) and `schema.postgres.prisma` (PostgreSQL)
 - Core tables (`Shortcut`, `AppInfo`) are shared across both databases
 - User-related tables (`User`, `UserShortcut`, `Collection`, etc.) are PostgreSQL-only for the web app
 - TUI uses: `shortcuts.db` (bundled, read-only) + `user-data.db` (local, read-write)
