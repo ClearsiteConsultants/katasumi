@@ -1,0 +1,96 @@
+name: Publish TUI to npm
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    name: Build and Publish to npm
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build core package
+        run: pnpm --filter=@katasumi/core build
+      
+      - name: Build TUI package
+        run: pnpm --filter=@katasumi/tui build
+      
+      - name: Run tests
+        run: pnpm --filter=@katasumi/tui test
+      
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Update package.json version
+        run: |
+          cd packages/tui
+          pnpm version ${{ steps.get_version.outputs.VERSION }} --no-git-tag-version
+      
+      - name: Publish to npm
+        run: |
+          cd packages/tui
+          pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## 🎉 Katasumi TUI v${{ steps.get_version.outputs.VERSION }}
+            
+            ### Installation
+            ```bash
+            npm install -g @katasumi/tui
+            # or
+            pnpm add -g @katasumi/tui
+            ```
+            
+            ### What's Changed
+            See the commit history for details.
+            
+            ### Package
+            📦 [View on npm](https://www.npmjs.com/package/@katasumi/tui/v/${{ steps.get_version.outputs.VERSION }})
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Notify on success
+        run: |
+          echo "✅ Successfully published @katasumi/tui@${{ steps.get_version.outputs.VERSION }} to npm"
+          echo "📦 Package URL: https://www.npmjs.com/package/@katasumi/tui/v/${{ steps.get_version.outputs.VERSION }}"
