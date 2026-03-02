@@ -15,6 +15,7 @@ export function SearchBar() {
   const setResults = useStore((state) => state.setResults)
   const mode = useStore((state) => state.mode)
   const aiEnabled = useStore((state) => state.aiEnabled)
+  const aiKeyMode = useStore((state) => state.aiKeyMode)
   const decrementAIQueryCount = useStore((state) => state.decrementAIQueryCount)
   const [localQuery, setLocalQuery] = useState(query)
   const [isSearching, setIsSearching] = useState(false)
@@ -94,7 +95,7 @@ export function SearchBar() {
     }
 
     // Check AI configuration
-    if (!isAIConfigured()) {
+    if (aiKeyMode !== 'builtin' && !isAIConfigured()) {
       setAiError('Please configure AI in Settings')
       return
     }
@@ -213,8 +214,10 @@ export function SearchBar() {
   // Determine button visibility and behavior
   const showAIButton = isFullPhrase && aiEnabled
   const buttonLabel = 'Search with AI'
-  const buttonDisabled = isSearching || isAISearching || !isAIConfigured()
-  const buttonTooltip = !isAIConfigured() ? 'Configure AI in Settings' : undefined
+  // Builtin AI (premium) is always ready; personal key requires localStorage config
+  const isAIReady = aiKeyMode === 'builtin' || isAIConfigured()
+  const buttonDisabled = isSearching || isAISearching || !isAIReady
+  const buttonTooltip = !isAIReady ? 'Configure AI in Settings' : undefined
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
