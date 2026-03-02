@@ -96,6 +96,22 @@ Use https://bcrypt-generator.com/ with cost factor 10.
 
 ---
 
+# Admin Manually Updating DB
+
+Updating the web postgres db:
+```
+cd packages/core
+
+DATABASE_URL="..." \
+DB_TYPE=postgres \
+pnpm run migrate
+
+
+DATABASE_URL="..." \
+DB_TYPE=postgres \
+pnpm run seed
+```
+
 ## Trial Accounts
 
 ### Creating a 30-Day Trial User
@@ -200,10 +216,10 @@ WHERE email = 'user@example.com';
 ```
 
 ---
-
 ## Subscription Expiration Management
 
 ### Checking Expired Subscriptions
+
 
 ```sql
 -- List all expired premium subscriptions

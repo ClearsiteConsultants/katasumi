@@ -2,20 +2,19 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@katasumi/core'],
-  serverComponentsExternalPackages: [
-    '@libsql/client',
-    'libsql',
-    '@prisma/adapter-libsql',
-  ],
   webpack: (config, { isServer }) => {
     if (isServer) {
-      // Exclude SQLite-related modules from server bundle
-      config.externals = config.externals || [];
-      config.externals.push({
-        '@libsql/client': 'commonjs @libsql/client',
-        'libsql': 'commonjs libsql',
-        '@prisma/adapter-libsql': 'commonjs @prisma/adapter-libsql',
-      });
+      // Stub out SQLite-related modules so they are never required at runtime.
+      // @katasumi/core re-exports SQLiteAdapter (a TUI-only class) which imports
+      // these packages. Aliasing to `false` replaces them with empty modules at
+      // build time, avoiding a MODULE_NOT_FOUND error in the Vercel environment
+      // where these native packages are not present.
+      config.resolve.alias = {
+        ...(config.resolve.alias || {}),
+        '@prisma/adapter-libsql': false,
+        '@libsql/client': false,
+        'libsql': false,
+      };
     }
     return config;
   },
