@@ -117,28 +117,53 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check AI configuration from request
-    if (!provider) {
+    // Determine AI credentials: prefer user-provided key, then builtin (premium), then error
+    const isPremium =
+      (user.subscriptionStatus === 'active' || user.subscriptionStatus === 'enterprise') &&
+      (!user.subscriptionExpiresAt || user.subscriptionExpiresAt > new Date());
+    const userAiKeyMode = user.aiKeyMode || 'personal';
+
+    let resolvedProvider: 'openai' | 'anthropic' | 'openrouter' | 'ollama';
+    let resolvedApiKey: string;
+    let resolvedModel: string | undefined;
+    let resolvedBaseUrl: string | undefined;
+
+    if (provider) {
+      // User supplied their own credentials
+      if (provider !== 'ollama' && !apiKey) {
+        return NextResponse.json(
+          { error: 'AI API key is required for this provider' },
+          { status: 400 }
+        );
+      }
+      resolvedProvider = provider as 'openai' | 'anthropic' | 'openrouter' | 'ollama';
+      resolvedApiKey = apiKey || '';
+      resolvedModel = model;
+      resolvedBaseUrl = baseUrl;
+    } else if (isPremium && userAiKeyMode === 'builtin') {
+      // Premium builtin user — use server-side credentials
+      resolvedProvider = (process.env.AI_PROVIDER || 'openrouter') as 'openai' | 'anthropic' | 'openrouter' | 'ollama';
+      resolvedApiKey = process.env.OPENROUTER_API_KEY || '';
+      resolvedModel = process.env.AI_MODEL || 'openai/gpt-4o-mini';
+      resolvedBaseUrl = process.env.AI_BASE_URL;
+    } else {
       return NextResponse.json(
-        { error: 'AI provider is required in request body' },
+        {
+          error: 'AI provider is required in request body',
+          message: isPremium
+            ? 'Enable "Use Built-in AI" in settings or provide your own API key.'
+            : 'Free tier requires you to provide your own AI API key.',
+        },
         { status: 400 }
       );
     }
-    
-    // Validate API key for non-Ollama providers
-    if (provider !== 'ollama' && !apiKey) {
-      return NextResponse.json(
-        { error: 'AI API key is required for this provider' },
-        { status: 400 }
-      );
-    }
-    
+
     // Call AI to scrape web for shortcuts
     const scrapeResult = await scrapeShortcutsWithAI(cleanAppName, context, {
-      provider: provider as any,
-      apiKey: apiKey || '',
-      model: model,
-      baseUrl: baseUrl,
+      provider: resolvedProvider,
+      apiKey: resolvedApiKey,
+      model: resolvedModel,
+      baseUrl: resolvedBaseUrl,
       timeout: 60000,
     });
     

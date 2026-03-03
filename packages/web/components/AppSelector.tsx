@@ -49,6 +49,7 @@ export function AppSelector() {
   const [aiError, setAiError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const aiEnabled = useStore((state) => state.aiEnabled)
+  const aiKeyMode = useStore((state) => state.aiKeyMode)
 
   // Focus input on mount (replacing autoFocus attribute)
   useEffect(() => {
@@ -100,28 +101,30 @@ export function AppSelector() {
     }
 
     // Check AI configuration
-    if (!isAIConfigured()) {
+    const usingBuiltin = aiKeyMode === 'builtin'
+    if (!usingBuiltin && !isAIConfigured()) {
       setAiError('Please configure AI in Settings first')
       return
     }
 
-    // Load AI config from localStorage
-    const configStr = typeof window !== 'undefined' ? localStorage.getItem('katasumi-config') : null
-    let aiConfig = null
-    if (configStr) {
-      try {
-        const config = JSON.parse(configStr)
-        aiConfig = config.ai
-      } catch (e) {
-        console.error('Failed to parse AI config:', e)
-        setAiError('Invalid AI configuration. Please reconfigure in Settings.')
+    // Load personal AI config from localStorage (only needed for personal key mode)
+    let aiConfig: { provider?: string; apiKey?: string; model?: string; baseUrl?: string } | null = null
+    if (!usingBuiltin) {
+      const configStr = typeof window !== 'undefined' ? localStorage.getItem('katasumi-config') : null
+      if (configStr) {
+        try {
+          const config = JSON.parse(configStr)
+          aiConfig = config.ai
+        } catch (e) {
+          console.error('Failed to parse AI config:', e)
+          setAiError('Invalid AI configuration. Please reconfigure in Settings.')
+          return
+        }
+      }
+      if (!aiConfig) {
+        setAiError('AI configuration not found. Please configure in Settings.')
         return
       }
-    }
-
-    if (!aiConfig) {
-      setAiError('AI configuration not found. Please configure in Settings.')
-      return
     }
 
     setIsAIScraping(true)
@@ -138,10 +141,13 @@ export function AppSelector() {
         },
         body: JSON.stringify({ 
           appName: searchQuery,
-          provider: aiConfig.provider,
-          apiKey: aiConfig.apiKey,
-          model: aiConfig.model,
-          baseUrl: aiConfig.baseUrl
+          // Omit provider/apiKey for builtin users — the server uses its own credentials
+          ...(aiConfig ? {
+            provider: aiConfig.provider,
+            apiKey: aiConfig.apiKey,
+            model: aiConfig.model,
+            baseUrl: aiConfig.baseUrl,
+          } : {}),
         })
       })
       
@@ -311,9 +317,9 @@ export function AppSelector() {
               <button
                 type="button"
                 onClick={handleAISearch}
-                disabled={isAIScraping || !isAIConfigured()}
+                disabled={isAIScraping || !(aiKeyMode === 'builtin' || isAIConfigured())}
                 className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-                title={!isAIConfigured() ? 'Configure AI in Settings' : undefined}
+                title={!(aiKeyMode === 'builtin' || isAIConfigured()) ? 'Configure AI in Settings' : undefined}
               >
                 {isAIScraping ? (
                   <>
