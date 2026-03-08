@@ -43,6 +43,12 @@ jobs:
       
       - name: Build core package
         run: pnpm --filter=@katasumi/core build
+
+      - name: Refresh workspace links after core build
+        run: pnpm install --frozen-lockfile
+
+      - name: Build core database for TUI tests
+        run: pnpm --filter=@katasumi/core build-db
       
       - name: Build TUI package
         run: pnpm --filter=@katasumi/tui build
