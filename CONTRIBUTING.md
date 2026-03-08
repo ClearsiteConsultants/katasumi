@@ -25,7 +25,7 @@ This project and everyone participating in it is governed by our commitment to p
 
 ### Reporting Bugs
 
-Before creating bug reports, please check the [existing issues](https://github.com/joshpitkin/katasumi/issues) to avoid duplicates.
+Before creating bug reports, please check the [existing issues](https://github.com/ClearsiteConsultants/katasumi/issues) to avoid duplicates.
 
 When you create a bug report, please include:
 
@@ -61,7 +61,7 @@ Search should handle special characters gracefully
 
 Feature suggestions are welcome! Before creating a feature request:
 
-1. Check [existing issues](https://github.com/joshpitkin/katasumi/issues) for similar suggestions
+1. Check [existing issues](https://github.com/ClearsiteConsultants/katasumi/issues) for similar suggestions
 2. Review the [project roadmap](DEVELOPMENT_PRIORITIES.md) to see if it's already planned
 3. Consider whether the feature fits the project's philosophy
 
@@ -111,7 +111,7 @@ Documentation changes follow the same pull request process as code changes.
 For the fastest setup, use our automated script:
 
 ```bash
-git clone https://github.com/joshpitkin/katasumi.git
+git clone https://github.com/ClearsiteConsultants/katasumi.git
 cd katasumi
 ./quick-setup.sh
 ```
@@ -129,7 +129,7 @@ If you prefer to set up manually or need more control:
 #### 1. Clone and Install
 
 ```bash
-git clone https://github.com/joshpitkin/katasumi.git
+git clone https://github.com/ClearsiteConsultants/katasumi.git
 cd katasumi
 pnpm install
 ```

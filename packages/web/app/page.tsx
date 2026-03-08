@@ -39,7 +39,7 @@ export default function LandingPage() {
           </div>
           <div className="mt-6">
             <Link
-              href="https://github.com/joshpitkin/katasumi"
+              href="https://github.com/ClearsiteConsultants/katasumi"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
@@ -105,7 +105,7 @@ export default function LandingPage() {
               </Link>
               <div className="mt-4">
                 <Link
-                  href="https://github.com/joshpitkin/katasumi"
+                  href="https://github.com/ClearsiteConsultants/katasumi"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
@@ -155,7 +155,7 @@ export default function LandingPage() {
                 <div className="mt-1 text-gray-500"># Fast, keyboard-driven interface</div>
               </div>
               <p className="mt-4 text-gray-600 dark:text-gray-300">
-                Lightning-fast terminal interface for power users. Navigate entirely with your keyboard. For installation and setup instructions, visit the <Link href="https://github.com/joshpitkin/katasumi#readme" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline dark:text-blue-400">GitHub repository</Link>.
+                Lightning-fast terminal interface for power users. Navigate entirely with your keyboard. For installation and setup instructions, visit the <Link href="https://github.com/ClearsiteConsultants/katasumi#readme" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline dark:text-blue-400">GitHub repository</Link>.
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg">
@@ -178,7 +178,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-center items-center gap-6 text-gray-600 dark:text-gray-400">
             <Link
-              href="https://github.com/joshpitkin/katasumi"
+              href="https://github.com/ClearsiteConsultants/katasumi"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-2"
@@ -190,7 +190,7 @@ export default function LandingPage() {
             </Link>
             <span className="hidden md:inline text-gray-300 dark:text-gray-700">•</span>
             <Link
-              href="https://github.com/joshpitkin/katasumi#readme"
+              href="https://github.com/ClearsiteConsultants/katasumi#readme"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
@@ -199,7 +199,7 @@ export default function LandingPage() {
             </Link>
             <span className="hidden md:inline text-gray-300 dark:text-gray-700">•</span>
             <Link
-              href="https://github.com/joshpitkin/katasumi/issues"
+              href="https://github.com/ClearsiteConsultants/katasumi/issues"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors"

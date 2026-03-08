@@ -2466,7 +2466,7 @@
         "Verify two-tier comparison clearly shows Free vs Premium",
         "Click 'Get Started (Free)' and verify redirect to GitHub README",
         "Click 'Sign Up for Premium' and verify redirect to /signup",
-        "Click 'View on GitHub' and verify opens joshpitkin/katasumi repo",
+        "Click 'View on GitHub' and verify opens ClearsiteConsultants/katasumi repo",
         "Verify screenshots/demo showing both TUI and web interface",
         "Check mobile layout and verify responsive design works",
         "Inspect page source and verify SEO meta tags present",
@@ -2480,7 +2480,7 @@
         "PHASE1-PREMIUM-001"
       ],
       "reportedDate": "2026-02-07",
-      "technicalNotes": "Implementation:\n1. Create app/page.tsx as landing page (move current search to /search)\n2. Use shadcn/ui components for hero, features grid, comparison table\n3. Tailwind for responsive layout\n4. Next.js Image component for screenshots\n5. next-seo for meta tags\n6. GitHub repo link: https://github.com/joshpitkin/katasumi\n7. Free tier CTA links to: https://github.com/joshpitkin/katasumi#readme\n8. Premium CTA links to: /signup\n9. Consider using Framer Motion for subtle animations\n10. Screenshot tool: carbon.now.sh for code/TUI screenshots"
+      "technicalNotes": "Implementation:\n1. Create app/page.tsx as landing page (move current search to /search)\n2. Use shadcn/ui components for hero, features grid, comparison table\n3. Tailwind for responsive layout\n4. Next.js Image component for screenshots\n5. next-seo for meta tags\n6. GitHub repo link: https://github.com/ClearsiteConsultants/katasumi\n7. Free tier CTA links to: https://github.com/ClearsiteConsultants/katasumi#readme\n8. Premium CTA links to: /signup\n9. Consider using Framer Motion for subtle animations\n10. Screenshot tool: carbon.now.sh for code/TUI screenshots"
     },
     {
       "id": "PHASE3-WEB-022",

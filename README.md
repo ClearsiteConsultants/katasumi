@@ -1,6 +1,6 @@
 # Katasumi (隅) - Your Corner Companion for Keyboard Shortcuts
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/joshpitkin/katasumi/ci.yml?branch=main)](https://github.com/joshpitkin/katasumi/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/ClearsiteConsultants/katasumi/ci.yml?branch=main)](https://github.com/ClearsiteConsultants/katasumi/actions)
 [![Version](https://img.shields.io/npm/v/katasumi.svg)](https://www.npmjs.com/package/katasumi)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Downloads](https://img.shields.io/npm/dt/katasumi.svg)](https://www.npmjs.com/package/katasumi)
@@ -353,8 +353,8 @@ We welcome contributions from developers of all skill levels! Whether you're fix
 **Quick Links:**
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Comprehensive contribution guide
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Detailed development setup and troubleshooting
-- [GitHub Issues](https://github.com/joshpitkin/katasumi/issues) - Report bugs or request features
-- [GitHub Discussions](https://github.com/joshpitkin/katasumi/discussions) - Ask questions and share ideas
+- [GitHub Issues](https://github.com/ClearsiteConsultants/katasumi/issues) - Report bugs or request features
+- [GitHub Discussions](https://github.com/ClearsiteConsultants/katasumi/discussions) - Ask questions and share ideas
 
 ### Development Environment Setup
 
@@ -369,7 +369,7 @@ We welcome contributions from developers of all skill levels! Whether you're fix
 For the fastest setup, use our automated script:
 
 ```bash
-git clone https://github.com/joshpitkin/katasumi.git
+git clone https://github.com/ClearsiteConsultants/katasumi.git
 cd katasumi
 ./quick-setup.sh
 ```
@@ -384,7 +384,7 @@ This script will:
 
 1. **Clone and install:**
    ```bash
-   git clone https://github.com/joshpitkin/katasumi.git
+   git clone https://github.com/ClearsiteConsultants/katasumi.git
    cd katasumi
    pnpm install
    ```

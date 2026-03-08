@@ -40,7 +40,7 @@ The fastest way to get started is using Docker Compose to run PostgreSQL:
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/joshpitkin/katasumi.git
+git clone https://github.com/ClearsiteConsultants/katasumi.git
 cd katasumi
 pnpm install
 ```
@@ -548,8 +548,8 @@ Before committing new components:
 
 ## Getting Help
 
-- **Issues**: https://github.com/joshpitkin/katasumi/issues
-- **Discussions**: https://github.com/joshpitkin/katasumi/discussions
+- **Issues**: https://github.com/ClearsiteConsultants/katasumi/issues
+- **Discussions**: https://github.com/ClearsiteConsultants/katasumi/discussions
 
 ---
 

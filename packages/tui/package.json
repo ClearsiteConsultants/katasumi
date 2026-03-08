@@ -1,6 +1,6 @@
 {
   "name": "@katasumi/tui",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "type": "module",
   "description": "Terminal UI for Katasumi keyboard shortcut search",
   "main": "dist/cli.js",
