@@ -8,26 +8,25 @@ dotenv.config({ path: path.join(process.cwd(), '.env.local') });
 
 const LOG_DIR = path.join(os.homedir(), '.katasumi');
 const LOG_FILE = path.join(LOG_DIR, 'tui-debug.log');
-const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+const DEBUG_ENABLED = process.env.KATASUMI_DEBUG !== '0';
 
-// Only set up logging in development mode
-if (IS_DEVELOPMENT) {
+// Set up logging once on import.
+if (DEBUG_ENABLED) {
   // Ensure log directory exists
   if (!fs.existsSync(LOG_DIR)) {
     fs.mkdirSync(LOG_DIR, { recursive: true });
   }
 
-  // Clear log file on startup
-  fs.writeFileSync(LOG_FILE, `=== TUI Debug Log Started: ${new Date().toISOString()} ===\n`);
-  fs.writeFileSync(LOG_FILE, `Env ${JSON.stringify(process.env.NODE_ENV, null, 2)}\n`);
+  // Append a startup marker so multiple runs can be traced in one file.
+  fs.appendFileSync(LOG_FILE, `\n=== TUI Debug Log Started: ${new Date().toISOString()} ===\n`);
+  fs.appendFileSync(LOG_FILE, `Env ${JSON.stringify(process.env.NODE_ENV ?? 'undefined')}\n`);
   
   // Log the file path on import so users know where to look
   console.error(`Debug log: ${LOG_FILE}`);
 }
 
 export function debugLog(...args: any[]): void {
-  // Only log in development mode
-  if (!IS_DEVELOPMENT) return;
+  if (!DEBUG_ENABLED) return;
   
   const timestamp = new Date().toISOString();
   const message = args.map(arg => 

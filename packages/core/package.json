@@ -4,6 +4,14 @@
   "description": "Core types and database adapters for Katasumi",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "migrations",
+    "prisma",
+    "data/shortcuts.db",
+    ".env.example",
+    "prisma.config.ts"
+  ],
   "scripts": {
     "build": "prisma generate && prisma generate --schema=prisma/schema.postgres.prisma && tsc --build && pnpm run copy-prisma",
     "copy-prisma": "mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/ && cp -r src/generated/prisma-postgres dist/generated/",

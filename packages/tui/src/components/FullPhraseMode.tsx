@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
-import type { Shortcut, Platform, DatabaseAdapter } from '@katasumi/core';
-import { SQLiteAdapter, KeywordSearchEngine } from '@katasumi/core';
+import type { Shortcut, Platform } from '@katasumi/core';
+import { KeywordSearchEngine } from '@katasumi/core';
 import { useAppStore } from '../store.js';
 import type { PlatformOption } from '../store.js';
 import { DetailView } from './DetailView.js';
 import { logError, getUserFriendlyMessage } from '../utils/error-logger.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
-import * as path from 'path';
-import * as fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-// ES module dirname shim
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { getDbAdapter } from '../utils/db-adapter.js';
 
 interface FullPhraseModeProps {
   aiEnabled: boolean;
@@ -24,32 +17,6 @@ interface FullPhraseModeProps {
 interface GroupedResult {
   app: string;
   shortcuts: Shortcut[];
-}
-
-// Singleton database adapter
-let dbAdapter: DatabaseAdapter | null = null;
-
-function getDbAdapter(): DatabaseAdapter {
-  if (!dbAdapter) {
-    // Resolve path from the monorepo root
-    const possiblePaths = [
-      path.resolve(__dirname, '..', '..', '..', 'core', 'data', 'shortcuts.db'),
-      path.resolve(__dirname, '..', 'core', 'data', 'shortcuts.db'),
-      path.resolve(process.cwd(), '..', 'core', 'data', 'shortcuts.db'),
-      path.resolve(process.cwd(), 'packages', 'core', 'data', 'shortcuts.db'),
-    ];
-
-    let coreDbPath = possiblePaths.find((p) => fs.existsSync(p));
-
-    if (!coreDbPath) {
-      console.error('❌ Core database not found.');
-      coreDbPath = ':memory:';
-    }
-
-    const userDbPath = path.join(process.env.HOME || '~', '.katasumi', 'user-data.db');
-    dbAdapter = new SQLiteAdapter(coreDbPath, userDbPath);
-  }
-  return dbAdapter;
 }
 
 export function FullPhraseMode({ aiEnabled, view }: FullPhraseModeProps) {
