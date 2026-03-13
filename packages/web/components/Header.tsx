@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import { isAIConfigured } from '@/lib/config'
@@ -15,6 +15,7 @@ export function Header() {
   const toggleAI = useStore((state) => state.toggleAI)
   const setShowSettings = useStore((state) => state.setShowSettings)
   const setPlatform = useStore((state) => state.setPlatform)
+  const setShowPlatformSelector = useStore((state) => state.setShowPlatformSelector)
   const isAuthenticated = useStore((state) => state.isAuthenticated)
   const user = useStore((state) => state.user)
   const setUser = useStore((state) => state.setUser)
@@ -25,15 +26,20 @@ export function Header() {
   const userTier = useStore((state) => state.userTier)
   const [showAccountMenu, setShowAccountMenu] = useState(false)
 
-  // Detect platform on client-side after hydration to avoid mismatch
+  // Detect platform on client-side after hydration to avoid mismatch.
+  // Uses a ref so this only fires once on mount and never overrides a user's
+  // explicit 'All Platforms' selection.
+  const hasAutoDetected = useRef(false)
   useEffect(() => {
-    if (typeof window !== 'undefined' && platform === 'all') {
+    if (typeof window !== 'undefined' && !hasAutoDetected.current) {
+      hasAutoDetected.current = true
       const userAgent = window.navigator.userAgent.toLowerCase()
       if (userAgent.includes('mac')) setPlatform('mac')
       else if (userAgent.includes('win')) setPlatform('windows')
       else if (userAgent.includes('linux')) setPlatform('linux')
+      // If no match, leave as 'all'
     }
-  }, [platform, setPlatform])
+  }, [setPlatform])
 
   // Check authentication status on mount
   useEffect(() => {
@@ -113,11 +119,16 @@ export function Header() {
             </button>
             )}
 
-            {/* Platform Display */}
+            {/* Platform Selector Button */}
             {!isHiddenButtonsPage && (
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              <span className="font-semibold">Platform:</span> {formatPlatform(platform)}
-            </span>
+            <button
+              type="button"
+              onClick={() => setShowPlatformSelector(true)}
+              className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+              title="Press P to change platform"
+            >
+              Platform: {formatPlatform(platform)}
+            </button>
             )}
 
             {/* AI Toggle Button with Status */}

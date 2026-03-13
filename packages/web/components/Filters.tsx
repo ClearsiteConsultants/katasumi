@@ -129,9 +129,15 @@ export function Filters() {
   const filters = useStore((state) => state.filters)
   const setFilters = useStore((state) => state.setFilters)
   const selectedApp = useStore((state) => state.selectedApp)
+  const platform = useStore((state) => state.platform)
+  const setPlatform = useStore((state) => state.setPlatform)
   const [contexts, setContexts] = useState<string[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
+  const [stats, setStats] = useState<{
+    total: number
+    platforms: { mac: number; windows: number; linux: number }
+  } | null>(null)
   const contextButtonRef = useRef<HTMLButtonElement>(null)
   const categoryButtonRef = useRef<HTMLButtonElement>(null)
   const tagButtonRef = useRef<HTMLButtonElement>(null)
@@ -172,12 +178,18 @@ export function Filters() {
   }, [selectedApp])
 
   useEffect(() => {
-    // Fetch available contexts, categories and tags for the selected app
+    // Reset when app changes
+    setStats(null)
+    setContexts([])
+    setCategories([])
+    setTags([])
+
+    // Fetch all shortcuts for the selected app to populate filters and compute stats
     async function fetchFilters() {
       if (!selectedApp) return
 
       try {
-        const params = new URLSearchParams({ app: selectedApp })
+        const params = new URLSearchParams({ app: selectedApp, limit: '10000' })
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
         const headers: HeadersInit = {}
         if (token) {
@@ -185,18 +197,26 @@ export function Filters() {
         }
         const response = await fetch(`/api/search?${params}`, { headers })
         const data = await response.json()
-        
+
+        const shortcuts: any[] = data.results || []
+
+        // Compute platform counts
+        const mac = shortcuts.filter((s) => s.keys?.mac).length
+        const windows = shortcuts.filter((s) => s.keys?.windows).length
+        const linux = shortcuts.filter((s) => s.keys?.linux).length
+        setStats({ total: shortcuts.length, platforms: { mac, windows, linux } })
+
         // Extract unique contexts, categories and tags
         const uniqueContexts = new Set<string>()
         const uniqueCategories = new Set<string>()
         const uniqueTags = new Set<string>()
-        
-        data.results?.forEach((result: any) => {
+
+        shortcuts.forEach((result) => {
           if (result.context) uniqueContexts.add(result.context)
           if (result.category) uniqueCategories.add(result.category)
           result.tags?.forEach((tag: string) => uniqueTags.add(tag))
         })
-        
+
         setContexts(Array.from(uniqueContexts).sort())
         setCategories(Array.from(uniqueCategories).sort())
         setTags(Array.from(uniqueTags).sort())
@@ -223,7 +243,68 @@ export function Filters() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-3">
+      {/* App shortcut summary */}
+      {stats && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm pb-2 border-b border-gray-200 dark:border-gray-700">
+          <span className="font-semibold text-gray-900 dark:text-white">
+            {stats.total} shortcuts
+          </span>
+          <span className="text-gray-300 dark:text-gray-600 select-none">·</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">Platform:</span>
+          {(['mac', 'windows', 'linux'] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => stats.platforms[p] > 0 && setPlatform(p)}
+              title={stats.platforms[p] > 0 ? `Show ${p} shortcuts only` : `No ${p} shortcuts for this app`}
+              className={`text-xs px-2 py-0.5 rounded transition-colors ${
+                stats.platforms[p] > 0
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 cursor-pointer'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-default'
+              } ${platform === p ? 'ring-1 ring-blue-500 dark:ring-blue-400' : ''}`}
+            >
+              {p === 'windows' ? 'win' : p}: {stats.platforms[p]}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setPlatform('all')}
+            title="Show shortcuts for all platforms"
+            className={`text-xs px-2 py-0.5 rounded transition-colors bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 cursor-pointer ${
+              platform === 'all' ? 'ring-1 ring-blue-500 dark:ring-blue-400' : ''
+            }`}
+          >
+            all: {stats.total}
+          </button>
+          {contexts.length > 0 && (
+            <>
+              <span className="text-gray-300 dark:text-gray-600 select-none">·</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {contexts.length} {contexts.length === 1 ? 'context' : 'contexts'}
+              </span>
+            </>
+          )}
+          {categories.length > 0 && (
+            <>
+              <span className="text-gray-300 dark:text-gray-600 select-none">·</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {categories.length} {categories.length === 1 ? 'category' : 'categories'}
+              </span>
+            </>
+          )}
+          {tags.length > 0 && (
+            <>
+              <span className="text-gray-300 dark:text-gray-600 select-none">·</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {tags.length} {tags.length === 1 ? 'tag' : 'tags'}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Filter dropdowns */}
       <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start sm:items-center">
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Filters:
