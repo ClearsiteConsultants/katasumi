@@ -9,6 +9,10 @@
 
 Like a helpful friend waiting in the corner of your workspace, Katasumi provides instant access to keyboard shortcuts across terminal and desktop applications, supporting you without getting in the way.
 
+Personal note: I wrote this app for myself, since I try to be extremely keyboard centric in all my workflows, I wanted to get better at finding and learning shortcuts for all the apps I use.  The problem is that there are many, they change often, and they all have different shortcuts documented on various web sites.  So this tool is to help consolidate and simplify the day-to-day search required.
+
+A lot of this is still a work in progress, a lot is "vibe-coded" but with a lot of supervision from me and its just now moving into more of a UAT phase where I am doing all the testing.  I hope someone else will find it useful and helpful and want to contribute.  If you do please drop me a note as a GH issue and I will work on getting you free access for now.
+
 ## 📑 Table of Contents
 
 - [Philosophy](#-philosophy)
@@ -22,6 +26,7 @@ Like a helpful friend waiting in the corner of your workspace, Katasumi provides
 - [Architecture](#️-architecture)
 - [Getting Started](#-getting-started)
   - [Quick Install (TUI)](#quick-install-tui)
+  - [Running in Quake Mode](#running-unobtrusively)
 - [Database Strategy](#-database-strategy)
 - [Documentation](#-documentation)
 - [Development](#️-development)
@@ -308,11 +313,71 @@ katasumi
 
 ### Running Unobtrusively
 
-Katasumi is designed to stay out of your way. Here are some tips for running it unobtrusively:
+Katasumi is designed to stay out of your way. The best way to achieve this is to run it in **"quake mode"** — a dropdown terminal that slides in from the top of the screen on a global hotkey, just like the console in the original Quake game. Press the hotkey once to summon Katasumi, press it again to send it back to the corner. This perfectly embodies the 隅 philosophy.
+
+#### Quake Mode Setup by Terminal
+
+**Windows Terminal (Windows)** *(Recommended for Windows users)*
+
+Windows Terminal has built-in quake mode support:
+
+1. Press **Win + \`** (backtick) to open Windows Terminal in quake mode — it drops down from the top of the screen instantly.
+2. Set Katasumi as your default profile so it launches automatically:
+   - Open Windows Terminal settings (`Ctrl+,`)
+   - Under **Startup → Default profile**, select the profile you use for Katasumi
+   - Or add a dedicated Katasumi profile with `katasumi` as the command
+3. Now **Win + \`** drops Katasumi in from the top whenever you need it.
+
+> **Tip:** You can pin the quake-mode window to a specific monitor in Windows Terminal settings under **Appearance → Launch size → Quake mode**.
+
+**iTerm2 (macOS)**
+
+1. Open iTerm2 Preferences → **Keys → Hotkey**
+2. Enable **"Show/hide all windows with a system-wide hotkey"** and set your preferred key (e.g., `⌘ + \``)
+3. Create a dedicated profile for Katasumi:
+   - Go to **Profiles → +** → name it "Katasumi"
+   - Under **General → Command**, set it to `katasumi`
+   - Under **Window → Style**, choose **Full-Width Top of Screen** for the classic quake look
+4. Assign the hotkey to the Katasumi profile under **Keys → Hotkey Window**
+
+**Guake (Linux/GNOME)**
+
+```bash
+# Install Guake
+sudo apt install guake      # Debian/Ubuntu
+sudo dnf install guake      # Fedora
+
+# Launch and configure
+guake &
+guake-prefs  # Open preferences
+```
+
+In preferences, set the command to `katasumi` under **Shell → Default interpreter** and configure your preferred hotkey (default is **F12**).
+
+**Yakuake (Linux/KDE)**
+
+```bash
+sudo apt install yakuake    # Debian/Ubuntu
+sudo dnf install yakuake    # Fedora
+```
+
+Yakuake defaults to **F12** as the toggle hotkey. Set the default shell command to `katasumi` in **Settings → Configure Yakuake → Behavior**.
+
+**tmux (Any terminal)**
+
+For a portable approach that works anywhere:
+
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+alias ks='tmux new-session -A -s katasumi katasumi'
+```
+
+Then bind `ks` to a global hotkey in your desktop environment for a similar effect.
+
+#### Tips for the Best Experience
 
 - **TUI Mode**: Assign a global keyboard shortcut to launch Katasumi instantly
-- **Background Process**: Run the TUI in a tmux/screen session for instant access
-- **Terminal Dropdown**: Use with terminal drop-down tools (e.g., Guake, iTerm2 Hotkey Window)
+- **Background Process**: Run the TUI in a tmux/screen session for persistent access
 - **Web Bookmarklet**: Save the web version as a bookmarklet for quick browser access
 
 ## 📊 Database Strategy
@@ -514,14 +579,3 @@ SOFTWARE.
 
 **Katasumi** - Always there in your corner, ready to help. 隅
 
-
-TODO:
-- test sync
-- test ai search from TUI
-- test login from TUI
-- change stripe env to prod
-- show correct version # in tui
-- more slim tui
-- custom note in readme / quake mode instructions
-- prd review
-- manual shortcut edit/entry

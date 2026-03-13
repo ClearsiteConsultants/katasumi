@@ -1,6 +1,10 @@
 import React from 'react';
 import { Box, Text } from 'ink';
+import { createRequire } from 'module';
 import type { PlatformOption } from '../store.js';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../../package.json') as { version: string };
 import { isAIConfigured, loadToken } from '../utils/config.js';
 import { debugLog } from '../utils/debug-logger.js';
 
@@ -50,7 +54,7 @@ export function Header({ mode, platform, aiEnabled }: HeaderProps) {
     <Box flexDirection="column">
       <Box borderStyle="single" borderColor="cyan" paddingX={1}>
         <Text bold color="cyan">
-          Katasumi v1.0
+          Katasumi v{version}
         </Text>
       </Box>
       <Box paddingX={1}>
