@@ -47,6 +47,8 @@ export class PostgresAdapter implements DatabaseAdapter {
       if (userDbUrl.startsWith('postgresql://')) {
         userDbUrl = userDbUrl.replace('postgresql://', 'postgres://');
       }
+      // log the last part of the URL for debugging (without credentials)
+      console.log(`[PostgresAdapter] Using separate user database at ${userDbUrl.substring(userDbUrl.lastIndexOf('/') + 1)}...`);
       
       try {
         const { Pool } = require('pg');
@@ -60,6 +62,7 @@ export class PostgresAdapter implements DatabaseAdapter {
         throw new Error(`Failed to connect to user PostgreSQL database: ${error instanceof Error ? error.message : String(error)}`);
       }
     } else {
+      console.log(`[PostgresAdapter] No separate user database URL provided, using core database for user data: ${coreDbUrl.substring(coreDbUrl.lastIndexOf('/') + 1)}`);
       this.userClient = this.coreClient;
     }
     
@@ -97,6 +100,7 @@ export class PostgresAdapter implements DatabaseAdapter {
     // Query user database if userId is set
     let userShortcuts: any[] = [];
     if (this.userId) {
+      console.log(`[PostgresAdapter] Searching user shortcuts for userId ${this.userId} with filters:`, { app, category, tag, query });
       try {
         userShortcuts = await this.userClient.userShortcut.findMany({
           where: { ...where, userId: this.userId },

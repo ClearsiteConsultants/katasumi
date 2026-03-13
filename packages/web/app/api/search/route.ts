@@ -77,7 +77,9 @@ export async function GET(request: NextRequest) {
       console.warn(`[API /api/search] No shortcuts found for app: ${app}`)
     }
 
-    return NextResponse.json({ results: filteredResults })
+    return NextResponse.json({ results: filteredResults }, {
+      headers: { 'Cache-Control': 'no-store, private' }
+    })
   } catch (error) {
     console.error('Search error:', error)
     return NextResponse.json(

@@ -4,7 +4,16 @@
   "framework": "nextjs",
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/search",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, private"
+        }
+      ]
+    },
+    {
+      "source": "/api/((?!search).*)",
       "headers": [
         {
           "key": "Cache-Control",
