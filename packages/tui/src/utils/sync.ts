@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { Shortcut } from '@katasumi/core';
 
-const API_BASE_URL = process.env.KATASUMI_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.KATASUMI_API_URL || 'https://www.katasumi.dev';
 const CONFIG_DIR = path.join(os.homedir(), '.katasumi');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const SYNC_STATE_PATH = path.join(CONFIG_DIR, 'sync-state.json');

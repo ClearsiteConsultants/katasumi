@@ -58,6 +58,8 @@ jobs:
       
       - name: Run tests
         run: pnpm --filter=@katasumi/tui test
+        env:
+          KATASUMI_API_URL: http://localhost:3000
       
       - name: Extract version from tag
         id: get_version

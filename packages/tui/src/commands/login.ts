@@ -3,7 +3,7 @@ import readline from 'readline';
 import fs from 'fs';
 import path from 'path';
 
-const API_BASE_URL = process.env.KATASUMI_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.KATASUMI_API_URL || 'https://www.katasumi.dev';
 const CONFIG_DIR = path.join(process.env.HOME || '~', '.katasumi');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 
