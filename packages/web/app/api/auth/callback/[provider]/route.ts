@@ -35,9 +35,17 @@ async function exchangeCodeForToken(
     }).toString(),
   })
 
-  if (!res.ok) throw new Error(`Token exchange failed: ${res.status}`)
+  if (!res.ok) {
+    let body = ''
+    try { body = await res.text() } catch { /* ignore */ }
+    throw new Error(`Token exchange failed: ${res.status} ${res.statusText} — ${body}`)
+  }
   const data = await res.json()
-  if (!data.access_token) throw new Error('No access_token in response')
+  if (!data.access_token) {
+    // GitHub returns 200 with error fields on failure (e.g. bad_verification_code)
+    const providerError = data.error ? `${data.error}: ${data.error_description ?? ''}` : JSON.stringify(data)
+    throw new Error(`No access_token in response — ${providerError}`)
+  }
   return data.access_token as string
 }
 
@@ -45,9 +53,13 @@ async function fetchGoogleUser(accessToken: string): Promise<{ id: string; email
   const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-  if (!res.ok) throw new Error('Failed to fetch Google user info')
+  if (!res.ok) {
+    let body = ''
+    try { body = await res.text() } catch { /* ignore */ }
+    throw new Error(`Failed to fetch Google user info: ${res.status} ${res.statusText} — ${body}`)
+  }
   const data = await res.json()
-  if (!data.email) throw new Error('No email in Google user info')
+  if (!data.email) throw new Error(`No email in Google user info — sub: ${data.sub ?? 'missing'}`)
   return { id: String(data.sub), email: data.email as string }
 }
 
@@ -69,7 +81,11 @@ async function fetchGithubUser(accessToken: string): Promise<{ id: string; email
     }),
   ])
 
-  if (!userRes.ok) throw new Error('Failed to fetch GitHub user info')
+  if (!userRes.ok) {
+    let body = ''
+    try { body = await userRes.text() } catch { /* ignore */ }
+    throw new Error(`Failed to fetch GitHub user info: ${userRes.status} ${userRes.statusText} — ${body}`)
+  }
   const user = await userRes.json()
 
   let email: string | null = user.email ?? null
