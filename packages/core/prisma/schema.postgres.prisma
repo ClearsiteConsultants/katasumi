@@ -61,7 +61,9 @@ model AppInfo {
 model User {
   id                    String    @id @default(uuid())
   email                 String    @unique
-  passwordHash          String    @map("password_hash")
+  passwordHash          String?   @map("password_hash")           // null for OAuth-only users
+  oauthProvider         String?   @map("oauth_provider")          // 'google' | 'github'
+  oauthId               String?   @map("oauth_id")                // Provider's user ID
   tier                  String    @default("free") // 'free' | 'pro' | 'enterprise'
   subscriptionStatus    String    @default("free") @map("subscription_status") // 'free' | 'premium' | 'enterprise'
   subscriptionExpiresAt DateTime? @map("subscription_expires_at")
@@ -84,6 +86,7 @@ model User {
   @@index([email])
   @@index([tier])
   @@index([subscriptionStatus])
+  @@index([oauthProvider, oauthId])
   @@map("users")
 }
 

@@ -22,12 +22,12 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 /**
- * User with password field
+ * User record — passwordHash is null for OAuth-only accounts
  */
 export interface UserWithPassword {
   id: string;
   email: string;
-  passwordHash: string;
+  passwordHash: string | null;
   tier: string;
   subscriptionStatus: string;
   createdAt: Date;
@@ -36,12 +36,12 @@ export interface UserWithPassword {
 
 export async function createUser(
   email: string,
-  password: string,
+  password: string | null,
   tier: string = 'pending',
   subscriptionStatus: string = 'pending'
 ): Promise<UserWithPassword> {
   const { hashPassword } = await import('./auth');
-  const passwordHash = await hashPassword(password);
+  const passwordHash = password ? await hashPassword(password) : null;
   
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({ where: { email } });

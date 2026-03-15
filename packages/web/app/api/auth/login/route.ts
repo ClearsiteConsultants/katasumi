@@ -29,6 +29,12 @@ export async function POST(request: NextRequest) {
     }
     
     // Verify password
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { error: 'This account was created with Google or GitHub. Please use the social login button.' },
+        { status: 400 }
+      );
+    }
     const isValid = await comparePassword(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json(
